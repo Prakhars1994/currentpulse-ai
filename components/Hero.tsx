@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
+const DEFAULT_IMAGE =
+  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200";
+
 function stripHtml(value: string | null) {
   if (!value) return "";
 
@@ -24,7 +27,7 @@ export default async function Hero() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, paper, why_news, image_url, created_at, status"
+        "id, title, slug, paper, why_news, image, created_at, status"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })
@@ -74,9 +77,10 @@ export default async function Hero() {
     0
   );
 
+  const featuredImage = featured?.image || DEFAULT_IMAGE;
+
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
-      {/* Background Blur */}
       <div className="absolute inset-0" aria-hidden="true">
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-cyan-500/20 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
@@ -84,7 +88,6 @@ export default async function Hero() {
 
       <div className="relative mx-auto max-w-7xl px-6 py-24">
         <div className="grid items-center gap-16 lg:grid-cols-2">
-          {/* Left Side */}
           <div>
             <span className="inline-flex items-center rounded-full border border-cyan-500/40 bg-cyan-500/10 px-5 py-2 text-sm font-semibold text-cyan-300">
               🚀 AI-Powered UPSC Preparation
@@ -120,7 +123,6 @@ export default async function Hero() {
               </Link>
             </div>
 
-            {/* Dynamic Statistics */}
             <div className="mt-14 grid grid-cols-3 gap-4 sm:gap-6">
               <div>
                 <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
@@ -154,24 +156,21 @@ export default async function Hero() {
             </div>
           </div>
 
-          {/* Right Side */}
           <div>
             {featured ? (
               <article className="overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl">
                 <Link
                   href={`/current-affairs/${featured.slug}`}
-                  className="block"
+                  className="block overflow-hidden"
                 >
                   <img
-                    src={
-                      featured.image_url ||
-                      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200"
-                    }
+                    src={featuredImage}
                     alt={
                       featured.title ||
                       "Featured current affairs article"
                     }
-                    className="h-60 w-full object-cover"
+                    className="h-60 w-full object-cover transition duration-500 hover:scale-105 sm:h-72"
+                    loading="eager"
                   />
                 </Link>
 

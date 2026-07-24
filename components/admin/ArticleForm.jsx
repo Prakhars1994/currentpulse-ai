@@ -30,7 +30,11 @@ export default function ArticleForm({ article = null }) {
   const isEditing = Boolean(article);
 
   const [loading, setLoading] = useState(false);
-  const [imageUrl, setImageUrl] = useState(article?.image_url || "");
+
+  const [imageUrl, setImageUrl] = useState(
+    article?.image || article?.image_url || ""
+  );
+
   const [content, setContent] = useState(article?.content || "");
   const [whyNews, setWhyNews] = useState(article?.why_news || "");
   const [prelims, setPrelims] = useState(article?.prelims || "");
@@ -92,82 +96,72 @@ export default function ArticleForm({ article = null }) {
       }
 
       if (!session) {
-        toast.error("You must be logged in.");
+        toast.error("Your session has expired. Please login again.");
         router.replace("/admin/login");
         return;
       }
 
       const articleData = {
-        ...data,
-        image_url: imageUrl || null,
+        id: article?.id,
+        title: data.title,
+        slug: data.slug,
+        category: data.category,
+        paper: data.paper || "",
+        seo_title: data.seo_title || "",
+        seo_description: data.seo_description || "",
+        status: data.status,
+
+        image: imageUrl || null,
         content,
         why_news: whyNews,
         prelims,
         mains,
         question,
+
         tags: tags
           .split(",")
           .map((tag) => tag.trim())
           .filter(Boolean),
-        author_id: session.user.id,
-        updated_at: new Date().toISOString(),
       };
 
-      let result;
+      const response = await fetch("/api/articles", {
+        method: isEditing ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(articleData),
+      });
 
-      if (isEditing) {
-        result = await supabase
-          .from("articles")
-          .update(articleData)
-          .eq("id", article.id);
-      } else {
-        result = await supabase.from("articles").insert([
-          {
-            ...articleData,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message || "Unable to save the article."
+        );
       }
 
-      if (result.error) {
-  console.error("SUPABASE INSERT ERROR:", {
-    message: result.error.message,
-    code: result.error.code,
-    details: result.error.details,
-    hint: result.error.hint,
-  });
-
-  throw new Error(
-    [
-      result.error.message,
-      result.error.details,
-      result.error.hint,
-      result.error.code ? `Code: ${result.error.code}` : "",
-    ]
-      .filter(Boolean)
-      .join(" | ")
-  );
-}
-
       toast.success(
-        isEditing
-          ? "Article updated successfully."
-          : "Article created successfully."
+        result.message ||
+          (isEditing
+            ? "Article updated successfully."
+            : "Article created successfully.")
       );
 
       router.push("/admin/articles");
       router.refresh();
-   } catch (error) {
-  const message =
-    error instanceof Error
-      ? error.message
-      : JSON.stringify(error, null, 2);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to save the article.";
 
-  console.error("Article save error:", message);
-  toast.error(message || "Unable to save the article.", {
-    duration: 10000,
-  });
-} finally {
+      console.error("Article save error:", error);
+
+      toast.error(message, {
+        duration: 10000,
+      });
+    } finally {
       setLoading(false);
     }
   }
@@ -179,6 +173,7 @@ export default function ArticleForm({ article = null }) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="rounded-lg bg-white p-6 text-gray-900 shadow">
         <div className="grid grid-cols-1 gap-6">
+
           <div>
             <label
               htmlFor="title"
@@ -259,7 +254,9 @@ export default function ArticleForm({ article = null }) {
                 <option value="Geography">Geography</option>
                 <option value="Social Justice">Social Justice</option>
                 <option value="Governance">Governance</option>
-                <option value="Internal Security">Internal Security</option>
+                <option value="Internal Security">
+                  Internal Security
+                </option>
                 <option value="Ethics">Ethics</option>
                 <option value="Miscellaneous">Miscellaneous</option>
               </select>
@@ -463,7 +460,10 @@ export default function ArticleForm({ article = null }) {
                     value="draft"
                     className="h-4 w-4"
                   />
-                  <span className="ml-2 text-sm text-gray-700">Draft</span>
+
+                  <span className="ml-2 text-sm text-gray-700">
+                    Draft
+                  </span>
                 </label>
 
                 <label className="inline-flex cursor-pointer items-center">
@@ -473,6 +473,7 @@ export default function ArticleForm({ article = null }) {
                     value="published"
                     className="h-4 w-4"
                   />
+
                   <span className="ml-2 text-sm text-gray-700">
                     Published
                   </span>
@@ -486,6 +487,7 @@ export default function ArticleForm({ article = null }) {
               )}
             </fieldset>
           </div>
+
         </div>
       </div>
 

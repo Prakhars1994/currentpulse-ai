@@ -3,6 +3,15 @@ import { supabase } from "@/lib/supabase";
 
 export const revalidate = 0;
 
+const DEFAULT_LARGE_IMAGE =
+  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200";
+
+const DEFAULT_CARD_IMAGE =
+  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800";
+
+const DEFAULT_THUMBNAIL =
+  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400";
+
 function stripHtml(value: string | null) {
   if (!value) return "";
 
@@ -27,7 +36,7 @@ function formatDate(date: string | null) {
 }
 
 function formatViews(views: number | null) {
-  const totalViews = views || 0;
+  const totalViews = Number(views || 0);
 
   if (totalViews >= 1000000) {
     return `${(totalViews / 1000000).toFixed(1)}M`;
@@ -45,7 +54,7 @@ export default async function LatestNews() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, why_news, image_url, created_at, views"
+        "id, title, slug, category, paper, why_news, image, created_at, views"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })
@@ -54,7 +63,7 @@ export default async function LatestNews() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, image_url, created_at, views"
+        "id, title, slug, category, paper, image, created_at, views"
       )
       .eq("status", "published")
       .order("views", { ascending: false })
@@ -84,8 +93,8 @@ export default async function LatestNews() {
               </h2>
 
               <p className="mt-4 max-w-2xl text-gray-400">
-                Explore the current affairs articles receiving the most attention
-                from readers.
+                Explore the current affairs articles receiving the most
+                attention from readers.
               </p>
             </div>
 
@@ -113,17 +122,18 @@ export default async function LatestNews() {
                     href={`/current-affairs/${trendingArticles[0].slug}`}
                     className="block"
                   >
-                    <div className="relative">
+                    <div className="relative overflow-hidden">
                       <img
                         src={
-                          trendingArticles[0].image_url ||
-                          "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200"
+                          trendingArticles[0].image ||
+                          DEFAULT_LARGE_IMAGE
                         }
                         alt={
                           trendingArticles[0].title ||
                           "Trending current affairs article"
                         }
-                        className="h-72 w-full object-cover md:h-96"
+                        className="h-72 w-full object-cover transition duration-500 hover:scale-105 md:h-96"
+                        loading="lazy"
                       />
 
                       <div className="absolute left-5 top-5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-black">
@@ -134,15 +144,21 @@ export default async function LatestNews() {
                     <div className="p-7 md:p-9">
                       <div className="flex flex-wrap items-center gap-3">
                         <span className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-bold text-black">
-                          {trendingArticles[0].category || "Current Affairs"}
+                          {trendingArticles[0].category ||
+                            "Current Affairs"}
                         </span>
 
                         <span className="text-sm text-gray-400">
-                          {trendingArticles[0].paper || "General Studies"}
+                          {trendingArticles[0].paper ||
+                            "General Studies"}
                         </span>
 
                         <span className="text-sm font-semibold text-orange-400">
-                          👁️ {formatViews(trendingArticles[0].views)} views
+                          👁️{" "}
+                          {formatViews(
+                            trendingArticles[0].views
+                          )}{" "}
+                          views
                         </span>
                       </div>
 
@@ -152,7 +168,9 @@ export default async function LatestNews() {
 
                       <div className="mt-7 flex items-center justify-between gap-4">
                         <span className="text-sm text-gray-500">
-                          {formatDate(trendingArticles[0].created_at)}
+                          {formatDate(
+                            trendingArticles[0].created_at
+                          )}
                         </span>
 
                         <span className="font-semibold text-orange-400">
@@ -171,8 +189,20 @@ export default async function LatestNews() {
                       href={`/current-affairs/${item.slug}`}
                       className="group flex gap-4 rounded-2xl border border-slate-800 bg-slate-950 p-4 transition hover:border-orange-500 hover:shadow-xl"
                     >
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-500 text-lg font-black text-black">
-                        {index + 2}
+                      <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl">
+                        <img
+                          src={item.image || DEFAULT_THUMBNAIL}
+                          alt={
+                            item.title ||
+                            "Trending current affairs article"
+                          }
+                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                          loading="lazy"
+                        />
+
+                        <div className="absolute left-2 top-2 rounded-md bg-orange-500 px-2 py-1 text-xs font-black text-black">
+                          #{index + 2}
+                        </div>
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -185,8 +215,13 @@ export default async function LatestNews() {
                         </h3>
 
                         <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                          <span>👁️ {formatViews(item.views)} views</span>
-                          <span>{formatDate(item.created_at)}</span>
+                          <span>
+                            👁️ {formatViews(item.views)} views
+                          </span>
+
+                          <span>
+                            {formatDate(item.created_at)}
+                          </span>
                         </div>
                       </div>
                     </Link>
@@ -196,21 +231,21 @@ export default async function LatestNews() {
             )}
 
           {!trendingError &&
-            (!trendingArticles || trendingArticles.length === 0) && (
+            (!trendingArticles ||
+              trendingArticles.length === 0) && (
               <div className="rounded-2xl border border-slate-700 bg-slate-950 p-10 text-center">
                 <h3 className="text-2xl font-bold text-white">
                   No Trending Articles Yet
                 </h3>
 
                 <p className="mt-4 text-gray-400">
-                  Trending articles will appear once readers start viewing your
-                  content.
+                  Trending articles will appear once readers start
+                  viewing your content.
                 </p>
               </div>
             )}
         </div>
       </section>
-
       {/* Latest Current Affairs */}
       <section className="bg-slate-950 py-20">
         <div className="mx-auto max-w-7xl px-6">
@@ -239,7 +274,6 @@ export default async function LatestNews() {
             </div>
           )}
 
-
           {!newsError && news && news.length > 0 && (
             <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
               {news.map((item) => (
@@ -247,14 +281,18 @@ export default async function LatestNews() {
                   key={item.id}
                   className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 transition duration-300 hover:-translate-y-2 hover:border-cyan-500 hover:shadow-2xl"
                 >
-                  <Link href={`/current-affairs/${item.slug}`}>
+                  <Link
+                    href={`/current-affairs/${item.slug}`}
+                    className="block overflow-hidden"
+                  >
                     <img
-                      src={
-                        item.image_url ||
-                        "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800"
+                      src={item.image || DEFAULT_CARD_IMAGE}
+                      alt={
+                        item.title ||
+                        "Current affairs article"
                       }
-                      alt={item.title || "Current affairs article"}
-                      className="h-52 w-full object-cover"
+                      className="h-56 w-full object-cover transition duration-500 hover:scale-105"
+                      loading="lazy"
                     />
                   </Link>
 
@@ -282,17 +320,20 @@ export default async function LatestNews() {
 
                     <div className="mt-5 flex items-center gap-2 text-sm text-purple-400">
                       <span>👁️</span>
-                      <span>{formatViews(item.views)} views</span>
+
+                      <span>
+                        {formatViews(item.views)} views
+                      </span>
                     </div>
 
-                    <div className="mt-7 flex items-center justify-between gap-4">
+                    <div className="mt-7 flex items-center justify-between">
                       <span className="text-sm text-gray-500">
                         {formatDate(item.created_at)}
                       </span>
 
                       <Link
                         href={`/current-affairs/${item.slug}`}
-                        className="font-semibold text-cyan-400 hover:text-cyan-300"
+                        className="font-semibold text-cyan-400 transition hover:text-cyan-300"
                       >
                         Read More →
                       </Link>

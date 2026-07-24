@@ -6,6 +6,9 @@ import ArticleViewTracker from "@/components/ArticleViewTracker";
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
+const DEFAULT_ARTICLE_IMAGE =
+  "https://images.unsplash.com/photo-1451187580459-43490279c0fa";
+
 // Remove HTML tags for SEO descriptions and reading-time calculation
 function stripHtml(html = "") {
   return html
@@ -73,9 +76,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const image =
-    article.image_url ||
-    "https://images.unsplash.com/photo-1451187580459-43490279c0fa";
+  const image = article.image || DEFAULT_ARTICLE_IMAGE;
 
   const plainDescription =
     stripHtml(article.seo_description || "") ||
@@ -85,6 +86,7 @@ export async function generateMetadata({ params }) {
   return {
     title: article.seo_title || article.title,
     description: plainDescription,
+
     keywords: Array.isArray(article.tags)
       ? article.tags.join(", ")
       : article.tags || "",
@@ -170,6 +172,7 @@ export default async function ArticlePage({ params }) {
     console.error("Previous article fetch error:", previousError);
   }
 
+
   // Only published next article
   const { data: nextArticle, error: nextError } = await supabase
     .from("articles")
@@ -184,363 +187,317 @@ export default async function ArticlePage({ params }) {
     console.error("Next article fetch error:", nextError);
   }
 
-  const articleSchema = {
+  const articleImage = article.image || DEFAULT_ARTICLE_IMAGE;
+
+  const structuredData = {
     "@context": "https://schema.org",
-    "@type": "Article",
-
+    "@type": "NewsArticle",
     headline: article.title,
-
     description:
       stripHtml(article.seo_description || "") ||
       stripHtml(article.why_news || ""),
-
-    image: article.image_url
-      ? [article.image_url]
-      : [
-          "https://images.unsplash.com/photo-1451187580459-43490279c0fa",
-        ],
-
+    image: [articleImage],
+    datePublished: article.created_at,
+    dateModified: article.updated_at || article.created_at,
     author: {
       "@type": "Organization",
       name: "CurrentPulse AI",
     },
-
     publisher: {
       "@type": "Organization",
       name: "CurrentPulse AI",
+      logo: {
+        "@type": "ImageObject",
+        url: `${BASE_URL}/logo.png`,
+      },
     },
-
-    datePublished: article.created_at,
-
-    dateModified: article.updated_at || article.created_at,
-
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `${BASE_URL}/current-affairs/${article.slug}`,
+      "@id": `${BASE_URL}/current-affairs/${slug}`,
     },
   };
 
   return (
     <>
+      <ArticleViewTracker slug={slug} />
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(articleSchema),
+          __html: JSON.stringify(structuredData),
         }}
       />
 
-      <main className="min-h-screen bg-slate-100 py-10">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          {/* Breadcrumb */}
-          <div className="mb-8 text-sm text-gray-500">
-            <Link href="/" className="hover:text-blue-600">
-              Home
-            </Link>
+      <main className="max-w-4xl mx-auto px-4 py-8">
 
-            {" / "}
+        <nav className="text-sm text-gray-500 mb-5">
+          <Link href="/" className="hover:text-blue-600">
+            Home
+          </Link>
 
-            <Link
-              href="/current-affairs"
-              className="hover:text-blue-600"
-            >
-              Current Affairs
-            </Link>
+          {" / "}
 
-            {" / "}
+          <Link
+            href="/current-affairs"
+            className="hover:text-blue-600"
+          >
+            Current Affairs
+          </Link>
 
-            <Link
-              href={`/current-affairs/category/${encodeURIComponent(
-                article.category
-              )}`}
-              className="hover:text-blue-600"
-            >
-              {article.category}
-            </Link>
+          {" / "}
 
-            {" / "}
+          <span>{article.title}</span>
+        </nav>
 
-            <span className="text-gray-700">
-              {article.title}
-            </span>
-          </div>
+        <h1 className="text-4xl font-bold leading-tight">
+          {article.title}
+        </h1>
 
-          {/* Article Card */}
-          <article className="overflow-hidden rounded-3xl bg-white shadow-lg">
-            {article.image_url && (
-              <img
-                src={article.image_url}
-                alt={article.title}
-                className="h-[240px] w-full object-cover sm:h-[340px] lg:h-[420px]"
+        <div className="flex flex-wrap items-center gap-3 mt-4 text-sm text-gray-500">
+
+          <span>
+            📅 {formatDate(article.created_at)}
+          </span>
+
+          <span>•</span>
+
+          <span>
+            ⏱ {readingTime} min read
+          </span>
+
+          <span>•</span>
+
+          <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded">
+            {article.category}
+          </span>
+
+          <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
+            {article.paper}
+          </span>
+
+        </div>
+
+        {article.image && (
+          <img
+            src={article.image}
+            alt={article.title}
+            className="w-full rounded-xl mt-8 mb-8 shadow-lg object-cover max-h-[500px]"
+          />
+        )}
+        <article className="prose prose-lg max-w-none">
+
+          <section className="mt-10">
+            <h2>📌 Why in News?</h2>
+
+            <div
+              dangerouslySetInnerHTML={{
+                __html:
+                  article.why_news ||
+                  "<p>Why in News will be updated soon.</p>",
+              }}
+            />
+          </section>
+
+          <section className="mt-12">
+            <h2>🎯 UPSC Relevance</h2>
+
+            <div className="not-prose rounded-xl border border-blue-100 bg-blue-50 p-6">
+              <ul className="space-y-3 text-gray-800">
+                <li>
+                  <strong>Paper:</strong>{" "}
+                  {article.paper || "Not specified"}
+                </li>
+
+                <li>
+                  <strong>Category:</strong>{" "}
+                  {article.category || "Not specified"}
+                </li>
+
+                <li>
+                  Important for UPSC Civil Services Examination.
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <section className="mt-12">
+            <h2>📚 Prelims Facts</h2>
+
+            <div
+              dangerouslySetInnerHTML={{
+                __html:
+                  article.prelims ||
+                  "<p>Prelims facts will be updated soon.</p>",
+              }}
+            />
+          </section>
+
+          <section className="mt-12">
+            <h2>✍️ Mains Perspective</h2>
+
+            <div
+              dangerouslySetInnerHTML={{
+                __html:
+                  article.mains ||
+                  "<p>Detailed Mains analysis will be updated soon.</p>",
+              }}
+            />
+          </section>
+
+          <section className="mt-12">
+            <h2>📝 Possible UPSC Mains Question</h2>
+
+            <div className="not-prose rounded-xl border-l-4 border-blue-600 bg-blue-50 p-6">
+              <div
+                className="text-lg leading-8 text-gray-800"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    article.question ||
+                    "<p>Discuss the significance of this topic for India.</p>",
+                }}
               />
+            </div>
+          </section>
+
+        </article>
+
+        <section className="mt-14">
+          <h2 className="text-2xl font-bold mb-5">
+            📤 Share this Article
+          </h2>
+
+          <div className="flex flex-wrap gap-3">
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent(
+                `${article.title} ${BASE_URL}/current-affairs/${article.slug}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-green-600 px-5 py-3 font-semibold text-white"
+            >
+              WhatsApp
+            </a>
+
+            <a
+              href={`https://t.me/share/url?url=${encodeURIComponent(
+                `${BASE_URL}/current-affairs/${article.slug}`
+              )}&text=${encodeURIComponent(article.title)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-sky-500 px-5 py-3 font-semibold text-white"
+            >
+              Telegram
+            </a>
+
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
+                article.title
+              )}&url=${encodeURIComponent(
+                `${BASE_URL}/current-affairs/${article.slug}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-black px-5 py-3 font-semibold text-white"
+            >
+              X
+            </a>
+
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
+                `${BASE_URL}/current-affairs/${article.slug}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white"
+            >
+              LinkedIn
+            </a>
+          </div>
+        </section>
+
+        <section className="mt-14">
+          <button
+            type="button"
+            className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 py-5 text-lg font-bold text-white"
+          >
+            🤖 Ask CurrentPulse AI About This Topic
+          </button>
+        </section>
+
+        {(previousArticle || nextArticle) && (
+          <section className="mt-20 grid gap-6 md:grid-cols-2">
+
+            {previousArticle ? (
+              <Link
+                href={`/current-affairs/${previousArticle.slug}`}
+                className="rounded-xl border border-gray-200 p-6 transition hover:border-blue-300 hover:shadow-lg"
+              >
+                <p className="mb-2 text-sm text-gray-500">
+                  ← Previous Article
+                </p>
+
+                <h3 className="font-bold text-gray-900">
+                  {previousArticle.title}
+                </h3>
+              </Link>
+            ) : (
+              <div />
             )}
 
-            <div className="p-6 sm:p-8 lg:p-10">
-              {/* Category */}
-              <span className="inline-flex rounded-full bg-cyan-600 px-4 py-2 font-semibold text-white">
-                {article.category}
-              </span>
+            {nextArticle ? (
+              <Link
+                href={`/current-affairs/${nextArticle.slug}`}
+                className="rounded-xl border border-gray-200 p-6 text-right transition hover:border-blue-300 hover:shadow-lg"
+              >
+                <p className="mb-2 text-sm text-gray-500">
+                  Next Article →
+                </p>
 
-              {/* Title */}
-              <h1 className="mt-6 break-words text-3xl font-extrabold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
-                {article.title}
-              </h1>
+                <h3 className="font-bold text-gray-900">
+                  {nextArticle.title}
+                </h3>
+              </Link>
+            ) : (
+              <div />
+            )}
 
-              {/* Meta */}
-              <div className="mt-8 flex flex-wrap gap-3 text-sm">
-                {article.paper && (
-                  <span className="rounded-full bg-blue-600 px-4 py-2 text-white">
-                    {article.paper}
-                  </span>
-                )}
+          </section>
+        )}
 
-                <span className="rounded-full bg-emerald-600 px-4 py-2 text-white">
-                  {readingTime} min read
-                </span>
+        {relatedArticles?.length > 0 && (
+          <section className="mt-20">
 
-                <span className="rounded-full bg-orange-500 px-4 py-2 text-white">
-                  Published {formatDate(article.created_at)}
-                </span>
+            <h2 className="mb-8 text-3xl font-bold">
+              Related Articles
+            </h2>
 
-                <ArticleViewTracker
-                  slug={article.slug}
-                  initialViews={article.views || 0}
-                />
-              </div>
+            <div className="grid gap-6 md:grid-cols-3">
 
-              <hr className="my-10 border-gray-200" />
-
-              {/* Why in News */}
-              <section>
-                <h2 className="mb-5 text-2xl font-bold text-gray-900 sm:text-3xl">
-                  📌 Why in News?
-                </h2>
-
-                <div
-                  className="prose prose-lg max-w-none leading-8 text-gray-700"
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      article.why_news ||
-                      "<p>Why in News will be updated soon.</p>",
-                  }}
-                />
-              </section>
-
-              {/* UPSC Relevance */}
-              <section className="mt-14">
-                <h2 className="mb-5 text-2xl font-bold text-gray-900 sm:text-3xl">
-                  🎯 UPSC Relevance
-                </h2>
-
-                <div className="rounded-xl border border-blue-100 bg-blue-50 p-6">
-                  <ul className="space-y-3 text-lg text-gray-800">
-                    <li>
-                      <strong>Paper:</strong>{" "}
-                      {article.paper || "Not specified"}
-                    </li>
-
-                    <li>
-                      <strong>Category:</strong>{" "}
-                      {article.category || "Not specified"}
-                    </li>
-
-                    <li>
-                      Important for UPSC Civil Services Examination.
-                    </li>
-                  </ul>
-                </div>
-              </section>
-
-              {/* Prelims */}
-              <section className="mt-14">
-                <h2 className="mb-5 text-2xl font-bold text-gray-900 sm:text-3xl">
-                  📚 Prelims Facts
-                </h2>
-
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-6">
-                  <div
-                    className="prose prose-lg max-w-none leading-8 text-gray-700"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        article.prelims ||
-                        "<p>Prelims facts will be updated soon.</p>",
-                    }}
-                  />
-                </div>
-              </section>
-
-              {/* Mains */}
-              <section className="mt-14">
-                <h2 className="mb-5 text-2xl font-bold text-gray-900 sm:text-3xl">
-                  ✍️ Mains Perspective
-                </h2>
-
-                <div className="rounded-xl border border-gray-200 bg-gray-50 p-6">
-                  <div
-                    className="prose prose-lg max-w-none leading-8 text-gray-700"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        article.mains ||
-                        "<p>Detailed Mains analysis will be updated soon.</p>",
-                    }}
-                  />
-                </div>
-              </section>
-
-              {/* UPSC Question */}
-              <section className="mt-14">
-                <h2 className="mb-5 text-2xl font-bold text-gray-900 sm:text-3xl">
-                  📝 Possible UPSC Mains Question
-                </h2>
-
-                <div className="rounded-xl border-l-4 border-blue-600 bg-blue-50 p-6">
-                  <div
-                    className="prose prose-lg max-w-none leading-8 text-gray-800"
-                    dangerouslySetInnerHTML={{
-                      __html:
-                        article.question ||
-                        "<p>Discuss the significance of this topic for India.</p>",
-                    }}
-                  />
-                </div>
-              </section>
-
-              {/* Share */}
-              <section className="mt-16">
-                <h2 className="mb-5 text-2xl font-bold text-gray-900">
-                  📤 Share this Article
-                </h2>
-
-                <div className="flex flex-wrap gap-4">
-                  <a
-                    href={`https://wa.me/?text=${encodeURIComponent(
-                      `${article.title} ${BASE_URL}/current-affairs/${article.slug}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-green-600 px-5 py-3 font-semibold text-white transition hover:bg-green-700"
-                  >
-                    WhatsApp
-                  </a>
-
-                  <a
-                    href={`https://t.me/share/url?url=${encodeURIComponent(
-                      `${BASE_URL}/current-affairs/${article.slug}`
-                    )}&text=${encodeURIComponent(article.title)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-sky-500 px-5 py-3 font-semibold text-white transition hover:bg-sky-600"
-                  >
-                    Telegram
-                  </a>
-
-                  <a
-                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
-                      article.title
-                    )}&url=${encodeURIComponent(
-                      `${BASE_URL}/current-affairs/${article.slug}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-black px-5 py-3 font-semibold text-white transition hover:opacity-80"
-                  >
-                    X
-                  </a>
-
-                  <a
-                    href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                      `${BASE_URL}/current-affairs/${article.slug}`
-                    )}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-blue-700 px-5 py-3 font-semibold text-white transition hover:bg-blue-800"
-                  >
-                    LinkedIn
-                  </a>
-                </div>
-              </section>
-
-              {/* AI Button */}
-              <section className="mt-16">
-                <button
-                  type="button"
-                  className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 py-5 text-lg font-bold text-white transition hover:opacity-90 sm:text-xl"
+              {relatedArticles.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/current-affairs/${item.slug}`}
+                  className="rounded-xl border border-gray-200 p-5 transition hover:border-cyan-300 hover:shadow-lg"
                 >
-                  🤖 Ask CurrentPulse AI About This Topic
-                </button>
-              </section>
+                  <span className="text-sm font-medium text-cyan-600">
+                    {item.category}
+                  </span>
 
-              {/* Previous / Next */}
-              {(previousArticle || nextArticle) && (
-                <section className="mt-20 grid gap-6 md:grid-cols-2">
-                  {previousArticle ? (
-                    <Link
-                      href={`/current-affairs/${previousArticle.slug}`}
-                      className="rounded-xl border border-gray-200 p-6 transition hover:border-blue-300 hover:shadow-lg"
-                    >
-                      <p className="mb-2 text-sm text-gray-500">
-                        ← Previous Article
-                      </p>
+                  <h3 className="mt-3 font-bold text-gray-900">
+                    {item.title}
+                  </h3>
 
-                      <h3 className="font-bold text-gray-900">
-                        {previousArticle.title}
-                      </h3>
-                    </Link>
-                  ) : (
-                    <div />
-                  )}
+                  <p className="mt-4 text-sm text-gray-500">
+                    {formatDate(item.created_at)}
+                  </p>
+                </Link>
+              ))}
 
-                  {nextArticle ? (
-                    <Link
-                      href={`/current-affairs/${nextArticle.slug}`}
-                      className="rounded-xl border border-gray-200 p-6 text-right transition hover:border-blue-300 hover:shadow-lg"
-                    >
-                      <p className="mb-2 text-sm text-gray-500">
-                        Next Article →
-                      </p>
-
-                      <h3 className="font-bold text-gray-900">
-                        {nextArticle.title}
-                      </h3>
-                    </Link>
-                  ) : (
-                    <div />
-                  )}
-                </section>
-              )}
-
-              {/* Related Articles */}
-              {relatedArticles?.length > 0 && (
-                <section className="mt-20">
-                  <h2 className="mb-8 text-2xl font-bold text-gray-900 sm:text-3xl">
-                    Related Articles
-                  </h2>
-
-                  <div className="grid gap-6 md:grid-cols-3">
-                    {relatedArticles.map((item) => (
-                      <Link
-                        key={item.id}
-                        href={`/current-affairs/${item.slug}`}
-                        className="rounded-xl border border-gray-200 p-5 transition hover:border-cyan-300 hover:shadow-lg"
-                      >
-                        <span className="text-sm font-medium text-cyan-600">
-                          {item.category}
-                        </span>
-
-                        <h3 className="mt-3 font-bold text-gray-900">
-                          {item.title}
-                        </h3>
-
-                        <p className="mt-4 text-sm text-gray-500">
-                          {formatDate(item.created_at)}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              )}
             </div>
-          </article>
-        </div>
+
+          </section>
+        )}
+
       </main>
     </>
   );
