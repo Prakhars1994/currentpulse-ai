@@ -107,7 +107,39 @@ export default async function Hero() {
               downloadable PDFs — all in one platform.
             </p>
 
-            <div className="mt-10 flex flex-wrap gap-5">
+            {/* Homepage Search */}
+            <form
+              action="/search"
+              method="GET"
+              className="mt-8 flex max-w-2xl flex-col gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur sm:flex-row"
+            >
+              <div className="relative flex-1">
+                <span
+                  className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400"
+                  aria-hidden="true"
+                >
+                  🔍
+                </span>
+
+                <input
+                  type="search"
+                  name="q"
+                  required
+                  aria-label="Search current affairs"
+                  placeholder="Search topics, categories or GS papers..."
+                  className="h-14 w-full rounded-xl border border-white/10 bg-slate-950/70 pl-12 pr-4 text-white outline-none transition placeholder:text-gray-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="h-14 rounded-xl bg-cyan-500 px-7 font-bold text-slate-950 transition hover:bg-cyan-400"
+              >
+                Search
+              </button>
+            </form>
+
+            <div className="mt-8 flex flex-wrap gap-5">
               <Link
                 href="/current-affairs"
                 className="rounded-xl bg-cyan-500 px-8 py-4 font-bold text-black transition hover:bg-cyan-400"
