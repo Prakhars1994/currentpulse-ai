@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
 import { FormEvent, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Menu,
   X,
@@ -20,6 +20,7 @@ export default function Navbar() {
   const [query, setQuery] = useState("");
 
   const router = useRouter();
+  const pathname = usePathname();
 
   const links = [
     {
@@ -59,13 +60,23 @@ export default function Navbar() {
 
     const cleanQuery = query.trim();
 
-    if (!cleanQuery) return;
+    if (!cleanQuery) {
+      return;
+    }
 
     router.push(`/search?q=${encodeURIComponent(cleanQuery)}`);
 
     setQuery("");
     setSearchOpen(false);
     setOpen(false);
+  }
+
+  function isActiveLink(href: string) {
+    if (href === "/") {
+      return pathname === "/";
+    }
+
+    return pathname === href || pathname.startsWith(`${href}/`);
   }
 
   return (
@@ -92,15 +103,27 @@ export default function Navbar() {
         {/* Desktop Navigation */}
 
         <nav className="hidden items-center gap-7 lg:flex">
-          {links.map((item) => (
-            <Link
-              key={item.name}
-              href={item.href}
-              className="text-sm font-medium text-gray-300 transition hover:text-cyan-400"
-            >
-              {item.name}
-            </Link>
-          ))}
+          {links.map((item) => {
+            const active = isActiveLink(item.href);
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`relative py-2 text-sm font-medium transition ${
+                  active
+                    ? "text-cyan-400"
+                    : "text-gray-300 hover:text-cyan-400"
+                }`}
+              >
+                {item.name}
+
+                {active && (
+                  <span className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-cyan-400" />
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Desktop Right Buttons */}
@@ -108,8 +131,9 @@ export default function Navbar() {
         <div className="hidden items-center gap-3 lg:flex">
           <button
             type="button"
-            onClick={() => setSearchOpen(!searchOpen)}
-            aria-label="Open search"
+            onClick={() => setSearchOpen((current) => !current)}
+            aria-label={searchOpen ? "Close search" : "Open search"}
+            aria-expanded={searchOpen}
             className="rounded-xl border border-slate-700 p-3 text-gray-300 transition hover:border-cyan-500 hover:text-cyan-400"
           >
             {searchOpen ? <X size={18} /> : <Search size={18} />}
@@ -128,8 +152,9 @@ export default function Navbar() {
 
         <button
           type="button"
-          onClick={() => setOpen(!open)}
-          aria-label="Open navigation menu"
+          onClick={() => setOpen((current) => !current)}
+          aria-label={open ? "Close navigation menu" : "Open navigation menu"}
+          aria-expanded={open}
           className="text-white lg:hidden"
         >
           {open ? <X size={28} /> : <Menu size={28} />}
@@ -156,7 +181,7 @@ export default function Navbar() {
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search current affairs, category or GS paper..."
                 autoFocus
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pl-12 pr-4 text-white outline-none placeholder:text-gray-500 focus:border-cyan-500"
+                className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pl-12 pr-4 text-white outline-none placeholder:text-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
               />
             </div>
 
@@ -190,7 +215,7 @@ export default function Navbar() {
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder="Search articles..."
-                  className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-white outline-none placeholder:text-gray-500 focus:border-cyan-500"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pl-11 pr-4 text-white outline-none placeholder:text-gray-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
                 />
               </div>
 
@@ -198,7 +223,7 @@ export default function Navbar() {
                 type="submit"
                 disabled={!query.trim()}
                 aria-label="Search"
-                className="rounded-xl bg-cyan-500 px-4 text-black transition hover:bg-cyan-400 disabled:opacity-50"
+                className="rounded-xl bg-cyan-500 px-4 text-black transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Search size={19} />
               </button>
@@ -206,15 +231,26 @@ export default function Navbar() {
 
             {links.map((item) => {
               const Icon = item.icon;
+              const active = isActiveLink(item.href);
 
               return (
                 <Link
                   key={item.name}
                   href={item.href}
                   onClick={() => setOpen(false)}
-                  className="flex items-center gap-3 rounded-xl px-4 py-3 text-gray-300 transition hover:bg-slate-900 hover:text-cyan-400"
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 transition ${
+                    active
+                      ? "bg-slate-900 text-cyan-400"
+                      : "text-gray-300 hover:bg-slate-900 hover:text-cyan-400"
+                  }`}
                 >
-                  <Icon size={18} />
+                  <Icon
+                    size={18}
+                    className={
+                      active ? "text-cyan-400" : "text-gray-400"
+                    }
+                  />
+
                   {item.name}
                 </Link>
               );
@@ -223,7 +259,7 @@ export default function Navbar() {
             <Link
               href="/admin/login"
               onClick={() => setOpen(false)}
-              className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-black"
+              className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-black transition hover:bg-cyan-400"
             >
               <Shield size={18} />
               Admin Login
