@@ -15,15 +15,64 @@ function stripHtml(value: string | null) {
 }
 
 export default async function Hero() {
-  const { data: featured } = await supabase
-    .from("articles")
-    .select(
-      "id, title, slug, paper, why_news, image_url, created_at, status"
-    )
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [
+    { data: featured, error: featuredError },
+    { count: articleCount, error: articleCountError },
+    { data: categoryRows, error: categoryError },
+    { data: viewRows, error: viewsError },
+  ] = await Promise.all([
+    supabase
+      .from("articles")
+      .select(
+        "id, title, slug, paper, why_news, image_url, created_at, status"
+      )
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+
+    supabase
+      .from("articles")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published"),
+
+    supabase
+      .from("articles")
+      .select("category")
+      .eq("status", "published"),
+
+    supabase
+      .from("articles")
+      .select("views")
+      .eq("status", "published"),
+  ]);
+
+  if (featuredError) {
+    console.error("Featured article fetch error:", featuredError);
+  }
+
+  if (articleCountError) {
+    console.error("Article count fetch error:", articleCountError);
+  }
+
+  if (categoryError) {
+    console.error("Category count fetch error:", categoryError);
+  }
+
+  if (viewsError) {
+    console.error("Views fetch error:", viewsError);
+  }
+
+  const categoryCount = new Set(
+    (categoryRows || [])
+      .map((row) => row.category)
+      .filter(Boolean)
+  ).size;
+
+  const totalViews = (viewRows || []).reduce(
+    (sum, row) => sum + Number(row.views || 0),
+    0
+  );
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">
@@ -71,31 +120,35 @@ export default async function Hero() {
               </Link>
             </div>
 
-            <div className="mt-14 grid grid-cols-3 gap-6">
+            {/* Dynamic Statistics */}
+            <div className="mt-14 grid grid-cols-3 gap-4 sm:gap-6">
               <div>
-                <p className="text-4xl font-bold text-cyan-400">
-                  500+
+                <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
+                  {(articleCount || 0).toLocaleString("en-IN")}
                 </p>
-                <p className="mt-2 text-gray-400">
+
+                <p className="mt-2 text-sm text-gray-400 sm:text-base">
                   Articles
                 </p>
               </div>
 
               <div>
-                <p className="text-4xl font-bold text-cyan-400">
-                  20+
+                <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
+                  {categoryCount.toLocaleString("en-IN")}
                 </p>
-                <p className="mt-2 text-gray-400">
+
+                <p className="mt-2 text-sm text-gray-400 sm:text-base">
                   Categories
                 </p>
               </div>
 
               <div>
-                <p className="text-4xl font-bold text-cyan-400">
-                  AI
+                <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
+                  {totalViews.toLocaleString("en-IN")}
                 </p>
-                <p className="mt-2 text-gray-400">
-                  Assistant
+
+                <p className="mt-2 text-sm text-gray-400 sm:text-base">
+                  Total Views
                 </p>
               </div>
             </div>
@@ -114,7 +167,10 @@ export default async function Hero() {
                       featured.image_url ||
                       "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200"
                     }
-                    alt={featured.title || "Featured current affairs article"}
+                    alt={
+                      featured.title ||
+                      "Featured current affairs article"
+                    }
                     className="h-60 w-full object-cover"
                   />
                 </Link>
