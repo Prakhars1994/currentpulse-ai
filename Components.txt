@@ -1,0 +1,255 @@
+ Volume in drive C is Acer
+ Volume Serial Number is 9E9E-D1A3
+
+ Directory of C:\Users\prana\my-app\app
+
+24-07-2026  10:02             1,106 layout.tsx
+24-07-2026  09:44               537 page.tsx
+               2 File(s)          1,643 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin
+
+23-07-2026  03:58               426 layout.jsx
+23-07-2026  02:14             4,513 page.jsx
+               2 File(s)          4,939 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\ai-generator
+
+25-07-2026  06:23            20,037 page.jsx
+               1 File(s)         20,037 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\articles
+
+23-07-2026  08:22             4,692 page.jsx
+               1 File(s)          4,692 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\articles\create
+
+23-07-2026  01:42               260 page.jsx
+               1 File(s)            260 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\articles\edit\[id]
+
+23-07-2026  01:42             1,523 page.jsx
+               1 File(s)          1,523 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\login
+
+24-07-2026  09:44             6,283 page.jsx
+               1 File(s)          6,283 bytes
+
+ Directory of C:\Users\prana\my-app\app\category\[slug]
+
+24-07-2026  11:01             2,174 page.tsx
+               1 File(s)          2,174 bytes
+
+ Directory of C:\Users\prana\my-app\app\current-affairs\category\[category]
+
+22-07-2026  12:58             1,500 page.jsx
+               1 File(s)          1,500 bytes
+
+ Directory of C:\Users\prana\my-app\app\search
+
+24-07-2026  10:44             8,075 page.tsx
+               1 File(s)          8,075 bytes
+
+ Directory of C:\Users\prana\my-app\components
+
+23-07-2026  10:44             1,122 ArticleViewTracker.jsx
+
+ Directory of C:\Users\prana\my-app\components
+
+24-07-2026  09:32             2,196 BreakingNews.tsx
+22-07-2026  00:01             1,398 Categories.tsx
+21-07-2026  23:49             1,622 Features.tsx
+24-07-2026  09:59             5,687 Footer.tsx
+25-07-2026  04:15             8,764 Hero.tsx
+24-07-2026  14:55            13,753 LatestNews.tsx
+24-07-2026  10:47             8,285 Navbar.tsx
+21-07-2026  21:10                 0 Stats.tsx
+               9 File(s)         42,827 bytes
+
+ Directory of C:\Users\prana\my-app\components\admin
+
+23-07-2026  02:26             1,008 AdminHeader.jsx
+23-07-2026  02:26             2,504 AdminSidebar.jsx
+24-07-2026  16:43            16,076 ArticleForm.jsx
+23-07-2026  02:27             1,122 AuthProvider.jsx
+23-07-2026  09:33             4,024 ImageUpload.jsx
+23-07-2026  02:27               648 layout.jsx
+24-07-2026  09:44             5,982 RichTextEditor.jsx
+               7 File(s)         31,364 bytes
+
+ Directory of C:\Users\prana\my-app\components\admin\articles
+
+23-07-2026  03:37               575 page.jsx
+               1 File(s)            575 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\ajv\src\__tests__
+
+24-07-2026  08:26             2,935 Form-native-validation.tsx
+24-07-2026  08:26             1,850 Form.tsx
+               2 File(s)          4,785 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\arktype\src\__tests__
+
+24-07-2026  08:26             2,499 Form-native-validation.tsx
+24-07-2026  08:26             1,472 Form.tsx
+               2 File(s)          3,971 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\ata-validator\src\__tests__
+
+24-07-2026  08:26             2,394 Form-native-validation.tsx
+24-07-2026  08:26             1,534 Form.tsx
+               2 File(s)          3,928 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\class-validator\src\__tests__
+
+24-07-2026  08:26             2,493 Form-native-validation.tsx
+24-07-2026  08:26             1,483 Form.tsx
+               2 File(s)          3,976 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\computed-types\src\__tests__
+
+24-07-2026  08:26             2,667 Form-native-validation.tsx
+24-07-2026  08:26             1,895 Form.tsx
+               2 File(s)          4,562 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\effect-ts\src\__tests__
+
+24-07-2026  08:26             2,800 Form-native-validation.tsx
+24-07-2026  08:26             2,444 Form.tsx
+               2 File(s)          5,244 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\fluentvalidation-ts\src\__tests__
+
+24-07-2026  08:26             2,874 Form-native-validation.tsx
+24-07-2026  08:26             1,813 Form.tsx
+               2 File(s)          4,687 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\io-ts\src\__tests__
+
+24-07-2026  08:26             2,671 Form-native-validation.tsx
+24-07-2026  08:26             2,351 Form.tsx
+               2 File(s)          5,022 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\joi\src\__tests__
+
+24-07-2026  08:26             2,547 Form-native-validation.tsx
+24-07-2026  08:26             1,579 Form.tsx
+               2 File(s)          4,126 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\nope\src\__tests__
+
+24-07-2026  08:26             2,727 Form-native-validation.tsx
+24-07-2026  08:26             1,501 Form.tsx
+               2 File(s)          4,228 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\standard-schema\src\__tests__
+
+24-07-2026  08:26             2,513 Form-native-validation.tsx
+24-07-2026  08:26             1,486 Form.tsx
+               2 File(s)          3,999 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\superstruct\src\__tests__
+
+24-07-2026  08:26             2,636 Form-native-validation.tsx
+24-07-2026  08:26             2,383 Form.tsx
+               2 File(s)          5,019 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\typanion\src\__tests__
+
+24-07-2026  08:26             2,543 Form-native-validation.tsx
+24-07-2026  08:26             1,491 Form.tsx
+               2 File(s)          4,034 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\typebox\src\__tests__
+
+24-07-2026  08:26             1,577 Form-compiler.tsx
+24-07-2026  08:26             2,702 Form-native-validation-compiler.tsx
+24-07-2026  08:26             2,585 Form-native-validation.tsx
+24-07-2026  08:26             1,453 Form.tsx
+               4 File(s)          8,317 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\typeschema\src\__tests__
+
+24-07-2026  08:26             2,739 Form-native-validation.tsx
+24-07-2026  08:26             1,617 Form.tsx
+               2 File(s)          4,356 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\valibot\src\__tests__
+
+24-07-2026  08:26             2,525 Form-native-validation.tsx
+24-07-2026  08:26             2,514 Form.tsx
+               2 File(s)          5,039 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\vest\src\__tests__
+
+24-07-2026  08:26             2,829 Form-native-validation.tsx
+24-07-2026  08:26             1,741 Form.tsx
+               2 File(s)          4,570 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\vine\src\__tests__
+
+24-07-2026  08:26             2,604 Form-native-validation.tsx
+24-07-2026  08:26             1,614 Form.tsx
+               2 File(s)          4,218 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\yup\src\__tests__
+
+24-07-2026  08:26             2,663 Form-native-validation.tsx
+24-07-2026  08:26             1,530 Form.tsx
+               2 File(s)          4,193 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@hookform\resolvers\zod\src\__tests__
+
+24-07-2026  08:26             2,677 Form-native-validation.tsx
+24-07-2026  08:26             1,532 Form.tsx
+               2 File(s)          4,209 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@tiptap\extension-blockquote\src
+
+24-07-2026  08:26             3,243 blockquote.tsx
+               1 File(s)          3,243 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@tiptap\extension-bold\src
+
+24-07-2026  08:26             3,418 bold.tsx
+               1 File(s)          3,418 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@tiptap\react\src
+
+24-07-2026  08:26             1,597 Context.tsx
+24-07-2026  08:26             5,514 EditorContent.tsx
+24-07-2026  08:26               743 NodeViewContent.tsx
+24-07-2026  08:26               577 NodeViewWrapper.tsx
+24-07-2026  08:26             3,327 ReactMarkViewRenderer.tsx
+24-07-2026  08:26            14,482 ReactNodeViewRenderer.tsx
+24-07-2026  08:26             7,545 ReactRenderer.tsx
+24-07-2026  08:26             6,807 Tiptap.tsx
+               8 File(s)         40,592 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\@tiptap\react\src\menus
+
+24-07-2026  08:26             4,755 BubbleMenu.tsx
+24-07-2026  08:26             4,849 FloatingMenu.tsx
+               2 File(s)          9,604 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\react-dropzone\src
+
+24-07-2026  08:26            35,164 index.tsx
+               1 File(s)         35,164 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\react-hot-toast\src\components
+
+24-07-2026  08:26             1,161 checkmark.tsx
+24-07-2026  08:26             1,356 error.tsx
+24-07-2026  08:26               544 loader.tsx
+24-07-2026  08:26             2,843 toast-bar.tsx
+24-07-2026  08:26             1,644 toast-icon.tsx
+24-07-2026  08:26             3,391 toaster.tsx
+               6 File(s)         10,939 bytes
+
+     Total Files Listed:
+              90 File(s)        321,335 bytes
+               0 Dir(s)  56,971,513,856 bytes free

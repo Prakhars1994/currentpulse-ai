@@ -1,0 +1,191 @@
+ Volume in drive C is Acer
+ Volume Serial Number is 9E9E-D1A3
+
+ Directory of C:\Users\prana\my-app\.next\server\app
+
+25-07-2026  04:39             1,044 page.js
+               1 File(s)          1,044 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\admin
+
+25-07-2026  04:39             1,010 page.js
+               1 File(s)          1,010 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\admin\ai-generator
+
+25-07-2026  04:39             1,039 page.js
+               1 File(s)          1,039 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\admin\articles
+
+25-07-2026  04:39             1,031 page.js
+               1 File(s)          1,031 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\admin\articles\create
+
+25-07-2026  04:39             1,048 page.js
+               1 File(s)          1,048 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\admin\articles\edit\[id]
+
+25-07-2026  04:39             1,057 page.js
+               1 File(s)          1,057 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\admin\current-affairs
+
+25-07-2026  04:39             1,045 page.js
+               1 File(s)          1,045 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\admin\login
+
+25-07-2026  04:39             1,025 page.js
+               1 File(s)          1,025 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\ai
+
+25-07-2026  04:39               965 page.js
+               1 File(s)            965 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\category\[slug]
+
+25-07-2026  04:39             1,043 page.js
+               1 File(s)          1,043 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\contact
+
+25-07-2026  04:39               975 page.js
+               1 File(s)            975 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\current-affairs
+
+25-07-2026  04:39             1,040 page.js
+               1 File(s)          1,040 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\current-affairs\category\[category]
+
+25-07-2026  04:39             1,076 page.js
+               1 File(s)          1,076 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\current-affairs\[slug]
+
+25-07-2026  04:39             1,096 page.js
+               1 File(s)          1,096 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\pdf
+
+25-07-2026  04:39               967 page.js
+               1 File(s)            967 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\quiz
+
+25-07-2026  04:39               969 page.js
+               1 File(s)            969 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\search
+
+25-07-2026  04:39             1,022 page.js
+               1 File(s)          1,022 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\_global-error
+
+25-07-2026  04:39               655 page.js
+               1 File(s)            655 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\_not-found
+
+25-07-2026  04:39               883 page.js
+               1 File(s)            883 bytes
+
+ Directory of C:\Users\prana\my-app\app
+
+24-07-2026  09:44               537 page.tsx
+               1 File(s)            537 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin
+
+23-07-2026  02:14             4,513 page.jsx
+               1 File(s)          4,513 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\ai-generator
+
+25-07-2026  06:23            20,037 page.jsx
+               1 File(s)         20,037 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\articles
+
+23-07-2026  08:22             4,692 page.jsx
+               1 File(s)          4,692 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\articles\create
+
+23-07-2026  01:42               260 page.jsx
+               1 File(s)            260 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\articles\edit\[id]
+
+23-07-2026  01:42             1,523 page.jsx
+               1 File(s)          1,523 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\current-affairs
+
+24-07-2026  14:03             7,054 page.js
+               1 File(s)          7,054 bytes
+
+ Directory of C:\Users\prana\my-app\app\admin\login
+
+24-07-2026  09:44             6,283 page.jsx
+               1 File(s)          6,283 bytes
+
+ Directory of C:\Users\prana\my-app\app\ai
+
+22-07-2026  01:56             4,210 page.js
+               1 File(s)          4,210 bytes
+
+ Directory of C:\Users\prana\my-app\app\category\[slug]
+
+24-07-2026  11:01             2,174 page.tsx
+               1 File(s)          2,174 bytes
+
+ Directory of C:\Users\prana\my-app\app\contact
+
+23-07-2026  10:10               463 page.js
+               1 File(s)            463 bytes
+
+ Directory of C:\Users\prana\my-app\app\current-affairs
+
+24-07-2026  10:58             4,828 page.js
+               1 File(s)          4,828 bytes
+
+ Directory of C:\Users\prana\my-app\app\current-affairs\category\[category]
+
+22-07-2026  12:58             1,500 page.jsx
+               1 File(s)          1,500 bytes
+
+ Directory of C:\Users\prana\my-app\app\current-affairs\[slug]
+
+24-07-2026  14:25            14,059 page.js
+               1 File(s)         14,059 bytes
+
+ Directory of C:\Users\prana\my-app\app\pdf
+
+23-07-2026  10:12             1,167 page.js
+               1 File(s)          1,167 bytes
+
+ Directory of C:\Users\prana\my-app\app\quiz
+
+23-07-2026  10:14             1,114 page.js
+               1 File(s)          1,114 bytes
+
+ Directory of C:\Users\prana\my-app\app\search
+
+24-07-2026  10:44             8,075 page.tsx
+               1 File(s)          8,075 bytes
+
+ Directory of C:\Users\prana\my-app\components\admin\articles
+
+23-07-2026  03:37               575 page.jsx
+               1 File(s)            575 bytes
+
+     Total Files Listed:
+              37 File(s)        102,054 bytes
+               0 Dir(s)  56,971,534,336 bytes free

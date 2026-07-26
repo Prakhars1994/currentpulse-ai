@@ -1,0 +1,86 @@
+ Volume in drive C is Acer
+ Volume Serial Number is 9E9E-D1A3
+
+ Directory of C:\Users\prana\my-app\.next\server\app\api\ai\generate-article
+
+25-07-2026  04:39               415 route.js
+               1 File(s)            415 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\api\articles
+
+25-07-2026  04:39               416 route.js
+               1 File(s)            416 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\api\ask-ai
+
+25-07-2026  04:39               386 route.js
+               1 File(s)            386 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\api\upload
+
+25-07-2026  04:39               414 route.js
+               1 File(s)            414 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\favicon.ico
+
+25-07-2026  04:39               412 route.js
+               1 File(s)            412 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\robots.txt
+
+25-07-2026  04:39               327 route.js
+               1 File(s)            327 bytes
+
+ Directory of C:\Users\prana\my-app\.next\server\app\sitemap.xml
+
+25-07-2026  04:39               411 route.js
+               1 File(s)            411 bytes
+
+ Directory of C:\Users\prana\my-app\app\api\ai\generate-article
+
+24-07-2026  11:38               956 route.js
+               1 File(s)            956 bytes
+
+ Directory of C:\Users\prana\my-app\app\api\articles
+
+24-07-2026  15:59             3,646 route.js
+               1 File(s)          3,646 bytes
+
+ Directory of C:\Users\prana\my-app\app\api\ask-ai
+
+22-07-2026  09:57             2,845 route.js
+               1 File(s)          2,845 bytes
+
+ Directory of C:\Users\prana\my-app\app\api\fetch-news
+
+25-07-2026  06:15             1,730 route.js
+               1 File(s)          1,730 bytes
+
+ Directory of C:\Users\prana\my-app\app\api\fetch-todays-news
+
+25-07-2026  07:27             6,419 route.js
+               1 File(s)          6,419 bytes
+
+ Directory of C:\Users\prana\my-app\app\api\google-news
+
+25-07-2026  07:32             7,280 route.js
+               1 File(s)          7,280 bytes
+
+ Directory of C:\Users\prana\my-app\app\api\resolve-news
+
+25-07-2026  07:37            10,093 route.js
+               1 File(s)         10,093 bytes
+
+ Directory of C:\Users\prana\my-app\app\api\upload
+
+24-07-2026  13:28             2,963 route.js
+               1 File(s)          2,963 bytes
+
+ Directory of C:\Users\prana\my-app\node_modules\color-convert
+
+24-07-2026  08:26             2,257 route.js
+               1 File(s)          2,257 bytes
+
+     Total Files Listed:
+              16 File(s)         40,970 bytes
+               0 Dir(s)  56,971,530,240 bytes free
