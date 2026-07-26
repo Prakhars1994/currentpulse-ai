@@ -114,18 +114,22 @@ export async function POST(req) {
       "-" +
       Date.now();
 
-    const articleData = {
-      slug,
-      title: title.trim(),
-      category: category?.trim() || "",
-      paper: paper?.trim() || "",
-      why_news: why_news?.trim() || "",
-      prelims: prelims?.trim() || "",
-      mains: mains?.trim() || "",
-      question: question?.trim() || "",
-      image: image?.trim() || null,
-      status,
-    };
+   const articleData = {
+  slug,
+  title: title.trim(),
+  category: category?.trim() || "",
+  paper: paper?.trim() || "",
+  why_news: why_news?.trim() || "",
+  prelims: prelims?.trim() || "",
+  mains: mains?.trim() || "",
+  question: question?.trim() || "",
+  image: image?.trim() || null,
+  status,
+  published_at:
+    status === "published"
+      ? new Date().toISOString()
+      : null,
+};
 
     const { data, error } = await supabase
       .from("articles")

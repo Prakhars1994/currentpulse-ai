@@ -12,11 +12,23 @@ export default async function CategoryPage({ params }) {
 
 
 
-  const { data: articles, error } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("category", decodedCategory)
-    .order("created_at", { ascending: false });
+  const { data: allArticles, error } = await supabase
+  .from("articles")
+  .select("*")
+  .eq("status", "published")
+  .order("created_at", { ascending: false });
+
+const articles =
+  allArticles?.filter((article) => {
+    const slug = (article.category || "")
+      .toLowerCase()
+      .trim()
+      .replace(/&/g, "and")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    return slug === decodedCategory;
+  }) || [];
 
 
 
@@ -37,53 +49,36 @@ export default async function CategoryPage({ params }) {
 
 
       <p className="mt-3 text-gray-600">
-        UPSC current affairs analysis for {decodedCategory}.
-      </p>
+  UPSC current affairs analysis and latest published articles for {decodedCategory}.
+</p>
 
 
 
-      <div className="grid md:grid-cols-2 gap-6 mt-8">
 
 
-        {articles?.map((article) => (
+<div className="grid md:grid-cols-2 gap-6 mt-8">
 
+  {articles?.map((article) => (
 
-          <div
-            key={article.id}
-            className="border rounded-xl p-6"
-          >
+    ...
 
+  ))}
 
-            <h2 className="text-2xl font-bold">
-              {article.title}
-            </h2>
+</div>
 
+{articles.length === 0 && (
+  <div className="mt-10 rounded-xl border bg-white p-8 text-center">
+    <h2 className="text-xl font-bold">
+      No published articles found
+    </h2>
 
-            <p className="mt-2 text-gray-600">
-              {article.paper}
-            </p>
+    <p className="mt-2 text-gray-500">
+      Articles in this category will appear here after they are published.
+    </p>
+  </div>
+)}
 
-
-
-            <Link
-              href={`/current-affairs/${article.slug}`}
-              className="inline-block mt-5 bg-black text-white px-5 py-2 rounded-lg"
-            >
-              Read More
-            </Link>
-
-
-          </div>
-
-
-        ))}
-
-
-      </div>
-
-
-    </main>
-
+</main>
   );
 
 }

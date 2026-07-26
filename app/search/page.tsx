@@ -132,7 +132,7 @@ export default async function SearchPage({
                   <Link
                     key={article.id}
                     href={`/current-affairs/${article.slug}`}
-                    className="block overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
+                    className="group block overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
                   >
                     <div className="flex flex-col md:flex-row">
                       <img

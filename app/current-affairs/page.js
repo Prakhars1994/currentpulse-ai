@@ -72,7 +72,7 @@ export default async function CurrentAffairsPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       {article.category && (
                         <Link
-                          href={`/category/${categorySlug}`}
+                          href={`/current-affairs/category/${categorySlug}`}
                           className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-200"
                         >
                           {article.category}
