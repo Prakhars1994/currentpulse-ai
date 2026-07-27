@@ -21,18 +21,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   {
     url: BASE_URL,
     lastModified: new Date(),
-    changeFrequency: "daily",
+    changeFrequency: "daily" as const,
     priority: 1.0,
   },
   {
     url: `${BASE_URL}/current-affairs`,
     lastModified: new Date(),
-    changeFrequency: "hourly",
+    changeFrequency: "hourly" as const,
     priority: 0.9,
   },
   ...articleRoutes.map((article) => ({
     ...article,
-    changeFrequency: "weekly",
+    changeFrequency: "weekly" as const,
     priority: 0.8,
   })),
 ];
