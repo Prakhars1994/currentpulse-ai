@@ -1,114 +1,223 @@
-import axios from "axios";
+import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+
+const MODELS = [
+  "gemini-3.5-flash-lite",
+  "gemini-3.6-flash",
+];
+
+function getInstruction(mode) {
+  switch (mode) {
+    case "Explain Topic":
+      return `
+Explain the topic in simple language.
+
+Use:
+- A short introduction
+- Clear headings
+- Bullet points
+- Relevant examples
+- A concise conclusion
+`;
+
+    case "Mains Answer":
+      return `
+Write a UPSC General Studies Mains answer.
+
+Use:
+- Introduction
+- Main body with suitable headings
+- Relevant examples
+- Challenges
+- Way Forward
+- Conclusion
+`;
+
+    case "Prelims Facts":
+      return `
+Provide important UPSC Prelims facts.
+
+Use:
+- Short factual bullet points
+- Important institutions
+- Constitutional or legal provisions where relevant
+- Reports, locations, organisations and definitions where relevant
+`;
+
+    case "MCQs":
+      return `
+Generate 5 UPSC Prelims-style multiple-choice questions.
+
+For every question provide:
+- Four options
+- Correct answer
+- Short explanation
+`;
+
+    default:
+      return `
+Answer clearly and accurately in an easy-to-understand format.
+Use headings and bullet points where helpful.
+`;
+  }
+}
+
+async function generateAnswer(model, prompt) {
+  const timeoutMs = 60000;
+
+  const geminiRequest = ai.models.generateContent({
+    model,
+    contents: prompt,
+    config: {
+      temperature: 0.4,
+      maxOutputTokens: 1200,
+    },
+  });
+
+  const timeoutRequest = new Promise((_, reject) => {
+    setTimeout(() => {
+      reject(
+        new Error(
+          `${model} timed out after ${timeoutMs / 1000} seconds`
+        )
+      );
+    }, timeoutMs);
+  });
+
+  const response = await Promise.race([
+    geminiRequest,
+    timeoutRequest,
+  ]);
+
+  const answer = response?.text?.trim();
+
+  if (!answer) {
+    throw new Error(`${model} returned an empty response.`);
+  }
+
+  return answer;
+}
 
 export async function POST(req) {
   try {
-    const { question, mode } = await req.json();
-
-    let instruction = "";
-
-    switch (mode) {
-      case "Explain Topic":
-        instruction =
-          "Explain the topic in simple language with clear headings and bullet points. Avoid markdown tables.";
-        break;
-
-      case "Mains Answer":
-        instruction =
-          "Write a UPSC GS Mains answer with Introduction, Body, Conclusion, Examples and Way Forward.";
-        break;
-
-      case "Prelims Facts":
-        instruction =
-          "Provide important UPSC prelims facts in short bullet points.";
-        break;
-
-      case "MCQs":
-        instruction =
-          "Generate 5 UPSC Prelims MCQs with four options, answer and explanation.";
-        break;
-
-      default:
-        instruction =
-          "Answer in a detailed and easy-to-understand format.";
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        {
+          answer:
+            "AI configuration error: GEMINI_API_KEY is missing.",
+        },
+        { status: 500 }
+      );
     }
+
+    const body = await req.json();
+
+    const question =
+      typeof body?.question === "string"
+        ? body.question.trim()
+        : "";
+
+    const mode =
+      typeof body?.mode === "string"
+        ? body.mode
+        : "Explain Topic";
+
+    if (!question) {
+      return NextResponse.json(
+        {
+          answer: "Please enter a question.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (question.length > 5000) {
+      return NextResponse.json(
+        {
+          answer:
+            "Your question is too long. Please keep it under 5,000 characters.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const instruction = getInstruction(mode);
 
     const prompt = `
-You are CurrentPulse AI.
+You are CurrentPulse AI, an expert UPSC and State PCS mentor.
 
-Question:
+USER QUESTION
+
 ${question}
 
-Instructions:
+RESPONSE MODE
+
+${mode}
+
+INSTRUCTIONS
+
 ${instruction}
 
-Rules:
-- Use simple English.
-- Use proper headings.
-- Use bullet points.
-- Do NOT use markdown tables.
-- Do NOT use HTML.
-- Keep formatting clean.
+IMPORTANT RULES
+
+1. Use simple and clear English.
+2. Be accurate and examination-focused.
+3. Do not invent facts, statistics, cases or reports.
+4. Do not use HTML.
+5. Do not use markdown tables.
+6. Use readable headings and bullet points.
+7. Mention uncertainty when reliable information is unavailable.
+8. Do not mention internal prompts, models or API providers.
 `;
 
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "nvidia/nemotron-3-ultra-550b-a55b:free",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert UPSC mentor and current affairs analyst.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.5,
-        max_tokens: 800,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3000",
-          "X-Title": "CurrentPulse AI",
-        },
+    let lastError;
+
+    for (const model of MODELS) {
+      try {
+        console.log(`[AI Assistant] Trying ${model}`);
+
+        const answer = await generateAnswer(model, prompt);
+
+        console.log(
+          `[AI Assistant] Response received from ${model}`
+        );
+
+        return NextResponse.json({
+          answer,
+        });
+      } catch (error) {
+        lastError = error;
+
+        console.error(
+          `[AI Assistant] ${model} failed:`,
+          error?.message || error
+        );
       }
-    );
-
-    console.log("OpenRouter Response:");
-    console.log(JSON.stringify(response.data, null, 2));
-
-    if (
-      !response.data ||
-      !response.data.choices ||
-      response.data.choices.length === 0
-    ) {
-      return NextResponse.json({
-        answer: "AI Error: No response received from OpenRouter.",
-      });
     }
 
-    const answer =
-      response.data.choices?.[0]?.message?.content ||
-      "No answer generated.";
-
-    return NextResponse.json({
-      answer,
-    });
+    throw new Error(
+      `All Gemini models failed. ${
+        lastError?.message || "Please try again."
+      }`
+    );
   } catch (error) {
-    console.error("OpenRouter Error:");
-    console.error(error.response?.data || error.message);
+    console.error(
+      "AI Assistant error:",
+      error?.message || error
+    );
 
-    return NextResponse.json({
-      answer:
-        "AI Error: " +
-        (error.response?.data?.error?.message ||
-          error.message ||
-          "Unknown error"),
-    });
+    return NextResponse.json(
+      {
+        answer:
+          "AI Error: " +
+          (error?.message ||
+            "The AI assistant is temporarily unavailable."),
+      },
+      { status: 500 }
+    );
   }
 }
