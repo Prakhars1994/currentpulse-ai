@@ -228,9 +228,9 @@ export default async function ArticlePage({ params }) {
         }}
       />
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 text-gray-100">
 
-        <nav className="text-sm text-gray-500 mb-5">
+        <nav className="text-sm text-gray-300 mb-5">
           <Link href="/" className="hover:text-blue-600">
             Home
           </Link>
@@ -249,12 +249,11 @@ export default async function ArticlePage({ params }) {
           <span>{article.title}</span>
         </nav>
 
-        <h1 className="text-4xl font-bold leading-tight">
+        <h1 className="text-4xl font-bold leading-tight text-white">
           {article.title}
         </h1>
 
-        <div className="flex flex-wrap items-center gap-3 mt-4 text-sm text-gray-500">
-
+<div className="flex flex-wrap items-center gap-3 mt-4 text-sm text-gray-300">
           <span>
             📅 {formatDate(article.created_at)}
           </span>
@@ -284,7 +283,7 @@ export default async function ArticlePage({ params }) {
             className="w-full rounded-xl mt-8 mb-8 shadow-lg object-cover max-h-[500px]"
           />
         )}
-        <article className="prose prose-lg max-w-none">
+        <article className="prose prose-lg prose-invert max-w-none">
 
           <section className="mt-10">
             <h2>📌 Why in News?</h2>
@@ -301,21 +300,22 @@ export default async function ArticlePage({ params }) {
           <section className="mt-12">
             <h2>🎯 UPSC Relevance</h2>
 
-            <div className="not-prose rounded-xl border border-blue-100 bg-blue-50 p-6">
-              <ul className="space-y-3 text-gray-800">
-                <li>
-                  <strong>Paper:</strong>{" "}
-                  {article.paper || "Not specified"}
-                </li>
+            <div className="not-prose rounded-2xl border border-slate-700 bg-slate-900/70 p-6">
+  <ul className="space-y-4 text-gray-200">
 
-                <li>
-                  <strong>Category:</strong>{" "}
-                  {article.category || "Not specified"}
-                </li>
+   <li>
+  <strong className="text-cyan-400">Paper:</strong>{" "}
+  {article.paper || "Not specified"}
+</li>
 
-                <li>
-                  Important for UPSC Civil Services Examination.
-                </li>
+<li>
+  <strong className="text-cyan-400">Category:</strong>{" "}
+  {article.category || "Not specified"}
+</li>
+
+<li className="text-gray-300">
+  Important for UPSC Civil Services Examination.
+</li>
               </ul>
             </div>
           </section>
@@ -427,39 +427,39 @@ export default async function ArticlePage({ params }) {
         {(previousArticle || nextArticle) && (
           <section className="mt-20 grid gap-6 md:grid-cols-2">
 
-            {previousArticle ? (
-              <Link
-                href={`/current-affairs/${previousArticle.slug}`}
-                className="rounded-xl border border-gray-200 p-6 transition hover:border-blue-300 hover:shadow-lg"
-              >
-                <p className="mb-2 text-sm text-gray-500">
-                  ← Previous Article
-                </p>
+           {previousArticle ? (
+  <Link
+    href={`/current-affairs/${previousArticle.slug}`}
+    className="rounded-2xl border border-slate-700 bg-slate-900/70 p-6 transition-all duration-300 hover:border-cyan-400 hover:bg-slate-800 hover:shadow-xl"
+  >
+    <p className="mb-2 text-sm text-slate-400">
+      ← Previous Article
+    </p>
 
-                <h3 className="font-bold text-gray-900">
-                  {previousArticle.title}
-                </h3>
-              </Link>
-            ) : (
-              <div />
-            )}
+    <h3 className="mt-3 text-lg font-bold leading-7 text-white">
+      {previousArticle.title}
+    </h3>
+  </Link>
+) : (
+  <div />
+)}
 
-            {nextArticle ? (
-              <Link
-                href={`/current-affairs/${nextArticle.slug}`}
-                className="rounded-xl border border-gray-200 p-6 text-right transition hover:border-blue-300 hover:shadow-lg"
-              >
-                <p className="mb-2 text-sm text-gray-500">
-                  Next Article →
-                </p>
+           {nextArticle ? (
+  <Link
+    href={`/current-affairs/${nextArticle.slug}`}
+    className="rounded-2xl border border-slate-700 bg-slate-900/70 p-6 text-right transition-all duration-300 hover:border-cyan-400 hover:bg-slate-800 hover:shadow-xl"
+  >
+    <p className="mb-2 text-sm text-slate-400">
+      Next Article →
+    </p>
 
-                <h3 className="font-bold text-gray-900">
-                  {nextArticle.title}
-                </h3>
-              </Link>
-            ) : (
-              <div />
-            )}
+    <h3 className="mt-3 text-lg font-bold leading-7 text-white">
+      {nextArticle.title}
+    </h3>
+  </Link>
+) : (
+  <div />
+)}
 
           </section>
         )}
@@ -483,7 +483,7 @@ export default async function ArticlePage({ params }) {
                     {item.category}
                   </span>
 
-                  <h3 className="mt-3 font-bold text-gray-900">
+                  <h3 className="font-bold text-white">
                     {item.title}
                   </h3>
 
