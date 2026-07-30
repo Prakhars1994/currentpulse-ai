@@ -47,9 +47,18 @@ function isAuthorised(request) {
   const configuredSecret = process.env.CRON_SECRET?.trim() || "";
   const authorization = request.headers.get("authorization")?.trim() || "";
 
+  console.log("Authorization header received:", authorization);
   const expectedAuthorization = `Bearer ${configuredSecret}`;
 
-    if (!configuredSecret) {
+  console.log("=== CRON AUTH CHECK ===");
+  console.log("Secret exists:", Boolean(configuredSecret));
+  console.log("Secret length:", configuredSecret.length);
+  console.log("Authorization length:", authorization.length);
+  console.log("Expected authorization length:", expectedAuthorization.length);
+  console.log("Authorization matches:", authorization === expectedAuthorization);
+  console.log("=======================");
+
+  if (!configuredSecret) {
     console.error("CRON_SECRET is missing.");
     return false;
   }
