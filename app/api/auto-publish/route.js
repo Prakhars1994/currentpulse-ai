@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { NEWS_SOURCES, UPSC_QUERY_TERMS } from "@/lib/news/sourceCatalog";
 import { fetchSourceRss } from "@/lib/news/rss";
 import { deduplicateArticles } from "@/lib/news/filter";
-import { evaluateNews } from "@/lib/ai/evaluateNews";
+import { evaluateNewsBatch } from "@/lib/ai/evaluateNews";
 import { generateArticle } from "@/lib/ai/generateArticle";
 import { createServerSupabase } from "@/lib/supabase-server";
 
@@ -10,10 +10,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const PER_SOURCE_LIMIT = 5;
-const EVALUATION_LIMIT = 12;
-const MINIMUM_IMPORTANCE = 6;
-const MAX_ARTICLES_PER_RUN = 1;
+const PER_SOURCE_LIMIT = 8;
+const EVALUATION_LIMIT = 30;
+const MINIMUM_IMPORTANCE = 5;
+const MAX_ARTICLES_PER_RUN = 2;
 
 function cleanText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -45,17 +45,27 @@ function stripHtml(value) {
 
 function isAuthorised(request) {
   const configuredSecret = process.env.CRON_SECRET;
+  const authorization = request.headers.get("authorization");
+
+  console.log("=== AUTO PUBLISH AUTH DEBUG ===");
+  console.log("Authorization header:", authorization);
+  console.log("Configured secret exists:", !!configuredSecret);
+  console.log("Configured secret length:", configuredSecret?.length || 0);
+  console.log("Configured secret:", configuredSecret);
+  console.log("Expected header:", `Bearer ${configuredSecret}`);
+  console.log(
+    "Headers match:",
+    authorization === `Bearer ${configuredSecret}`
+  );
+  console.log("===============================");
 
   if (!configuredSecret) {
     console.error("CRON_SECRET is missing.");
     return false;
   }
 
-  const authorization = request.headers.get("authorization");
-
   return authorization === `Bearer ${configuredSecret}`;
 }
-
 function createSourceMaterial(article, evaluation) {
   const title = cleanText(article.title);
   const description = stripHtml(
@@ -146,8 +156,10 @@ async function slugExists(supabase, slug) {
 
 async function findBestCandidate(supabase, articles) {
   const candidates = articles.slice(0, EVALUATION_LIMIT);
-  const evaluatedCandidates = [];
+  const eligibleCandidates = [];
 
+  // First remove invalid headlines and existing articles.
+  // This avoids wasting Gemini calls on duplicates.
   for (const article of candidates) {
     try {
       const preliminarySlug = createSlug(article.title);
@@ -160,39 +172,73 @@ async function findBestCandidate(supabase, articles) {
         console.log(
           `[Auto publish] Skipping existing headline: ${article.title}`
         );
+
         continue;
       }
 
-      const evaluation = await evaluateNews(
-        article.title,
-        article.description ||
-          article.content ||
-          article.summary ||
-          article.title
-      );
-
-      if (
-        !evaluation.relevant ||
-        evaluation.importance < MINIMUM_IMPORTANCE
-      ) {
-        continue;
-      }
-
-      evaluatedCandidates.push({
-        article,
-        evaluation,
-      });
+      eligibleCandidates.push(article);
     } catch (error) {
       console.error(
-        `[Auto publish] Evaluation failed for "${article.title}":`,
+        `[Auto publish] Candidate check failed for "${article.title}":`,
         error?.message || error
       );
     }
   }
 
+  if (eligibleCandidates.length === 0) {
+    return [];
+  }
+
+  console.log(
+    `[Auto publish] Batch evaluating ${eligibleCandidates.length} new candidates.`
+  );
+
+  const evaluations = await evaluateNewsBatch(
+    eligibleCandidates.map((article) => ({
+      title: article.title,
+      description:
+        article.description ||
+        article.content ||
+        article.summary ||
+        article.title,
+    }))
+  );
+
+  const evaluatedCandidates = [];
+
+  for (
+    let index = 0;
+    index < eligibleCandidates.length;
+    index += 1
+  ) {
+    const article = eligibleCandidates[index];
+    const evaluation = evaluations[index];
+
+    if (!evaluation) {
+      console.warn(
+        `[Auto publish] No evaluation returned for: ${article.title}`
+      );
+
+      continue;
+    }
+
+    if (
+      !evaluation.relevant ||
+      evaluation.importance < MINIMUM_IMPORTANCE
+    ) {
+      continue;
+    }
+
+    evaluatedCandidates.push({
+      article,
+      evaluation,
+    });
+  }
+
   evaluatedCandidates.sort(
     (first, second) =>
-      second.evaluation.importance - first.evaluation.importance
+      second.evaluation.importance -
+      first.evaluation.importance
   );
 
   return evaluatedCandidates;
@@ -383,3 +429,6 @@ export async function GET(request) {
     );
   }
 }
+
+
+
