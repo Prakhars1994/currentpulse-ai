@@ -46,6 +46,8 @@ function stripHtml(value) {
 function isAuthorised(request) {
   const configuredSecret = process.env.CRON_SECRET?.trim() || "";
   const authorization = request.headers.get("authorization")?.trim() || "";
+
+  console.log("Authorization header received:", authorization);
   const expectedAuthorization = `Bearer ${configuredSecret}`;
 
   console.log("=== CRON AUTH CHECK ===");
