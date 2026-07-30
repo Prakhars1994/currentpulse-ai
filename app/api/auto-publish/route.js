@@ -44,28 +44,26 @@ function stripHtml(value) {
 }
 
 function isAuthorised(request) {
-  const configuredSecret = process.env.CRON_SECRET;
-  const authorization = request.headers.get("authorization");
+  const configuredSecret = process.env.CRON_SECRET?.trim() || "";
+  const authorization = request.headers.get("authorization")?.trim() || "";
+  const expectedAuthorization = `Bearer ${configuredSecret}`;
 
-  console.log("=== AUTO PUBLISH AUTH DEBUG ===");
-  console.log("Authorization header:", authorization);
-  console.log("Configured secret exists:", !!configuredSecret);
-  console.log("Configured secret length:", configuredSecret?.length || 0);
-  console.log("Configured secret:", configuredSecret);
-  console.log("Expected header:", `Bearer ${configuredSecret}`);
-  console.log(
-    "Headers match:",
-    authorization === `Bearer ${configuredSecret}`
-  );
-  console.log("===============================");
+  console.log("=== CRON AUTH CHECK ===");
+  console.log("Secret exists:", Boolean(configuredSecret));
+  console.log("Secret length:", configuredSecret.length);
+  console.log("Authorization length:", authorization.length);
+  console.log("Expected authorization length:", expectedAuthorization.length);
+  console.log("Authorization matches:", authorization === expectedAuthorization);
+  console.log("=======================");
 
   if (!configuredSecret) {
     console.error("CRON_SECRET is missing.");
     return false;
   }
 
-  return authorization === `Bearer ${configuredSecret}`;
+  return authorization === expectedAuthorization;
 }
+
 function createSourceMaterial(article, evaluation) {
   const title = cleanText(article.title);
   const description = stripHtml(
