@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { NEWS_SOURCES, UPSC_QUERY_TERMS } from "@/lib/news/sourceCatalog";
 import { fetchSourceRss } from "@/lib/news/rss";
 import { extractImageFromArticle } from "@/lib/news/imageExtractor";
@@ -7,12 +7,13 @@ import { evaluateNewsBatch } from "@/lib/ai/evaluateNews";
 import { generateArticle } from "@/lib/ai/generateArticle";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { isSameEvent } from "@/lib/news/eventCluster";
+import { queueCandidate } from "@/lib/queue/queueCandidate";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const PER_SOURCE_LIMIT = 8;
-const EVALUATION_LIMIT = 30;
+const PER_SOURCE_LIMIT = 5;
+const EVALUATION_LIMIT = 10;
 const MINIMUM_IMPORTANCE = 5;
 const MAX_ARTICLES_PER_RUN = 10;
 
@@ -460,54 +461,55 @@ export async function GET(request) {
       });
     }
 
-    const results = [];
+   const results = [];
 
-    for (const candidate of candidates.slice(
-      0,
-      MAX_ARTICLES_PER_RUN
-    )) {
-      try {
+for (const candidate of candidates.slice(
+  0,
+  MAX_ARTICLES_PER_RUN
+)) {
+  try {
+    const result = await queueCandidate(
+      candidate.article,
+      candidate.evaluation
+    );
 
+    results.push({
+      status: result.queued ? "queued" : "skipped",
+      title: candidate.article.title,
+      ...result,
+    });
 
+  } catch (error) {
+    console.error(
+      `[Auto publish] Queue failed for "${candidate.article.title}":`,
+      error?.message || error
+    );
 
-        const result = await publishCandidate(
-          supabase,
-          candidate
-        );
-
-        results.push(result);
-      } catch (error) {
-        console.error(
-          `[Auto publish] Publishing failed for "${candidate.article.title}":`,
-          error?.message || error
-        );
-
-        results.push({
-          status: "failed",
-          title: candidate.article.title,
-          error: error?.message || "Publishing failed.",
-        });
-      }
-    }
-
-    const publishedCount = results.filter(
-      (result) => result.status === "published"
-    ).length;
+    results.push({
+      status: "failed",
+      title: candidate.article.title,
+      error: error?.message || "Queue failed.",
+    });
+  }
+}
+    const queuedCount = results.filter(
+  (result) => result.status === "queued"
+).length;
 
     return NextResponse.json({
-      success: true,
-      message:
-        publishedCount > 0
-          ? `${publishedCount} current-affairs article published automatically.`
-          : "The automatic run completed, but no article was published.",
-      stats: {
-        collected: collectedArticles.length,
-        relevantCandidates: candidates.length,
-        published: publishedCount,
-        durationMs: Date.now() - startedAt,
-      },
-      results,
-    });
+  success: true,
+  message:
+    queuedCount > 0
+      ? `${queuedCount} articles added to publishing queue.`
+      : "No new articles were queued.",
+  stats: {
+    collected: collectedArticles.length,
+    relevantCandidates: candidates.length,
+    queued: queuedCount,
+    durationMs: Date.now() - startedAt,
+  },
+  results,
+});
   } catch (error) {
     console.error(
       "[Auto publish] Unexpected failure:",
