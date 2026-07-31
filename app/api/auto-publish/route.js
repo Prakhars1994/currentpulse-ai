@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { NEWS_SOURCES, UPSC_QUERY_TERMS } from "@/lib/news/sourceCatalog";
 import { fetchSourceRss } from "@/lib/news/rss";
 import { extractImageFromArticle } from "@/lib/news/imageExtractor";
@@ -248,7 +248,10 @@ eligibleCandidates.push(article);
     `[Auto publish] Batch evaluating ${eligibleCandidates.length} new candidates.`
   );
 
-  const evaluations = await evaluateNewsBatch(
+  let evaluations;
+
+try {
+  evaluations = await evaluateNewsBatch(
     eligibleCandidates.map((article) => ({
       title: article.title,
       description:
@@ -258,7 +261,79 @@ eligibleCandidates.push(article);
         article.title,
     }))
   );
+} catch (error) {
+  console.error(
+    "[Auto publish] AI evaluation unavailable; using local fallback:",
+    error?.message || error
+  );
 
+  evaluations = eligibleCandidates.map((article) => {
+    const score = Number(article.preliminaryScore || 0);
+    const text = `${article.title || ""} ${
+      article.description || ""
+    }`.toLowerCase();
+
+    let category = "General";
+    let paper = "Prelims";
+
+    if (
+      text.includes("parliament") ||
+      text.includes("constitution") ||
+      text.includes("supreme court") ||
+      text.includes("governance") ||
+      text.includes("scheme")
+    ) {
+      category = "Polity & Governance";
+      paper = "GS-2";
+    } else if (
+      text.includes("economy") ||
+      text.includes("rbi") ||
+      text.includes("inflation") ||
+      text.includes("gdp") ||
+      text.includes("bank") ||
+      text.includes("trade")
+    ) {
+      category = "Economy";
+      paper = "GS-3";
+    } else if (
+      text.includes("climate") ||
+      text.includes("environment") ||
+      text.includes("biodiversity") ||
+      text.includes("wildfire")
+    ) {
+      category = "Environment";
+      paper = "GS-3";
+    } else if (
+      text.includes("science") ||
+      text.includes("technology") ||
+      text.includes("space") ||
+      text.includes("isro") ||
+      text.includes("artificial intelligence")
+    ) {
+      category = "Science & Technology";
+      paper = "GS-3";
+    } else if (
+      text.includes("united nations") ||
+      text.includes("international") ||
+      text.includes("agreement") ||
+      text.includes("imf") ||
+      text.includes("world bank")
+    ) {
+      category = "International Relations";
+      paper = "GS-2";
+    }
+
+    return {
+      relevant: score >= 1,
+      importance: Math.min(10, Math.max(5, 5 + score)),
+      category,
+      paper,
+      reason:
+        "Selected by local UPSC keyword and source scoring because AI evaluation was unavailable.",
+      keywords: [],
+    };
+  });
+}
   const evaluatedCandidates = [];
 
   for (
