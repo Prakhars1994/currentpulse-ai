@@ -1,11 +1,12 @@
 ﻿import { NextResponse } from "next/server";
 import { NEWS_SOURCES, UPSC_QUERY_TERMS } from "@/lib/news/sourceCatalog";
 import { fetchSourceRss } from "@/lib/news/rss";
+import { extractImageFromArticle } from "@/lib/news/imageExtractor";
 import { deduplicateArticles } from "@/lib/news/filter";
 import { evaluateNewsBatch } from "@/lib/ai/evaluateNews";
 import { generateArticle } from "@/lib/ai/generateArticle";
 import { createServerSupabase } from "@/lib/supabase-server";
-
+import { isSameEvent } from "@/lib/news/eventCluster";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -13,7 +14,7 @@ export const maxDuration = 300;
 const PER_SOURCE_LIMIT = 8;
 const EVALUATION_LIMIT = 30;
 const MINIMUM_IMPORTANCE = 5;
-const MAX_ARTICLES_PER_RUN = 2;
+const MAX_ARTICLES_PER_RUN = 10;
 
 function cleanText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -145,6 +146,61 @@ async function slugExists(supabase, slug) {
   return Boolean(data);
 }
 
+
+
+
+async function eventExists(supabase, newsArticle) {
+  const publishedAt =
+    newsArticle.publishedAt ||
+    newsArticle.pubDate ||
+    newsArticle.created_at ||
+    new Date().toISOString();
+
+  const eventDate = new Date(publishedAt);
+
+  if (Number.isNaN(eventDate.getTime())) {
+    return false;
+  }
+
+  const startDate = new Date(eventDate);
+  startDate.setUTCHours(0, 0, 0, 0);
+
+  const endDate = new Date(eventDate);
+  endDate.setUTCHours(23, 59, 59, 999);
+
+  const { data, error } = await supabase
+    .from("articles")
+    .select("id, title, why_news, created_at")
+    .gte("created_at", startDate.toISOString())
+    .lte("created_at", endDate.toISOString())
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(
+      `Event duplicate check failed: ${error.message}`
+    );
+  }
+
+  return (data || []).some((existingArticle) =>
+    isSameEvent(
+      {
+        title: newsArticle.title || "",
+        description:
+          newsArticle.description ||
+          newsArticle.summary ||
+          newsArticle.content ||
+          "",
+        publishedAt,
+      },
+      {
+        title: existingArticle.title || "",
+        description: existingArticle.why_news || "",
+        publishedAt: existingArticle.created_at,
+      }
+    )
+  );
+}
+
 async function findBestCandidate(supabase, articles) {
   const candidates = articles.slice(0, EVALUATION_LIMIT);
   const eligibleCandidates = [];
@@ -158,16 +214,23 @@ async function findBestCandidate(supabase, articles) {
       if (!preliminarySlug || preliminarySlug.length < 5) {
         continue;
       }
+if (await slugExists(supabase, preliminarySlug)) {
+  console.log(
+    `[Auto publish] Skipping existing headline: ${article.title}`
+  );
 
-      if (await slugExists(supabase, preliminarySlug)) {
-        console.log(
-          `[Auto publish] Skipping existing headline: ${article.title}`
-        );
+  continue;
+}
 
-        continue;
-      }
+if (await eventExists(supabase, article)) {
+  console.log(
+    `[Auto publish] Skipping duplicate event: ${article.title}`
+  );
 
-      eligibleCandidates.push(article);
+  continue;
+}
+
+eligibleCandidates.push(article);
     } catch (error) {
       console.error(
         `[Auto publish] Candidate check failed for "${article.title}":`,
@@ -238,12 +301,43 @@ async function findBestCandidate(supabase, articles) {
 async function publishCandidate(supabase, candidate) {
   const { article: newsArticle, evaluation } = candidate;
 
+  let resolvedImageUrl = cleanText(newsArticle.imageUrl);
+
+  if (!resolvedImageUrl) {
+    const publisherUrl =
+      cleanText(newsArticle.link) ||
+      cleanText(newsArticle.url) ||
+      cleanText(newsArticle.sourceUrl);
+
+    if (publisherUrl) {
+      console.log(
+        `[Auto publish] RSS image missing. Checking article page: ${newsArticle.title}`
+      );
+
+     resolvedImageUrl = await extractImageFromArticle(
+  publisherUrl,
+  newsArticle.sourceDomain,
+  newsArticle.title
+);
+
+
+
+      if (resolvedImageUrl) {
+        console.log(
+          `[Auto publish] Publisher image found: ${resolvedImageUrl}`
+        );
+      } else {
+        console.log(
+          `[Auto publish] No publisher image found for: ${newsArticle.title}`
+        );
+      }
+    }
+  }
+
   const sourceMaterial = createSourceMaterial(
     newsArticle,
     evaluation
-  );
-
-  const generatedArticle = await generateArticle(sourceMaterial);
+  );  const generatedArticle = await generateArticle(sourceMaterial);
 
   const slug = createSlug(generatedArticle.title);
 
@@ -263,27 +357,36 @@ async function publishCandidate(supabase, candidate) {
   const now = new Date().toISOString();
 
   const articleData = {
-    title: generatedArticle.title,
-    slug,
-    category: generatedArticle.category || evaluation.category,
-    paper: generatedArticle.paper || evaluation.paper,
-    content: "",
-    why_news: generatedArticle.why_news,
-    prelims: generatedArticle.prelims,
-    mains: generatedArticle.mains,
-    question: generatedArticle.question,
-    seo_title: generatedArticle.title,
-    seo_description: stripHtml(
-      generatedArticle.why_news
-    ).slice(0, 160),
-    tags:
-      evaluation.keywords?.length > 0
-        ? evaluation.keywords
-        : [],
-    status: "published",
-    updated_at: now,
-    created_at: now,
-  };
+  title: generatedArticle.title,
+  slug,
+  category: generatedArticle.category || evaluation.category,
+  paper: generatedArticle.paper || evaluation.paper,
+
+  content: "",
+
+  why_news: generatedArticle.why_news,
+  prelims: generatedArticle.prelims,
+  mains: generatedArticle.mains,
+  question: generatedArticle.question,
+
+image_url: resolvedImageUrl || null,
+  image_alt: generatedArticle.title,
+  image_caption: newsArticle.source || "News Image",
+
+  seo_title: generatedArticle.title,
+  seo_description: stripHtml(
+    generatedArticle.why_news
+  ).slice(0, 160),
+
+  tags:
+    evaluation.keywords?.length > 0
+      ? evaluation.keywords
+      : [],
+
+  status: "published",
+  updated_at: now,
+  created_at: now,
+};
 
   const { data, error } = await supabase
     .from("articles")
@@ -364,6 +467,9 @@ export async function GET(request) {
       MAX_ARTICLES_PER_RUN
     )) {
       try {
+
+
+
         const result = await publishCandidate(
           supabase,
           candidate
