@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
@@ -110,7 +113,7 @@ export default async function CurrentAffairsPage() {
                         href={`/current-affairs/${article.slug}`}
                         className="font-semibold text-cyan-700 transition hover:text-cyan-900"
                       >
-                        Read More →
+                        Read More â†’
                       </Link>
                     </div>
                   </div>
