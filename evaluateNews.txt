@@ -1,4 +1,3 @@
-import { generateWithRouter } from "@/lib/ai/router";
 import { GoogleGenAI, Type } from "@google/genai";
 
 import {
@@ -411,7 +410,7 @@ async function callGeminiBatch(model, prompt, expectedCount) {
   }
 
   try {
-    const response = await generateWithRouter({
+    const response = await ai.models.generateContent({
       model,
       contents: prompt,
       config,

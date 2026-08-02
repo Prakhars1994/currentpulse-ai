@@ -4,7 +4,6 @@ import {
   isModelAvailable,
   markModelExhausted,
 } from "@/lib/ai/quotaManager";
-import { generateWithRouter } from "@/lib/ai/router";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,
@@ -355,7 +354,7 @@ async function callGemini(model, prompt) {
     config.temperature = 0.2;
   }
 
-  const response = await generateWithRouter({
+  const response = await ai.models.generateContent({
     model,
     contents: prompt,
     config,
