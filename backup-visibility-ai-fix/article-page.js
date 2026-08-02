@@ -2,7 +2,6 @@ import { supabase } from "@/lib/supabase";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
-import ArticleContent from "@/components/ArticleContent";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
@@ -229,11 +228,10 @@ export default async function ArticlePage({ params }) {
         }}
       />
 
-      <main className="min-h-screen bg-slate-950 text-slate-100">
-        <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:px-8">
+      <main className="max-w-4xl mx-auto px-4 py-8">
 
-        <nav className="mb-6 text-sm text-slate-400">
-          <Link href="/" className="hover:text-cyan-300">
+        <nav className="text-sm text-gray-500 mb-5">
+          <Link href="/" className="hover:text-blue-600">
             Home
           </Link>
 
@@ -241,7 +239,7 @@ export default async function ArticlePage({ params }) {
 
           <Link
             href="/current-affairs"
-            className="hover:text-cyan-300"
+            className="hover:text-blue-600"
           >
             Current Affairs
           </Link>
@@ -251,11 +249,11 @@ export default async function ArticlePage({ params }) {
           <span>{article.title}</span>
         </nav>
 
-        <h1 className="text-3xl font-extrabold leading-tight text-white sm:text-5xl">
+        <h1 className="text-4xl font-bold leading-tight">
           {article.title}
         </h1>
 
-        <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-300">
+        <div className="flex flex-wrap items-center gap-3 mt-4 text-sm text-gray-500">
 
           <span>
             📅 {formatDate(article.created_at)}
@@ -286,21 +284,25 @@ export default async function ArticlePage({ params }) {
             className="w-full rounded-xl mt-8 mb-8 shadow-lg object-cover max-h-[500px]"
           />
         )}
-        <article className="mt-10 space-y-8">
+        <article className="prose prose-lg max-w-none">
 
-          <section className="article-section border-purple-500/30 bg-purple-500/10">
-            <h2 className="article-section-title text-purple-200">📌 Why in News?</h2>
-            <ArticleContent
-              content={article.why_news}
-              fallback="Why in News will be updated soon."
+          <section className="mt-10">
+            <h2>📌 Why in News?</h2>
+
+            <div
+              dangerouslySetInnerHTML={{
+                __html:
+                  article.why_news ||
+                  "<p>Why in News will be updated soon.</p>",
+              }}
             />
           </section>
 
-          <section className="article-section">
-            <h2 className="article-section-title">🎯 UPSC Relevance</h2>
+          <section className="mt-12">
+            <h2>🎯 UPSC Relevance</h2>
 
-            <div className="rounded-xl border border-cyan-400/20 bg-slate-900/80 p-6">
-              <ul className="space-y-3 text-slate-100">
+            <div className="not-prose rounded-xl border border-blue-100 bg-blue-50 p-6">
+              <ul className="space-y-3 text-gray-800">
                 <li>
                   <strong>Paper:</strong>{" "}
                   {article.paper || "Not specified"}
@@ -318,28 +320,41 @@ export default async function ArticlePage({ params }) {
             </div>
           </section>
 
-          <section className="article-section">
-            <h2 className="article-section-title">📚 Prelims Facts</h2>
-            <ArticleContent
-              content={article.prelims}
-              fallback="Prelims facts will be updated soon."
+          <section className="mt-12">
+            <h2>📚 Prelims Facts</h2>
+
+            <div
+              dangerouslySetInnerHTML={{
+                __html:
+                  article.prelims ||
+                  "<p>Prelims facts will be updated soon.</p>",
+              }}
             />
           </section>
 
-          <section className="article-section">
-            <h2 className="article-section-title">✍️ Mains Perspective</h2>
-            <ArticleContent
-              content={article.mains}
-              fallback="Detailed Mains analysis will be updated soon."
+          <section className="mt-12">
+            <h2>✍️ Mains Perspective</h2>
+
+            <div
+              dangerouslySetInnerHTML={{
+                __html:
+                  article.mains ||
+                  "<p>Detailed Mains analysis will be updated soon.</p>",
+              }}
             />
           </section>
 
-          <section className="article-section border-blue-500/30 bg-blue-500/10">
-            <h2 className="article-section-title text-blue-200">📝 Possible UPSC Mains Question</h2>
-            <div className="rounded-xl border-l-4 border-blue-400 bg-slate-900/80 p-6 text-lg leading-8 text-slate-100">
-              <ArticleContent
-                content={article.question}
-                fallback="Discuss the significance of this topic for India."
+          <section className="mt-12">
+            <h2>📝 Possible UPSC Mains Question</h2>
+
+            <div className="not-prose rounded-xl border-l-4 border-blue-600 bg-blue-50 p-6">
+              <div
+                className="text-lg leading-8 text-gray-800"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    article.question ||
+                    "<p>Discuss the significance of this topic for India.</p>",
+                }}
               />
             </div>
           </section>
@@ -415,13 +430,13 @@ export default async function ArticlePage({ params }) {
             {previousArticle ? (
               <Link
                 href={`/current-affairs/${previousArticle.slug}`}
-                className="rounded-xl border border-slate-700 bg-slate-900/70 p-6 transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
+                className="rounded-xl border border-gray-200 p-6 transition hover:border-blue-300 hover:shadow-lg"
               >
-                <p className="mb-2 text-sm text-slate-400">
+                <p className="mb-2 text-sm text-gray-500">
                   ← Previous Article
                 </p>
 
-                <h3 className="font-bold text-slate-100">
+                <h3 className="font-bold text-gray-900">
                   {previousArticle.title}
                 </h3>
               </Link>
@@ -432,13 +447,13 @@ export default async function ArticlePage({ params }) {
             {nextArticle ? (
               <Link
                 href={`/current-affairs/${nextArticle.slug}`}
-                className="rounded-xl border border-slate-700 bg-slate-900/70 p-6 text-right transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
+                className="rounded-xl border border-gray-200 p-6 text-right transition hover:border-blue-300 hover:shadow-lg"
               >
-                <p className="mb-2 text-sm text-slate-400">
+                <p className="mb-2 text-sm text-gray-500">
                   Next Article →
                 </p>
 
-                <h3 className="font-bold text-slate-100">
+                <h3 className="font-bold text-gray-900">
                   {nextArticle.title}
                 </h3>
               </Link>
@@ -462,17 +477,17 @@ export default async function ArticlePage({ params }) {
                 <Link
                   key={item.id}
                   href={`/current-affairs/${item.slug}`}
-                  className="rounded-xl border border-slate-700 bg-slate-900/70 p-5 transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
+                  className="rounded-xl border border-gray-200 p-5 transition hover:border-cyan-300 hover:shadow-lg"
                 >
-                  <span className="text-sm font-semibold text-cyan-300">
+                  <span className="text-sm font-medium text-cyan-600">
                     {item.category}
                   </span>
 
-                  <h3 className="mt-3 font-bold leading-6 text-slate-100">
+                  <h3 className="mt-3 font-bold text-gray-900">
                     {item.title}
                   </h3>
 
-                  <p className="mt-4 text-sm text-slate-400">
+                  <p className="mt-4 text-sm text-gray-500">
                     {formatDate(item.created_at)}
                   </p>
                 </Link>
@@ -483,7 +498,6 @@ export default async function ArticlePage({ params }) {
           </section>
         )}
 
-        </div>
       </main>
     </>
   );

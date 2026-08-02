@@ -415,13 +415,13 @@ export default async function ArticlePage({ params }) {
             {previousArticle ? (
               <Link
                 href={`/current-affairs/${previousArticle.slug}`}
-                className="rounded-xl border border-slate-700 bg-slate-900/70 p-6 transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
+                className="rounded-xl border border-gray-200 p-6 transition hover:border-blue-300 hover:shadow-lg"
               >
-                <p className="mb-2 text-sm text-slate-400">
+                <p className="mb-2 text-sm text-gray-500">
                   ← Previous Article
                 </p>
 
-                <h3 className="font-bold text-slate-100">
+                <h3 className="font-bold text-gray-900">
                   {previousArticle.title}
                 </h3>
               </Link>
@@ -432,13 +432,13 @@ export default async function ArticlePage({ params }) {
             {nextArticle ? (
               <Link
                 href={`/current-affairs/${nextArticle.slug}`}
-                className="rounded-xl border border-slate-700 bg-slate-900/70 p-6 text-right transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
+                className="rounded-xl border border-gray-200 p-6 text-right transition hover:border-blue-300 hover:shadow-lg"
               >
-                <p className="mb-2 text-sm text-slate-400">
+                <p className="mb-2 text-sm text-gray-500">
                   Next Article →
                 </p>
 
-                <h3 className="font-bold text-slate-100">
+                <h3 className="font-bold text-gray-900">
                   {nextArticle.title}
                 </h3>
               </Link>
@@ -462,17 +462,17 @@ export default async function ArticlePage({ params }) {
                 <Link
                   key={item.id}
                   href={`/current-affairs/${item.slug}`}
-                  className="rounded-xl border border-slate-700 bg-slate-900/70 p-5 transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
+                  className="rounded-xl border border-gray-200 p-5 transition hover:border-cyan-300 hover:shadow-lg"
                 >
-                  <span className="text-sm font-semibold text-cyan-300">
+                  <span className="text-sm font-medium text-cyan-600">
                     {item.category}
                   </span>
 
-                  <h3 className="mt-3 font-bold leading-6 text-slate-100">
+                  <h3 className="mt-3 font-bold text-gray-900">
                     {item.title}
                   </h3>
 
-                  <p className="mt-4 text-sm text-slate-400">
+                  <p className="mt-4 text-sm text-gray-500">
                     {formatDate(item.created_at)}
                   </p>
                 </Link>

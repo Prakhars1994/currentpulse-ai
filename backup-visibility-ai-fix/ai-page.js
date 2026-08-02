@@ -30,13 +30,9 @@ export default function AIPage() {
 
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.answer || "AI request failed.");
-      }
-
-      setAnswer(data.answer || "No answer was generated.");
+      setAnswer(data.answer);
     } catch (err) {
-      setAnswer(err?.message || "Something went wrong. Please try again.");
+      setAnswer("Something went wrong. Please try again.");
     }
 
     setLoading(false);
@@ -60,7 +56,7 @@ export default function AIPage() {
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           placeholder="Example: Explain Article 370 for UPSC mains"
-          className="w-full rounded-xl border border-slate-600 bg-slate-900 p-5 text-lg text-white placeholder:text-slate-500 focus:border-cyan-400 focus:outline-none"
+          className="w-full rounded-xl bg-slate-900 border border-slate-700 p-5 text-lg"
           rows={5}
         />
 
@@ -129,13 +125,13 @@ export default function AIPage() {
         )}
 
         {answer && !loading && (
-          <div className="mt-8 rounded-xl border border-cyan-500/30 bg-slate-900 p-8 shadow-2xl shadow-cyan-950/20">
+          <div className="mt-8 rounded-xl bg-slate-900 p-8 border border-slate-700">
 
             <h2 className="text-2xl font-bold text-cyan-400 mb-6">
               AI Response
             </h2>
 
-            <div className="article-rich-content overflow-x-auto">
+            <div className="prose prose-invert max-w-none prose-headings:text-cyan-400 prose-strong:text-white prose-li:marker:text-cyan-400 overflow-x-auto">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {answer}
               </ReactMarkdown>

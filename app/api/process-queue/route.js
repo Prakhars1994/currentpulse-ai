@@ -1,38 +1,10 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
-import { generateArticle } from "@/lib/ai/generateArticle";
+import { publishArticle } from "@/lib/publisher/publishArticle";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
-
-function cleanText(value) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function stripHtml(value) {
-  return cleanText(value)
-    .replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function createSlug(value) {
-  return cleanText(value)
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 180);
-}
 
 function isAuthorised(request) {
   const configuredSecret =
@@ -42,62 +14,14 @@ function isAuthorised(request) {
     request.headers.get("authorization")?.trim() || "";
 
   if (!configuredSecret) {
-    console.error("[Queue processor] CRON_SECRET is missing.");
+    console.error(
+      "[Queue processor] CRON_SECRET is missing."
+    );
+
     return false;
   }
 
   return authorization === `Bearer ${configuredSecret}`;
-}
-
-async function slugExists(supabase, slug) {
-  const { data, error } = await supabase
-    .from("articles")
-    .select("id")
-    .eq("slug", slug)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(
-      `Article duplicate check failed: ${error.message}`
-    );
-  }
-
-  return data || null;
-}
-
-function createSourceMaterial(queueItem) {
-  const keywords = Array.isArray(queueItem.keywords)
-    ? queueItem.keywords
-    : [];
-
-  return `
-NEWS TITLE
-
-${cleanText(queueItem.title)}
-
-NEWS DESCRIPTION
-
-${stripHtml(queueItem.description) || cleanText(queueItem.title)}
-
-SOURCE
-
-${cleanText(queueItem.source) || "News source"}
-
-SOURCE URL
-
-${cleanText(queueItem.url) || "Not supplied"}
-
-INITIAL UPSC EVALUATION
-
-Category: ${cleanText(queueItem.category) || "General"}
-Paper: ${cleanText(queueItem.paper) || "Prelims"}
-Importance: ${queueItem.importance || 0}/10
-Reason: ${cleanText(queueItem.evaluation_reason) || "Important current-affairs development"}
-Keywords: ${keywords.join(", ")}
-
-Prepare the article only from the supplied news information.
-Do not invent unsupported facts.
-  `.trim();
 }
 
 async function getPendingQueueItem(supabase) {
@@ -127,7 +51,7 @@ async function claimQueueItem(supabase, queueItem) {
     .from("article_queue")
     .update({
       status: "processing",
-      attempts: (queueItem.attempts || 0) + 1,
+      attempts: Number(queueItem.attempts || 0) + 1,
       processing_started_at: now,
       updated_at: now,
       error: null,
@@ -157,6 +81,8 @@ async function markQueueDuplicate(
     .from("article_queue")
     .update({
       status: "duplicate",
+      article_id: articleId,
+      processing_started_at: null,
       processed_at: now,
       updated_at: now,
       error: "Generated article already exists.",
@@ -168,8 +94,6 @@ async function markQueueDuplicate(
       `Queue duplicate update failed: ${error.message}`
     );
   }
-
-  return articleId;
 }
 
 async function markQueuePublished(
@@ -184,6 +108,7 @@ async function markQueuePublished(
     .update({
       status: "published",
       article_id: articleId,
+      processing_started_at: null,
       processed_at: now,
       updated_at: now,
       error: null,
@@ -197,13 +122,54 @@ async function markQueuePublished(
   }
 }
 
+function isTemporaryAiError(errorMessage = "") {
+  const message = String(errorMessage).toLowerCase();
+
+  const temporaryTerms = [
+    "429",
+    "503",
+    "resource_exhausted",
+    "unavailable",
+    "quota",
+    "rate limit",
+    "high demand",
+    "try again later",
+    "temporarily unavailable",
+    "timeout",
+    "timed out",
+    "network error",
+    "fetch failed",
+  ];
+
+  return temporaryTerms.some((term) =>
+    message.includes(term)
+  );
+}
+
 async function markQueueFailed(
   supabase,
-  queueItem,
+  originalQueueItem,
   errorMessage
 ) {
-  const attempts = (queueItem.attempts || 0) + 1;
-  const shouldRetry = attempts < 3;
+  const temporaryFailure =
+    isTemporaryAiError(errorMessage);
+
+  /*
+   * claimQueueItem already increased attempts by one.
+   * originalQueueItem still contains the attempt count
+   * from before the claim.
+   */
+  const previousAttempts = Number(
+    originalQueueItem.attempts || 0
+  );
+
+  const attempts = temporaryFailure
+    ? previousAttempts
+    : previousAttempts + 1;
+
+  const shouldRetry =
+    temporaryFailure || attempts < 3;
+
   const now = new Date().toISOString();
 
   const { error } = await supabase
@@ -211,11 +177,14 @@ async function markQueueFailed(
     .update({
       status: shouldRetry ? "pending" : "failed",
       attempts,
+      processing_started_at: null,
       updated_at: now,
       processed_at: shouldRetry ? null : now,
-      error: errorMessage,
+      error: temporaryFailure
+        ? `Waiting for AI availability: ${errorMessage}`
+        : errorMessage,
     })
-    .eq("id", queueItem.id);
+    .eq("id", originalQueueItem.id);
 
   if (error) {
     console.error(
@@ -232,7 +201,8 @@ export async function GET(request) {
     return NextResponse.json(
       {
         success: false,
-        message: "Unauthorised queue processing request.",
+        message:
+          "Unauthorised queue processing request.",
       },
       { status: 401 }
     );
@@ -247,7 +217,8 @@ export async function GET(request) {
     if (!queueItem) {
       return NextResponse.json({
         success: true,
-        message: "No pending article exists in the queue.",
+        message:
+          "No pending article exists in the queue.",
         durationMs: Date.now() - startedAt,
       });
     }
@@ -266,101 +237,37 @@ export async function GET(request) {
       });
     }
 
-    const generatedArticle = await generateArticle(
-      createSourceMaterial(claimedItem)
-    );
-
-    const slug = createSlug(generatedArticle.title);
-
-    if (!slug || slug.length < 5) {
-      throw new Error(
-        "Generated article has an invalid slug."
-      );
-    }
-
-    const existingArticle = await slugExists(
+    const published = await publishArticle(
       supabase,
-      slug
+      claimedItem
     );
 
-    if (existingArticle) {
+    if (published.status === "duplicate") {
       await markQueueDuplicate(
         supabase,
         claimedItem.id,
-        existingArticle.id
+        published.articleId
       );
 
       return NextResponse.json({
         success: true,
-        message: "Queue item skipped because the article exists.",
+        message:
+          "Queue item skipped because the article exists.",
         result: {
           status: "duplicate",
           queueId: claimedItem.id,
-          articleId: existingArticle.id,
-          title: generatedArticle.title,
-          slug,
+          articleId: published.articleId,
+          title: published.title,
+          slug: published.slug,
         },
         durationMs: Date.now() - startedAt,
       });
     }
 
-    const now = new Date().toISOString();
-
-    const articleData = {
-      title: generatedArticle.title,
-      slug,
-      category:
-        generatedArticle.category ||
-        claimedItem.category ||
-        "General",
-      paper:
-        generatedArticle.paper ||
-        claimedItem.paper ||
-        "Prelims",
-
-      content: "",
-      why_news: generatedArticle.why_news,
-      prelims: generatedArticle.prelims,
-      mains: generatedArticle.mains,
-      question: generatedArticle.question,
-
-      // Image processing remains separate to keep this request fast.
-      image_url: null,
-      image_alt: generatedArticle.title,
-      image_caption:
-        claimedItem.source || "Current Affairs",
-
-      seo_title: generatedArticle.title,
-      seo_description: stripHtml(
-        generatedArticle.why_news
-      ).slice(0, 160),
-
-      tags: Array.isArray(claimedItem.keywords)
-        ? claimedItem.keywords
-        : [],
-
-      status: "published",
-      created_at: now,
-      updated_at: now,
-    };
-
-    const { data: publishedArticle, error: insertError } =
-      await supabase
-        .from("articles")
-        .insert([articleData])
-        .select()
-        .single();
-
-    if (insertError) {
-      throw new Error(
-        `Article insert failed: ${insertError.message}`
-      );
-    }
-
     await markQueuePublished(
       supabase,
       claimedItem.id,
-      publishedArticle.id
+      published.articleId
     );
 
     return NextResponse.json({
@@ -369,9 +276,11 @@ export async function GET(request) {
       result: {
         status: "published",
         queueId: claimedItem.id,
-        articleId: publishedArticle.id,
-        title: publishedArticle.title,
-        slug: publishedArticle.slug,
+        articleId: published.articleId,
+        title: published.title,
+        slug: published.slug,
+        category: published.category,
+        paper: published.paper,
       },
       durationMs: Date.now() - startedAt,
     });

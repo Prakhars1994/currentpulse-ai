@@ -517,71 +517,6 @@ the required JSON structure.
 `;
 }
 
-
-function createTrustedCoveragePrompt(sourceContent, options = {}) {
-  return `
-You are a language editor and formatter for CurrentPulse AI.
-
-The material below comes from a trusted UPSC current-affairs source. The topic
-has already been selected for UPSC relevance. Do not perform relevance
-evaluation and do not reject it.
-
-Your task is limited to improving grammar, English, sentence flow, readability
-and organization while converting the supplied material into the required
-CurrentPulse JSON fields.
-
-STRICT PRESERVATION RULES
-
-1. Preserve every important fact, date, number, statistic, report, ranking,
-   institution, ministry, organisation, constitutional Article, legal
-   provision, Act, rule, judgment, committee, scheme, policy, location,
-   scientific term, agreement, historical detail, example, PYQ and argument
-   present in the source.
-2. Do not remove important information merely to shorten the article.
-3. Do not add facts, analysis, examples, dates or claims that are absent from
-   the source.
-4. Do not change the meaning, level of certainty or numerical value of any
-   statement.
-5. Remove only webpage noise, repeated navigation text and exact repetition.
-6. Do not copy awkward wording when grammar can be improved, but retain the
-   complete knowledge content.
-7. Do not mention AI, rewriting, the source website's navigation, or this
-   instruction.
-8. Use exactly one approved category and one approved paper. Prefer the source
-   hints when they are valid.
-
-SOURCE HINTS
-
-Title: ${cleanText(options.sourceTitle) || "Not supplied"}
-Category: ${cleanText(options.sourceCategory) || "Not supplied"}
-Paper: ${cleanText(options.sourcePaper) || "Not supplied"}
-
-APPROVED CATEGORIES
-
-${VALID_CATEGORIES.map((category) => `- ${category}`).join("\n")}
-
-APPROVED PAPERS
-
-${VALID_PAPERS.map((paper) => `- ${paper}`).join("\n")}
-
-FIELD MAPPING
-
-- title: Correct the English of the source title without changing its meaning.
-- why_news: Preserve the immediate development and its essential context.
-- prelims: Place factual material in readable bullet-style text using "•".
-- mains: Organize all analytical material under suitable headings. Preserve
-  source arguments, significance, concerns, challenges and way forward.
-- question: Preserve a supplied Mains/PYQ question where suitable; otherwise
-  form one question strictly from the supplied content.
-
-TRUSTED SOURCE MATERIAL
-
-${sourceContent}
-
-Return only the required JSON object.
-  `;
-}
-
 function createReviewPrompt(sourceContent, draftArticle) {
   return `
 You are the final fact-checker and UPSC editorial reviewer for CurrentPulse AI.
@@ -626,7 +561,7 @@ Return only the corrected final article using the required JSON structure.
 `;
 }
 
-export async function generateArticle(sourceContent, options = {}) {
+export async function generateArticle(sourceContent) {
   if (!process.env.GEMINI_API_KEY) {
     throw new Error(
       "GEMINI_API_KEY is missing from the environment variables."
@@ -651,26 +586,12 @@ export async function generateArticle(sourceContent, options = {}) {
   */
   const limitedSource = cleanedSource.slice(0, 30000);
 
-  const trustedCoverage = options.mode === "trusted_coverage";
-
-  const draftPrompt = trustedCoverage
-    ? createTrustedCoveragePrompt(limitedSource, options)
-    : createDraftPrompt(limitedSource);
+  const draftPrompt = createDraftPrompt(limitedSource);
 
   const draftArticle = await generateWithFallback(
-    draftPrompt,
-    trustedCoverage
-      ? "Trusted coverage language editing"
-      : "Article generation"
-  );
-
-  if (trustedCoverage) {
-    console.log(
-      "[Editorial review] Skipped for trusted coaching coverage."
-    );
-
-    return draftArticle;
-  }
+  draftPrompt,
+  "Article generation"
+);
 
 // Local validation - if the article already looks good, publish it directly.
 const looksGood =

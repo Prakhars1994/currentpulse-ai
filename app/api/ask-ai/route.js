@@ -1,114 +1,110 @@
-import axios from "axios";
+import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
-export async function POST(req) {
+const MODELS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+];
+
+function buildInstruction(mode) {
+  switch (mode) {
+    case "Explain Topic":
+      return "Explain the topic in simple language with clear headings and bullet points. Avoid tables unless essential.";
+    case "Mains Answer":
+      return "Write a UPSC GS Mains answer with Introduction, Body, balanced analysis, examples, Way Forward and Conclusion.";
+    case "Prelims Facts":
+      return "Provide concise, high-value UPSC Prelims facts in bullet points, including dates, institutions, provisions and data where relevant.";
+    case "MCQs":
+      return "Generate 5 UPSC Prelims MCQs with four options, the correct answer and a short explanation for each.";
+    default:
+      return "Answer accurately in a detailed, easy-to-understand format with useful headings and bullet points.";
+  }
+}
+
+function isRetryable(error) {
+  const status = Number(error?.status);
+  const message = String(error?.message || "").toLowerCase();
+
+  return (
+    status === 429 ||
+    status === 500 ||
+    status === 502 ||
+    status === 503 ||
+    status === 504 ||
+    message.includes("resource_exhausted") ||
+    message.includes("rate limit") ||
+    message.includes("unavailable") ||
+    message.includes("high demand")
+  );
+}
+
+export async function POST(request) {
   try {
-    const { question, mode } = await req.json();
+    const { question, mode = "Explain Topic" } = await request.json();
+    const cleanQuestion = String(question || "").trim();
 
-    let instruction = "";
-
-    switch (mode) {
-      case "Explain Topic":
-        instruction =
-          "Explain the topic in simple language with clear headings and bullet points. Avoid markdown tables.";
-        break;
-
-      case "Mains Answer":
-        instruction =
-          "Write a UPSC GS Mains answer with Introduction, Body, Conclusion, Examples and Way Forward.";
-        break;
-
-      case "Prelims Facts":
-        instruction =
-          "Provide important UPSC prelims facts in short bullet points.";
-        break;
-
-      case "MCQs":
-        instruction =
-          "Generate 5 UPSC Prelims MCQs with four options, answer and explanation.";
-        break;
-
-      default:
-        instruction =
-          "Answer in a detailed and easy-to-understand format.";
+    if (!cleanQuestion) {
+      return NextResponse.json(
+        { answer: "Please enter a question." },
+        { status: 400 }
+      );
     }
 
-    const prompt = `
-You are CurrentPulse AI.
+    if (!process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        { answer: "AI service is not configured. GEMINI_API_KEY is missing." },
+        { status: 503 }
+      );
+    }
 
-Question:
-${question}
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+    const prompt = `You are CurrentPulse AI, an expert UPSC mentor and current-affairs analyst.\n\nUser question:\n${cleanQuestion}\n\nTask:\n${buildInstruction(mode)}\n\nRules:\n- Use clear English.\n- Use Markdown headings and bullet points.\n- Be factual and avoid inventing data.\n- Clearly state uncertainty when information is uncertain.\n- Keep the answer focused on UPSC usefulness.\n- Do not output HTML.`;
 
-Instructions:
-${instruction}
+    let lastError;
 
-Rules:
-- Use simple English.
-- Use proper headings.
-- Use bullet points.
-- Do NOT use markdown tables.
-- Do NOT use HTML.
-- Keep formatting clean.
-`;
-
-    const response = await axios.post(
-      "https://openrouter.ai/api/v1/chat/completions",
-      {
-        model: "nvidia/nemotron-3-ultra-550b-a55b:free",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert UPSC mentor and current affairs analyst.",
+    for (const model of MODELS) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: prompt,
+          config: {
+            temperature: model.startsWith("gemini-3") ? undefined : 0.4,
+            maxOutputTokens: 1400,
           },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.5,
-        max_tokens: 800,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-          "Content-Type": "application/json",
-          "HTTP-Referer": "http://localhost:3000",
-          "X-Title": "CurrentPulse AI",
-        },
+        });
+
+        const answer = response?.text?.trim();
+
+        if (answer) {
+          return NextResponse.json({ answer, provider: "gemini", model });
+        }
+
+        lastError = new Error(`${model} returned an empty response.`);
+      } catch (error) {
+        lastError = error;
+        console.error(`[Ask AI] ${model} failed:`, error?.message || error);
+
+        if (!isRetryable(error)) {
+          break;
+        }
       }
-    );
-
-    console.log("OpenRouter Response:");
-    console.log(JSON.stringify(response.data, null, 2));
-
-    if (
-      !response.data ||
-      !response.data.choices ||
-      response.data.choices.length === 0
-    ) {
-      return NextResponse.json({
-        answer: "AI Error: No response received from OpenRouter.",
-      });
     }
 
-    const answer =
-      response.data.choices?.[0]?.message?.content ||
-      "No answer generated.";
-
-    return NextResponse.json({
-      answer,
-    });
+    return NextResponse.json(
+      {
+        answer:
+          "CurrentPulse AI is temporarily unavailable. Please try again shortly.",
+        error: lastError?.message || "All Gemini models failed.",
+      },
+      { status: 503 }
+    );
   } catch (error) {
-    console.error("OpenRouter Error:");
-    console.error(error.response?.data || error.message);
+    console.error("Ask AI route error:", error);
 
-    return NextResponse.json({
-      answer:
-        "AI Error: " +
-        (error.response?.data?.error?.message ||
-          error.message ||
-          "Unknown error"),
-    });
+    return NextResponse.json(
+      { answer: "Something went wrong while generating the answer." },
+      { status: 500 }
+    );
   }
 }

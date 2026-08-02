@@ -1,0 +1,47 @@
+import { NextResponse } from "next/server";
+import { fetchVisionTopics } from "@/lib/coverage/adapters/vision";
+import { normalizeTopic } from "@/lib/coverage/topicNormalizer";
+import {
+  deduplicateCoverageTopics,
+} from "@/lib/coverage/duplicateDetector";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+export async function GET() {
+  try {
+    const rawTopics = await fetchVisionTopics();
+
+    const normalized = rawTopics.map(normalizeTopic);
+
+    const unique = deduplicateCoverageTopics(normalized);
+
+    const results = unique.map((topic) => ({
+      source: topic.source,
+      title: topic.title,
+      url: topic.url,
+      priority: 10,
+      trusted: true,
+      queue: true,
+    }));
+
+    return NextResponse.json({
+      success: true,
+      source: "Vision IAS",
+      fetched: rawTopics.length,
+      unique: unique.length,
+      results,
+    });
+
+  } catch (error) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: error.message,
+      },
+      {
+        status: 500,
+      }
+    );
+  }
+}
