@@ -40,7 +40,7 @@ export default function RootLayout({
         </main>
 
         <Footer />
-              <Analytics />
+              <Analytics debug />
       </body>
     </html>
   );
