@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-const DEFAULT_MAX_PUBLISHES_PER_RUN = 1;
+const DEFAULT_MAX_PUBLISHES_PER_RUN = 999;
 const MAX_ALLOWED_PUBLISHES_PER_RUN = 5;
 
 function cleanText(value) {
