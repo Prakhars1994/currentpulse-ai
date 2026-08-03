@@ -3,12 +3,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import ArticleContent from "@/components/ArticleContent";
+import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-
-const DEFAULT_ARTICLE_IMAGE =
-  "https://images.unsplash.com/photo-1451187580459-43490279c0fa";
 
 // Remove HTML tags for SEO descriptions and reading-time calculation
 function stripHtml(html = "") {
@@ -77,7 +75,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const image = article.image || article.image_url || DEFAULT_ARTICLE_IMAGE;
+  const image = resolveDisplayImage(article);
 
   const plainDescription =
     stripHtml(article.seo_description || "") ||
@@ -198,7 +196,7 @@ export default async function ArticlePage({ params }) {
     console.error("Next article fetch error:", nextError);
   }
 
-  const articleImage = article.image || article.image_url || DEFAULT_ARTICLE_IMAGE;
+  const articleImage = resolveDisplayImage(article);
 
   const structuredData = {
     "@context": "https://schema.org",

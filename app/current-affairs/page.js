@@ -4,6 +4,7 @@ export const revalidate = 0;
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { createCategorySlug } from "@/lib/categoryRouting";
+import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 function stripHtml(content = "") {
   return content
@@ -18,7 +19,7 @@ export default async function CurrentAffairsPage() {
   const { data: articles, error } = await supabase
     .from("articles")
     .select(
-      "id,title,slug,category,paper,why_news,image_url,created_at,status"
+      "id,title,slug,category,paper,why_news,image,image_url,created_at,status"
     )
     .eq("status", "published")
     .order("created_at", { ascending: false });
@@ -55,10 +56,7 @@ export default async function CurrentAffairsPage() {
                   className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
                 >
                   <img
-                    src={
-                      article.image_url ||
-                      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900"
-                    }
+                    src={resolveDisplayImage(article)}
                     alt={article.title || "Current affairs article"}
                     className="h-52 w-full object-cover"
                   />

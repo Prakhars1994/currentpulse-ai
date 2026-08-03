@@ -9,6 +9,7 @@ import {
   articleMatchesCategory,
   resolveCategoryRoute,
 } from "@/lib/categoryRouting";
+import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -94,11 +95,7 @@ export default async function CategoryPage({ params }: Props) {
                 className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl"
               >
                 <img
-                  src={
-                    article.image_url ||
-                    article.image ||
-                    "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=900"
-                  }
+                  src={resolveDisplayImage(article)}
                   alt=""
                   className="h-44 w-full object-cover"
                 />

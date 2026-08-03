@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-
-const DEFAULT_IMAGE =
-  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200";
+import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 function stripHtml(value: string | null) {
   if (!value) return "";
@@ -27,7 +25,7 @@ export default async function Hero() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, paper, why_news, image, image_url, created_at, status"
+        "id, title, slug, category, paper, why_news, image, image_url, created_at, status"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })
@@ -77,7 +75,7 @@ export default async function Hero() {
     0
   );
 
-  const featuredImage = featured?.image || featured?.image_url || DEFAULT_IMAGE;
+  const featuredImage = resolveDisplayImage(featured || {});
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">

@@ -1,16 +1,8 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 export const revalidate = 0;
-
-const DEFAULT_LARGE_IMAGE =
-  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1200";
-
-const DEFAULT_CARD_IMAGE =
-  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800";
-
-const DEFAULT_THUMBNAIL =
-  "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400";
 
 function stripHtml(value: string | null) {
   if (!value) return "";
@@ -124,11 +116,7 @@ export default async function LatestNews() {
                   >
                     <div className="relative overflow-hidden">
                       <img
-                        src={
-                          trendingArticles[0].image ||
-                          trendingArticles[0].image_url ||
-                          DEFAULT_LARGE_IMAGE
-                        }
+                        src={resolveDisplayImage(trendingArticles[0])}
                         alt={
                           trendingArticles[0].title ||
                           "Trending current affairs article"
@@ -192,7 +180,7 @@ export default async function LatestNews() {
                     >
                       <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl">
                         <img
-                          src={item.image || item.image_url || DEFAULT_THUMBNAIL}
+                          src={resolveDisplayImage(item)}
                           alt={
                             item.title ||
                             "Trending current affairs article"
@@ -287,7 +275,7 @@ export default async function LatestNews() {
                     className="block overflow-hidden"
                   >
                     <img
-                      src={item.image || item.image_url || DEFAULT_CARD_IMAGE}
+                      src={resolveDisplayImage(item)}
                       alt={
                         item.title ||
                         "Current affairs article"

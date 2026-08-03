@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 type SearchPageProps = {
   searchParams: Promise<{
@@ -14,6 +15,7 @@ type Article = {
   category: string | null;
   paper: string | null;
   why_news: string | null;
+  image: string | null;
   image_url: string | null;
   created_at: string | null;
   status: string | null;
@@ -49,7 +51,7 @@ export default async function SearchPage({
       const { data, error } = await supabase
         .from("articles")
         .select(
-          "id,title,slug,category,paper,why_news,image_url,created_at,status"
+          "id,title,slug,category,paper,why_news,image,image_url,created_at,status"
         )
         .eq("status", "published")
         .or(
@@ -136,10 +138,7 @@ export default async function SearchPage({
                   >
                     <div className="flex flex-col md:flex-row">
                       <img
-                        src={
-                          article.image_url ||
-                          "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800"
-                        }
+                        src={resolveDisplayImage(article)}
                         alt={article.title || "Current affairs article"}
                         className="h-52 w-full object-cover md:h-auto md:w-64"
                       />

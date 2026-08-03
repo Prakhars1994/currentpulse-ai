@@ -4,6 +4,7 @@ export const revalidate = 0;
 import Link from "next/link";
 import { ExternalLink, PlayCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 export const metadata = {
   title: "Current Affairs Video Discovery",
@@ -39,7 +40,7 @@ export default async function VideosPage() {
                 <article key={article.id} className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
                   <div className="relative">
                     <img
-                      src={article.image_url || article.image || "https://images.unsplash.com/photo-1485846234645-a62644f84728?w=900"}
+                      src={resolveDisplayImage(article)}
                       alt=""
                       className="h-44 w-full object-cover opacity-80"
                     />
