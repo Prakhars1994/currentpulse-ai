@@ -1,5 +1,6 @@
 import PyqExplorer from "@/components/PyqExplorer";
 import { PYQ_ITEMS } from "@/lib/study/pyqs";
+import Link from "next/link";
 
 export const metadata = {
   title: "UPSC PYQ Explorer",
@@ -19,6 +20,12 @@ export default function PyqPage() {
         <div className="mt-10">
           <PyqExplorer items={PYQ_ITEMS} />
         </div>
+        <section className="mt-12 rounded-3xl border border-cyan-500/25 bg-cyan-500/5 p-7 sm:p-9">
+          <p className="font-bold uppercase tracking-[0.18em] text-cyan-300">Original papers</p>
+          <h2 className="mt-3 text-3xl font-black">Download official UPSC Prelims & Mains PDFs</h2>
+          <p className="mt-3 max-w-3xl leading-7 text-slate-300">Use the exact, unmodified question papers hosted on upsc.gov.in, organised by year and examination stage.</p>
+          <Link href="/question-papers" className="mt-6 inline-flex rounded-xl bg-cyan-500 px-5 py-3 font-black text-slate-950">Open official paper library →</Link>
+        </section>
       </div>
     </main>
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import ArticleContent from "@/components/ArticleContent";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
+import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
@@ -49,6 +50,12 @@ function formatDate(date) {
   });
 }
 
+function absoluteImageUrl(value) {
+  if (!value) return "";
+  if (/^https?:\/\//i.test(value)) return value;
+  return `${BASE_URL.replace(/\/$/, "")}${value.startsWith("/") ? value : `/${value}`}`;
+}
+
 // ============================
 // Dynamic SEO
 // ============================
@@ -75,7 +82,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const image = resolveDisplayImage(article);
+  const image = absoluteImageUrl(resolveDisplayImage(article));
 
   const plainDescription =
     stripHtml(article.seo_description || "") ||
@@ -205,7 +212,7 @@ export default async function ArticlePage({ params }) {
     description:
       stripHtml(article.seo_description || "") ||
       stripHtml(article.why_news || ""),
-    image: [articleImage],
+    image: [absoluteImageUrl(articleImage)],
     datePublished: article.created_at,
     dateModified: article.updated_at || article.created_at,
     author: {
@@ -288,11 +295,27 @@ export default async function ArticlePage({ params }) {
         </div>
 
         {articleImage && (
-          <img
-            src={articleImage}
-            alt={article.title}
-            className="w-full rounded-xl mt-8 mb-8 shadow-lg object-cover max-h-[500px]"
-          />
+          <figure className="article-hero-visual">
+            <img
+              src={articleImage}
+              alt={article.image_alt || article.title}
+              className="article-hero-image"
+            />
+            {article.image_caption && (
+              <figcaption>
+                <span>{article.image_caption}</span>
+                {article.image_source_url && (
+                  <a
+                    href={article.image_source_url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                  >
+                    Image source ↗
+                  </a>
+                )}
+              </figcaption>
+            )}
+          </figure>
         )}
         <article className="mt-10 space-y-8">
 
@@ -303,6 +326,13 @@ export default async function ArticlePage({ params }) {
               fallback="Why in News will be updated soon."
             />
           </section>
+
+          <ArticleStudyVisuals
+            title={article.title}
+            visualSummary={article.visual_summary}
+            memoryTrick={article.memory_trick}
+            mapLocations={article.map_locations}
+          />
 
           <section className="article-section">
             <h2 className="article-section-title">🎯 UPSC Relevance</h2>

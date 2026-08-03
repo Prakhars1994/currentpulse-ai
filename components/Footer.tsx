@@ -6,6 +6,7 @@ const studyLinks = [
   ["PDF Digests", "/pdf"],
   ["Revision Notes", "/notes"],
   ["PYQ Explorer", "/pyq"],
+  ["Official UPSC Papers", "/question-papers"],
   ["Video Discovery", "/videos"],
 ];
 

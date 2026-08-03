@@ -26,6 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "pdf",
     "notes",
     "pyq",
+    "question-papers",
     "videos",
     "ai",
     "contact",

@@ -25,7 +25,7 @@ export default async function Hero() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, why_news, image, image_url, created_at, status"
+        "id, title, slug, category, paper, why_news, image, image_url, image_source_url, created_at, status"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })

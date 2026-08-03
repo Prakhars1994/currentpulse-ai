@@ -26,6 +26,7 @@ type Article = {
   mains: string | null;
   image: string | null;
   image_url: string | null;
+  image_source_url: string | null;
   created_at: string | null;
 };
 
@@ -45,7 +46,7 @@ export default async function CategoryPage({ params }: Props) {
   const { data, error } = await supabase
     .from("articles")
     .select(
-      "id,title,slug,category,paper,why_news,prelims,mains,image,image_url,created_at"
+      "id,title,slug,category,paper,why_news,prelims,mains,image,image_url,image_source_url,created_at"
     )
     .eq("status", "published")
     .order("created_at", { ascending: false })

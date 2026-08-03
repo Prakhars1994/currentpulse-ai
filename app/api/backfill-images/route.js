@@ -1,8 +1,8 @@
 import { after, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
-import { discoverSourceImage } from "@/lib/publisher/publishArticle";
-import { getCategoryFallbackImage } from "@/lib/news/categoryImage";
+import { isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import { persistRemoteArticleImage } from "@/lib/news/imageStorage";
+import { findRelevantCommonsImage } from "@/lib/news/relevantImage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,45 +13,6 @@ const CONCURRENCY = 3;
 function isAuthorised(request) {
   const secret = process.env.CRON_SECRET?.trim() || "";
   return Boolean(secret) && request.headers.get("authorization")?.trim() === `Bearer ${secret}`;
-}
-
-async function findSource(supabase, articleId, title) {
-  const [queueResult, coverageResult] = await Promise.all([
-    supabase
-      .from("article_queue")
-      .select("url,source,source_domain,title")
-      .eq("article_id", articleId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    supabase
-      .from("article_sources")
-      .select("source_url,source_name,source_title")
-      .eq("article_id", articleId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-  ]);
-
-  const queue = queueResult.data;
-  const coverage = coverageResult.data;
-  const url = queue?.url || coverage?.source_url || "";
-  let sourceDomain = queue?.source_domain || "";
-
-  if (!sourceDomain && url) {
-    try {
-      sourceDomain = new URL(url).hostname.replace(/^www\./, "");
-    } catch {
-      sourceDomain = "";
-    }
-  }
-
-  return {
-    title: queue?.title || coverage?.source_title || title,
-    url,
-    source: queue?.source || coverage?.source_name || "Current Affairs",
-    sourceDomain,
-  };
 }
 
 async function mapWithConcurrency(items, handler) {
@@ -77,38 +38,42 @@ async function executeBackfill(limit) {
   const supabase = createServerSupabase();
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,category,image,image_url,created_at")
+    .select("id,title,slug,category,image,image_url,image_source_url,image_search_query,created_at")
     .eq("status", "published")
     .order("created_at", { ascending: false })
     .limit(1000);
 
   if (error) throw new Error(`Image backfill fetch failed: ${error.message}`);
 
+  const needsReplacement = (article) => {
+    return !isVerifiedReusableArticleImage(article);
+  };
   const missing = (data || [])
-    .filter((article) => !article.image && !article.image_url)
+    .filter(needsReplacement)
     .slice(0, limit);
 
   const results = await mapWithConcurrency(missing, async (article) => {
     try {
-      const source = await findSource(supabase, article.id, article.title);
-      const discovered = source.url ? await discoverSourceImage(source) : "";
-      const selected =
-        discovered || getCategoryFallbackImage(article.category, article.slug || article.title);
-      const stored = await persistRemoteArticleImage(
-        supabase,
-        selected,
-        article.slug || article.title
+      const commons = await findRelevantCommonsImage(
+        article.image_search_query || article.title,
+        article.title
       );
+      const stored = commons
+        ? await persistRemoteArticleImage(
+            supabase,
+            commons.url,
+            article.slug || article.title
+          )
+        : "";
 
       const { error: updateError } = await supabase
         .from("articles")
         .update({
-          image: stored || selected,
-          image_url: stored || selected,
+          image: stored || commons?.url || null,
+          image_url: stored || commons?.url || null,
           image_alt: article.title,
-          image_caption: discovered
-            ? source.source || "Original publisher image"
-            : `${article.category || "Current affairs"} representative image`,
+          image_caption: commons?.caption || null,
+          image_source_url: commons?.sourceUrl || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", article.id);
@@ -119,7 +84,7 @@ async function executeBackfill(limit) {
         status: "updated",
         articleId: article.id,
         title: article.title,
-        imageType: discovered ? "publisher" : "category_fallback",
+        imageType: commons ? "wikimedia_commons" : "currentpulse_article_visual",
       };
     } catch (backfillError) {
       console.error(`[Image backfill] Failed for ${article.id}:`, backfillError?.message || backfillError);
@@ -140,7 +105,7 @@ async function executeBackfill(limit) {
       failed: results.filter((item) => item.status === "failed").length,
       remainingEstimate: Math.max(
         0,
-        (data || []).filter((article) => !article.image && !article.image_url).length -
+        (data || []).filter(needsReplacement).length -
           results.filter((item) => item.status === "updated").length
       ),
       concurrency: CONCURRENCY,

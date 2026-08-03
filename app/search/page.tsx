@@ -17,6 +17,7 @@ type Article = {
   why_news: string | null;
   image: string | null;
   image_url: string | null;
+  image_source_url: string | null;
   created_at: string | null;
   status: string | null;
 };
@@ -51,7 +52,7 @@ export default async function SearchPage({
       const { data, error } = await supabase
         .from("articles")
         .select(
-          "id,title,slug,category,paper,why_news,image,image_url,created_at,status"
+          "id,title,slug,category,paper,why_news,image,image_url,image_source_url,created_at,status"
         )
         .eq("status", "published")
         .or(

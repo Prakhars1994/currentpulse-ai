@@ -55,6 +55,11 @@ export default function Navbar() {
       icon: LibraryBig,
     },
     {
+      name: "Papers",
+      href: "/question-papers",
+      icon: LibraryBig,
+    },
+    {
       name: "AI",
       href: "/ai",
       icon: Bot,

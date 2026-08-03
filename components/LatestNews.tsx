@@ -46,7 +46,7 @@ export default async function LatestNews() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, why_news, image, image_url, created_at, views"
+        "id, title, slug, category, paper, why_news, image, image_url, image_source_url, created_at, views"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })
@@ -55,7 +55,7 @@ export default async function LatestNews() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, image, image_url, created_at, views"
+        "id, title, slug, category, paper, image, image_url, image_source_url, created_at, views"
       )
       .eq("status", "published")
       .order("views", { ascending: false })

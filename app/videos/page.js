@@ -14,7 +14,7 @@ export const metadata = {
 export default async function VideosPage() {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,category,paper,image,image_url,created_at")
+    .select("id,title,slug,category,paper,image,image_url,image_source_url,created_at")
     .eq("status", "published")
     .order("created_at", { ascending: false })
     .limit(24);

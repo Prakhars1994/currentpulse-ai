@@ -46,7 +46,7 @@ function normalizeMarkdown(value = "") {
     // Give common UPSC analysis labels a real visual hierarchy, including
     // older articles generated before Markdown headings were enforced.
     .replace(
-      /(?:^|\n|\.\s+)(Background|Context|Significance|Key Issues|Issues|Challenges|Way Forward|Conclusion|Impact|Implications|Opportunities|Recommendations)\s*:?\s+(?=[A-Z])/gi,
+      /(?:^|\n|\.\s+)(Background|Context|Significance|Key Issues(?: or Challenges)?|Issues and Challenges|Issues|Challenges|Way Forward|Conclusion|Impact|Implications|Opportunities|Recommendations)\s*:?\s+(?=[A-Z])/gi,
       (_, heading) => `\n\n### ${heading}\n\n`
     )
     // Emphasize short factual labels such as "Institution:" or "Report:".
