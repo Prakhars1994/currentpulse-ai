@@ -77,7 +77,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const image = article.image || DEFAULT_ARTICLE_IMAGE;
+  const image = article.image || article.image_url || DEFAULT_ARTICLE_IMAGE;
 
   const plainDescription =
     stripHtml(article.seo_description || "") ||
@@ -145,6 +145,16 @@ export default async function ArticlePage({ params }) {
 
   const readingTime = calculateReadingTime(article);
 
+  const { data: articleSources, error: sourcesError } = await supabase
+    .from("article_sources")
+    .select("id, source_name, source_title, source_url, source_published_at")
+    .eq("article_id", article.id)
+    .order("created_at", { ascending: true });
+
+  if (sourcesError && sourcesError.code !== "42P01") {
+    console.error("Article sources fetch error:", sourcesError);
+  }
+
   // Only published related articles
   const { data: relatedArticles, error: relatedError } = await supabase
     .from("articles")
@@ -188,7 +198,7 @@ export default async function ArticlePage({ params }) {
     console.error("Next article fetch error:", nextError);
   }
 
-  const articleImage = article.image || DEFAULT_ARTICLE_IMAGE;
+  const articleImage = article.image || article.image_url || DEFAULT_ARTICLE_IMAGE;
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -279,9 +289,9 @@ export default async function ArticlePage({ params }) {
 
         </div>
 
-        {article.image && (
+        {articleImage && (
           <img
-            src={article.image}
+            src={articleImage}
             alt={article.title}
             className="w-full rounded-xl mt-8 mb-8 shadow-lg object-cover max-h-[500px]"
           />
@@ -346,6 +356,38 @@ export default async function ArticlePage({ params }) {
 
         </article>
 
+        {articleSources?.length > 0 && (
+          <section className="mt-10 rounded-2xl border border-slate-700 bg-slate-900/70 p-6">
+            <h2 className="text-xl font-bold text-cyan-300">
+              🔎 Sources consulted
+            </h2>
+            <p className="mt-2 text-sm text-slate-400">
+              This CurrentPulse analysis synthesizes unique exam-relevant inputs from the following sources.
+            </p>
+            <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+              {articleSources.map((source) => (
+                <li key={source.id}>
+                  <a
+                    href={source.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer nofollow"
+                    className="block rounded-xl border border-slate-700 bg-slate-950/70 p-4 transition hover:border-cyan-500"
+                  >
+                    <span className="font-bold text-cyan-300">
+                      {source.source_name}
+                    </span>
+                    {source.source_title && (
+                      <span className="mt-1 block text-sm leading-6 text-slate-300">
+                        {source.source_title}
+                      </span>
+                    )}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section className="mt-14">
           <h2 className="text-2xl font-bold mb-5">
             📤 Share this Article
@@ -401,12 +443,12 @@ export default async function ArticlePage({ params }) {
         </section>
 
         <section className="mt-14">
-          <button
-            type="button"
-            className="w-full rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 py-5 text-lg font-bold text-white"
+          <Link
+            href={`/ai?topic=${encodeURIComponent(article.title)}`}
+            className="block w-full rounded-xl bg-gradient-to-r from-cyan-600 to-blue-700 py-5 text-center text-lg font-bold text-white transition hover:from-cyan-500 hover:to-blue-600"
           >
             🤖 Ask CurrentPulse AI About This Topic
-          </button>
+          </Link>
         </section>
 
         {(previousArticle || nextArticle) && (

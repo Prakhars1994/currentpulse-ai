@@ -2,8 +2,21 @@ import { after, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { fetchVisionTopics } from "@/lib/coverage/adapters/vision";
 import { fetchDrishtiTopics } from "@/lib/coverage/adapters/drishti";
-import { deduplicateCoverageTopics } from "@/lib/coverage/duplicateDetector";
-import { publishArticle } from "@/lib/publisher/publishArticle";
+import { fetchInsightsTopics } from "@/lib/coverage/adapters/insights";
+import { fetchForumTopics } from "@/lib/coverage/adapters/forum";
+import { fetchNextIasTopics } from "@/lib/coverage/adapters/nextias";
+import { fetchVajiramTopics } from "@/lib/coverage/adapters/vajiram";
+import { fetchIasBabaTopics } from "@/lib/coverage/adapters/iasbaba";
+import { mergeCoverageTopics } from "@/lib/coverage/duplicateDetector";
+import {
+  getCoverageSourceReferences,
+  loadMergedSourceKeys,
+  recordArticleSources,
+} from "@/lib/coverage/sourceRegistry";
+import {
+  enrichPublishedArticle,
+  publishArticle,
+} from "@/lib/publisher/publishArticle";
 import {
   findDuplicateInArticles,
   loadRecentArticles,
@@ -15,7 +28,18 @@ export const maxDuration = 300;
 
 const HARD_STOP_MS = 280000;
 const MINIMUM_NEXT_PUBLISH_BUDGET_MS = 50000;
+const DEFAULT_MAX_PUBLISHES_PER_RUN = 5;
 const MAX_MANUAL_LIMIT = 30;
+
+const SOURCE_ADAPTERS = {
+  vision: fetchVisionTopics,
+  drishti: fetchDrishtiTopics,
+  insights: fetchInsightsTopics,
+  forum: fetchForumTopics,
+  nextias: fetchNextIasTopics,
+  vajiram: fetchVajiramTopics,
+  iasbaba: fetchIasBabaTopics,
+};
 
 function isAuthorised(request) {
   const configuredSecret = process.env.CRON_SECRET?.trim() || "";
@@ -50,7 +74,34 @@ function isTemporaryAiError(message = "") {
   ].some((term) => value.includes(term));
 }
 
+function sourceSummary(references) {
+  return references
+    .map(
+      (reference) => `
+SOURCE: ${reference.sourceName}
+SOURCE TITLE: ${reference.sourceTitle}
+SOURCE URL: ${reference.sourceUrl}
+
+${reference.summary}
+      `.trim()
+    )
+    .join("\n\n----------------------------------------\n\n")
+    .slice(0, 30000);
+}
+
+function topicWithSources(topic, references) {
+  return {
+    ...topic,
+    sourceInputs: references,
+    sources: references.map((reference) => reference.sourceName),
+    source: references.map((reference) => reference.sourceName).join(", "),
+    summary: sourceSummary(references),
+  };
+}
+
 function toPublishingSource(topic) {
+  const references = getCoverageSourceReferences(topic);
+
   return {
     title: topic.title,
     description: topic.summary,
@@ -58,13 +109,12 @@ function toPublishingSource(topic) {
     url: topic.url,
     source: topic.source || "Trusted UPSC Source",
     sourceName: topic.source || "Trusted UPSC Source",
+    sourceReferences: references,
     publishedAt: topic.publishedAt,
     category: topic.category || "Polity & Governance",
     paper: topic.paper || "Prelims",
     importance: 10,
-    evaluation_reason: `Selected by trusted UPSC current-affairs source ${
-      topic.source || "Trusted UPSC Source"
-    }.`,
+    evaluation_reason: `Selected and synthesized from ${references.length} trusted UPSC source${references.length === 1 ? "" : "s"}.`,
     keywords: Array.isArray(topic.keywords) ? topic.keywords : [],
     image_url: topic.imageUrl || null,
     trustedCoverage: true,
@@ -72,63 +122,98 @@ function toPublishingSource(topic) {
   };
 }
 
+async function fetchCoverageSources(requestedSource) {
+  const entries = Object.entries(SOURCE_ADAPTERS).filter(
+    ([sourceId]) => requestedSource === "all" || requestedSource === sourceId
+  );
+  const settled = await Promise.allSettled(
+    entries.map(([, fetchTopics]) => fetchTopics())
+  );
+  const groups = [];
+  const counts = {};
+  const errors = {};
+
+  settled.forEach((result, index) => {
+    const sourceId = entries[index][0];
+
+    if (result.status === "fulfilled") {
+      const topics = Array.isArray(result.value) ? result.value : [];
+      groups.push(topics);
+      counts[sourceId] = topics.length;
+      return;
+    }
+
+    groups.push([]);
+    counts[sourceId] = 0;
+    errors[sourceId] = result.reason?.message || "Source fetch failed.";
+    console.error(`[Coverage import] ${sourceId} failed:`, errors[sourceId]);
+  });
+
+  return { groups, counts, errors };
+}
+
 async function executeCoverageImport({ requestedSource, manualLimit }) {
   const startedAt = Date.now();
 
   try {
     const supabase = createServerSupabase();
-
-    const [visionTopics, drishtiTopics, recentArticles] = await Promise.all([
-      requestedSource === "all" || requestedSource === "vision"
-        ? fetchVisionTopics()
-        : Promise.resolve([]),
-      requestedSource === "all" || requestedSource === "drishti"
-        ? fetchDrishtiTopics()
-        : Promise.resolve([]),
+    const [coverage, recentArticles] = await Promise.all([
+      fetchCoverageSources(requestedSource),
       loadRecentArticles(supabase, { lookbackDays: 45, limit: 900 }),
     ]);
-
-    const topics = deduplicateCoverageTopics(
-      interleaveTopics(visionTopics, drishtiTopics)
-    );
+    const topics = mergeCoverageTopics(interleaveTopics(...coverage.groups));
     const results = [];
+    const operationDurations = [];
+    let completedOperations = 0;
     let publishedCount = 0;
-    let averagePublishDurationMs = MINIMUM_NEXT_PUBLISH_BUDGET_MS;
+    let enrichedCount = 0;
     let aiUnavailable = false;
 
-    for (const topic of topics) {
+    for (const originalTopic of topics) {
       const duplicate = findDuplicateInArticles(
         {
-          title: topic.title,
-          description: topic.summary,
-          publishedAt: topic.publishedAt,
+          title: originalTopic.title,
+          description: originalTopic.summary,
+          publishedAt: originalTopic.publishedAt,
         },
         recentArticles
       );
 
+      let topic = originalTopic;
+
       if (duplicate) {
-        results.push({
-          status: "already_covered",
-          title: topic.title,
-          articleId: duplicate.id,
-          slug: duplicate.slug,
-        });
-        continue;
+        const knownSourceKeys = await loadMergedSourceKeys(supabase, duplicate.id);
+        const newReferences = getCoverageSourceReferences(topic).filter(
+          (reference) => !knownSourceKeys.has(reference.sourceKey)
+        );
+
+        if (newReferences.length === 0) {
+          results.push({
+            status: "already_merged",
+            title: topic.title,
+            articleId: duplicate.id,
+            slug: duplicate.slug,
+          });
+          continue;
+        }
+
+        topic = topicWithSources(topic, newReferences);
       }
 
-      if (manualLimit !== null && publishedCount >= manualLimit) {
+      if (completedOperations >= manualLimit || aiUnavailable) {
         results.push({ status: "waiting_for_next_run", title: topic.title });
         continue;
       }
 
-      if (aiUnavailable) {
-        results.push({ status: "waiting_for_next_run", title: topic.title });
-        continue;
-      }
-
+      const averageDuration = operationDurations.length
+        ? Math.round(
+            operationDurations.reduce((total, duration) => total + duration, 0) /
+              operationDurations.length
+          )
+        : MINIMUM_NEXT_PUBLISH_BUDGET_MS;
       const expectedNextDuration = Math.max(
         MINIMUM_NEXT_PUBLISH_BUDGET_MS,
-        Math.ceil(averagePublishDurationMs * 1.25)
+        Math.ceil(averageDuration * 1.25)
       );
 
       if (Date.now() - startedAt + expectedNextDuration >= HARD_STOP_MS) {
@@ -136,29 +221,53 @@ async function executeCoverageImport({ requestedSource, manualLimit }) {
         continue;
       }
 
-      const publishStartedAt = Date.now();
+      const operationStartedAt = Date.now();
 
       try {
-        const published = await publishArticle(supabase, toPublishingSource(topic));
-
-        if (published.status === "duplicate") {
+        if (duplicate) {
+          const enriched = await enrichPublishedArticle(
+            supabase,
+            duplicate.id,
+            toPublishingSource(topic)
+          );
+          await recordArticleSources(supabase, enriched.articleId, topic);
+          enrichedCount += 1;
+          completedOperations += 1;
           results.push({
-            status: "duplicate",
-            title: topic.title,
-            articleId: published.articleId,
-            slug: published.slug,
+            status: "enriched",
+            sourceTitle: topic.title,
+            sourceCount: getCoverageSourceReferences(topic).length,
+            ...enriched,
           });
         } else {
-          publishedCount += 1;
-          results.push({
-            status: "published",
-            sourceTitle: topic.title,
-            articleId: published.articleId,
-            title: published.title,
-            slug: published.slug,
-            category: published.category,
-            paper: published.paper,
-          });
+          const published = await publishArticle(supabase, toPublishingSource(topic));
+
+          if (published.status === "duplicate") {
+            results.push({
+              status: "duplicate",
+              title: topic.title,
+              articleId: published.articleId,
+              slug: published.slug,
+            });
+          } else {
+            await recordArticleSources(supabase, published.articleId, topic);
+            publishedCount += 1;
+            completedOperations += 1;
+            recentArticles.unshift({
+              id: published.articleId,
+              title: published.title,
+              slug: published.slug,
+              why_news: topic.summary,
+              created_at: new Date().toISOString(),
+              status: "published",
+            });
+            results.push({
+              status: "published",
+              sourceTitle: topic.title,
+              sourceCount: getCoverageSourceReferences(topic).length,
+              ...published,
+            });
+          }
         }
       } catch (error) {
         console.error(
@@ -168,16 +277,12 @@ async function executeCoverageImport({ requestedSource, manualLimit }) {
         results.push({
           status: "failed",
           title: topic.title,
-          error: error?.message || "Trusted coverage publishing failed.",
+          error: error?.message || "Hybrid coverage publishing failed.",
         });
         aiUnavailable = isTemporaryAiError(error?.message);
+      } finally {
+        operationDurations.push(Date.now() - operationStartedAt);
       }
-
-      const publishDuration = Date.now() - publishStartedAt;
-      averagePublishDurationMs =
-        publishedCount <= 1
-          ? publishDuration
-          : Math.round((averagePublishDurationMs + publishDuration) / 2);
     }
 
     const countStatus = (status) =>
@@ -186,12 +291,14 @@ async function executeCoverageImport({ requestedSource, manualLimit }) {
     return NextResponse.json({
       success: true,
       requestedSource,
-      manualLimit,
-      sources: { vision: visionTopics.length, drishti: drishtiTopics.length },
-      fetched: visionTopics.length + drishtiTopics.length,
-      uniqueTopics: topics.length,
+      maxOperationsPerRun: manualLimit,
+      sources: coverage.counts,
+      sourceErrors: coverage.errors,
+      fetched: Object.values(coverage.counts).reduce((total, count) => total + count, 0),
+      hybridEvents: topics.length,
       published: publishedCount,
-      alreadyCovered: countStatus("already_covered"),
+      enriched: enrichedCount,
+      alreadyMerged: countStatus("already_merged"),
       duplicate: countStatus("duplicate"),
       waitingForNextRun: countStatus("waiting_for_next_run"),
       failed: countStatus("failed"),
@@ -203,7 +310,7 @@ async function executeCoverageImport({ requestedSource, manualLimit }) {
     return NextResponse.json(
       {
         success: false,
-        message: error?.message || "Trusted coverage publishing failed.",
+        message: error?.message || "Hybrid coverage publishing failed.",
         durationMs: Date.now() - startedAt,
       },
       { status: 500 }
@@ -224,11 +331,14 @@ export async function GET(request) {
   const parsedLimit = Number.parseInt(searchParams.get("limit") || "", 10);
   const manualLimit = Number.isFinite(parsedLimit)
     ? Math.min(Math.max(parsedLimit, 1), MAX_MANUAL_LIMIT)
-    : null;
+    : DEFAULT_MAX_PUBLISHES_PER_RUN;
 
-  if (!["all", "vision", "drishti"].includes(requestedSource)) {
+  if (requestedSource !== "all" && !SOURCE_ADAPTERS[requestedSource]) {
     return NextResponse.json(
-      { success: false, message: "Invalid source. Use all, vision, or drishti." },
+      {
+        success: false,
+        message: `Invalid source. Use all or one of: ${Object.keys(SOURCE_ADAPTERS).join(", ")}.`,
+      },
       { status: 400 }
     );
   }
@@ -247,9 +357,9 @@ export async function GET(request) {
     {
       success: true,
       accepted: true,
-      message: "Trusted coverage import was accepted for background processing.",
+      message: "Hybrid coaching coverage was accepted for background processing.",
       requestedSource,
-      manualLimit,
+      maxOperationsPerRun: manualLimit,
     },
     { status: 202 }
   );

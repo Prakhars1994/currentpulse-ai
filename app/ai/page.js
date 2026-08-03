@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -9,6 +9,17 @@ export default function AIPage() {
   const [answer, setAnswer] = useState("");
   const [mode, setMode] = useState("Explain Topic");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const topic = new URLSearchParams(window.location.search).get("topic");
+    if (!topic) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setQuestion(`Explain ${topic} for UPSC preparation.`);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   async function askAI() {
     if (!question.trim()) return;

@@ -27,7 +27,7 @@ export default async function Hero() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, paper, why_news, image, created_at, status"
+        "id, title, slug, paper, why_news, image, image_url, created_at, status"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })
@@ -77,7 +77,7 @@ export default async function Hero() {
     0
   );
 
-  const featuredImage = featured?.image || DEFAULT_IMAGE;
+  const featuredImage = featured?.image || featured?.image_url || DEFAULT_IMAGE;
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800">

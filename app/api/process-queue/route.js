@@ -9,6 +9,7 @@ export const maxDuration = 300;
 const HARD_STOP_MS = 280000;
 const MINIMUM_NEXT_ITEM_BUDGET_MS = 45000;
 const STALE_PROCESSING_MINUTES = 20;
+const PROCESSING_CONCURRENCY = 2;
 
 function isAuthorised(request) {
   const configuredSecret = process.env.CRON_SECRET?.trim() || "";
@@ -168,74 +169,95 @@ async function executeQueueProcessing() {
   const supabase = createServerSupabase();
   const results = [];
   const attemptedIds = new Set();
-  let averageItemDurationMs = MINIMUM_NEXT_ITEM_BUDGET_MS;
+  const itemDurations = [];
+  let stopRequested = false;
+  let stoppedForRuntimeBudget = false;
 
   try {
     const recovered = await recoverStaleQueueItems(supabase);
 
-    while (true) {
-      const elapsed = Date.now() - startedAt;
-      const expectedNextDuration = Math.max(
-        MINIMUM_NEXT_ITEM_BUDGET_MS,
-        Math.ceil(averageItemDurationMs * 1.25)
-      );
+    async function worker(workerNumber) {
+      while (!stopRequested) {
+        const averageItemDurationMs = itemDurations.length
+          ? Math.round(
+              itemDurations.reduce((total, duration) => total + duration, 0) /
+                itemDurations.length
+            )
+          : MINIMUM_NEXT_ITEM_BUDGET_MS;
+        const elapsed = Date.now() - startedAt;
+        const expectedNextDuration = Math.max(
+          MINIMUM_NEXT_ITEM_BUDGET_MS,
+          Math.ceil(averageItemDurationMs * 1.25)
+        );
 
-      if (elapsed + expectedNextDuration >= HARD_STOP_MS) break;
-
-      const queueItem = await getPendingQueueItem(supabase, attemptedIds);
-      if (!queueItem) break;
-
-      const claimedItem = await claimQueueItem(supabase, queueItem);
-      if (!claimedItem) continue;
-      attemptedIds.add(claimedItem.id);
-
-      const itemStartedAt = Date.now();
-
-      try {
-        const published = await publishArticle(supabase, claimedItem);
-
-        if (published.status === "duplicate") {
-          await markQueueDuplicate(supabase, claimedItem.id, published.articleId);
-          results.push({
-            status: "duplicate",
-            queueId: claimedItem.id,
-            articleId: published.articleId,
-            title: published.title,
-            slug: published.slug,
-          });
-        } else {
-          await markQueuePublished(supabase, claimedItem.id, published.articleId);
-          results.push({
-            status: "published",
-            queueId: claimedItem.id,
-            articleId: published.articleId,
-            title: published.title,
-            slug: published.slug,
-            category: published.category,
-            paper: published.paper,
-          });
+        if (elapsed + expectedNextDuration >= HARD_STOP_MS) {
+          stoppedForRuntimeBudget = true;
+          break;
         }
-      } catch (error) {
-        const errorMessage = error?.message || "Queue processing failed.";
-        console.error(`[Queue processor] Failed for "${claimedItem.title}":`, errorMessage);
-        const failure = await markQueueFailed(supabase, queueItem, errorMessage);
 
-        results.push({
-          status: failure.shouldRetry ? "retry_pending" : "failed",
-          queueId: claimedItem.id,
-          title: claimedItem.title,
-          error: errorMessage,
-        });
+        const queueItem = await getPendingQueueItem(supabase, attemptedIds);
+        if (!queueItem) break;
 
-        if (failure.temporaryFailure) break;
+        attemptedIds.add(queueItem.id);
+        const claimedItem = await claimQueueItem(supabase, queueItem);
+        if (!claimedItem) continue;
+
+        const itemStartedAt = Date.now();
+
+        try {
+          const published = await publishArticle(supabase, claimedItem);
+
+          if (published.status === "duplicate") {
+            await markQueueDuplicate(supabase, claimedItem.id, published.articleId);
+            results.push({
+              status: "duplicate",
+              worker: workerNumber,
+              queueId: claimedItem.id,
+              articleId: published.articleId,
+              title: published.title,
+              slug: published.slug,
+            });
+          } else {
+            await markQueuePublished(supabase, claimedItem.id, published.articleId);
+            results.push({
+              status: "published",
+              worker: workerNumber,
+              queueId: claimedItem.id,
+              articleId: published.articleId,
+              title: published.title,
+              slug: published.slug,
+              category: published.category,
+              paper: published.paper,
+            });
+          }
+        } catch (error) {
+          const errorMessage = error?.message || "Queue processing failed.";
+          console.error(
+            `[Queue processor] Worker ${workerNumber} failed for "${claimedItem.title}":`,
+            errorMessage
+          );
+          const failure = await markQueueFailed(supabase, queueItem, errorMessage);
+
+          results.push({
+            status: failure.shouldRetry ? "retry_pending" : "failed",
+            worker: workerNumber,
+            queueId: claimedItem.id,
+            title: claimedItem.title,
+            error: errorMessage,
+          });
+
+          if (failure.temporaryFailure) stopRequested = true;
+        } finally {
+          itemDurations.push(Date.now() - itemStartedAt);
+        }
       }
-
-      const itemDuration = Date.now() - itemStartedAt;
-      averageItemDurationMs =
-        results.length === 1
-          ? itemDuration
-          : Math.round((averageItemDurationMs + itemDuration) / 2);
     }
+
+    await Promise.all(
+      Array.from({ length: PROCESSING_CONCURRENCY }, (_, index) =>
+        worker(index + 1)
+      )
+    );
 
     const publishedCount = results.filter((item) => item.status === "published").length;
     const duplicateCount = results.filter((item) => item.status === "duplicate").length;
@@ -255,8 +277,8 @@ async function executeQueueProcessing() {
         duplicate: duplicateCount,
         failed: failedCount,
         retryPending,
-        stoppedForRuntimeBudget:
-          Date.now() - startedAt + MINIMUM_NEXT_ITEM_BUDGET_MS >= HARD_STOP_MS,
+        concurrency: PROCESSING_CONCURRENCY,
+        stoppedForRuntimeBudget,
         durationMs: Date.now() - startedAt,
       },
       results,

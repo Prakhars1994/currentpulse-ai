@@ -43,6 +43,17 @@ function normalizeMarkdown(value = "") {
     .replace(/[ \t]+(#{2,4})[ \t]+/g, "\n\n$1 ")
     // Keep numbered points on separate lines when source text was flattened.
     .replace(/\s+(\d{1,2}[.)])[ \t]+(?=[A-Z])/g, "\n\n$1 ")
+    // Give common UPSC analysis labels a real visual hierarchy, including
+    // older articles generated before Markdown headings were enforced.
+    .replace(
+      /(?:^|\n|\.\s+)(Background|Context|Significance|Key Issues|Issues|Challenges|Way Forward|Conclusion|Impact|Implications|Opportunities|Recommendations)\s*:?\s+(?=[A-Z])/gi,
+      (_, heading) => `\n\n### ${heading}\n\n`
+    )
+    // Emphasize short factual labels such as "Institution:" or "Report:".
+    .replace(
+      /(^|\n)([-*]\s+)?([A-Z][A-Za-z0-9 /&()'-]{2,45}):\s+/g,
+      "$1$2**$3:** "
+    )
     // Every list item must begin on its own line.
     .replace(/\s+-[ \t]+/g, "\n- ")
     .replace(/\n{3,}/g, "\n\n")

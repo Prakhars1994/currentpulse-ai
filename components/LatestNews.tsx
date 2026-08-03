@@ -54,7 +54,7 @@ export default async function LatestNews() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, why_news, image, created_at, views"
+        "id, title, slug, category, paper, why_news, image, image_url, created_at, views"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })
@@ -63,7 +63,7 @@ export default async function LatestNews() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, image, created_at, views"
+        "id, title, slug, category, paper, image, image_url, created_at, views"
       )
       .eq("status", "published")
       .order("views", { ascending: false })
@@ -126,6 +126,7 @@ export default async function LatestNews() {
                       <img
                         src={
                           trendingArticles[0].image ||
+                          trendingArticles[0].image_url ||
                           DEFAULT_LARGE_IMAGE
                         }
                         alt={
@@ -191,7 +192,7 @@ export default async function LatestNews() {
                     >
                       <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl">
                         <img
-                          src={item.image || DEFAULT_THUMBNAIL}
+                          src={item.image || item.image_url || DEFAULT_THUMBNAIL}
                           alt={
                             item.title ||
                             "Trending current affairs article"
@@ -286,7 +287,7 @@ export default async function LatestNews() {
                     className="block overflow-hidden"
                   >
                     <img
-                      src={item.image || DEFAULT_CARD_IMAGE}
+                      src={item.image || item.image_url || DEFAULT_CARD_IMAGE}
                       alt={
                         item.title ||
                         "Current affairs article"

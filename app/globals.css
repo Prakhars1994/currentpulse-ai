@@ -64,7 +64,13 @@ body {
 .article-rich-content ol { list-style: decimal; }
 .article-rich-content li { margin: 0.45rem 0; }
 .article-rich-content li::marker { color: #22d3ee; }
-.article-rich-content strong { color: #ffffff; font-weight: 750; }
+.article-rich-content strong {
+  color: #fde68a;
+  font-weight: 800;
+  background: rgb(245 158 11 / 0.09);
+  border-radius: 0.25rem;
+  padding: 0 0.12rem;
+}
 .article-rich-content a { color: #67e8f9; text-decoration: underline; }
 .article-rich-content blockquote {
   border-left: 4px solid #22d3ee;
@@ -84,7 +90,8 @@ body {
   padding: 0.7rem;
   text-align: left;
 }
-.article-rich-content th { background: #0f172a; color: #67e8f9; }
+.article-rich-content th { background: #0c4a6e; color: #ecfeff; }
+.article-rich-content tr:nth-child(even) td { background: rgb(30 41 59 / 0.65); }
 
 @media (max-width: 640px) {
   .article-section { padding: 1.1rem; }

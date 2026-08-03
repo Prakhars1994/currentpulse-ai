@@ -1,5 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+import { generateWithRouter } from "@/lib/ai/router";
 
 const MODELS = [
   "gemini-3.6-flash",
@@ -51,21 +51,20 @@ export async function POST(request) {
       );
     }
 
-    if (!process.env.GEMINI_API_KEY) {
+    if (!process.env.GEMINI_API_KEY && !process.env.OPENROUTER_API_KEY) {
       return NextResponse.json(
-        { answer: "AI service is not configured. GEMINI_API_KEY is missing." },
+        { answer: "AI service is not configured." },
         { status: 503 }
       );
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     const prompt = `You are CurrentPulse AI, an expert UPSC mentor and current-affairs analyst.\n\nUser question:\n${cleanQuestion}\n\nTask:\n${buildInstruction(mode)}\n\nRules:\n- Use clear English.\n- Use Markdown headings and bullet points.\n- Be factual and avoid inventing data.\n- Clearly state uncertainty when information is uncertain.\n- Keep the answer focused on UPSC usefulness.\n- Do not output HTML.`;
 
     let lastError;
 
     for (const model of MODELS) {
       try {
-        const response = await ai.models.generateContent({
+        const response = await generateWithRouter({
           model,
           contents: prompt,
           config: {
@@ -77,7 +76,11 @@ export async function POST(request) {
         const answer = response?.text?.trim();
 
         if (answer) {
-          return NextResponse.json({ answer, provider: "gemini", model });
+          return NextResponse.json({
+            answer,
+            provider: response.provider || "gemini",
+            model: response.model || model,
+          });
         }
 
         lastError = new Error(`${model} returned an empty response.`);
