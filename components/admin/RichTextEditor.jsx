@@ -24,6 +24,28 @@ import {
   Redo,
 } from 'lucide-react'
 
+function ToolbarButton({
+  onClick,
+  isActive = false,
+  icon: Icon,
+  label,
+  disabled = false,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`p-2 rounded hover:bg-gray-100 transition-colors ${
+        isActive ? 'bg-gray-200 text-blue-600' : 'text-gray-700'
+      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      title={label}
+    >
+      <Icon className="h-4 w-4" />
+    </button>
+  )
+}
+
 export default function RichTextEditor({
   content,
   onChange,
@@ -73,26 +95,6 @@ export default function RichTextEditor({
   })
 
   if (!editor) return null
-
-  const ToolbarButton = ({
-    onClick,
-    isActive = false,
-    icon: Icon,
-    label,
-    disabled = false,
-  }) => (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={`p-2 rounded hover:bg-gray-100 transition-colors ${
-        isActive ? 'bg-gray-200 text-blue-600' : 'text-gray-700'
-      } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-      title={label}
-    >
-      <Icon className="h-4 w-4" />
-    </button>
-  )
 
   return (
     <div className="border border-gray-300 rounded-md overflow-hidden">

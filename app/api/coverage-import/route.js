@@ -1,69 +1,53 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { fetchVisionTopics } from "@/lib/coverage/adapters/vision";
-import { publishArticle } from "@/lib/publisher/publishArticle";
 import { fetchDrishtiTopics } from "@/lib/coverage/adapters/drishti";
+import { deduplicateCoverageTopics } from "@/lib/coverage/duplicateDetector";
+import { publishArticle } from "@/lib/publisher/publishArticle";
+import {
+  findDuplicateInArticles,
+  loadRecentArticles,
+} from "@/lib/news/duplicateRepository";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
-const DEFAULT_MAX_PUBLISHES_PER_RUN = 5;
-const MAX_ALLOWED_PUBLISHES_PER_RUN = 5;
-
-function cleanText(value) {
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function createSlug(value) {
-  return cleanText(value)
-    .toLowerCase()
-    .replace(/&/g, " and ")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 180);
-}
+const HARD_STOP_MS = 280000;
+const MINIMUM_NEXT_PUBLISH_BUDGET_MS = 50000;
+const MAX_MANUAL_LIMIT = 30;
 
 function isAuthorised(request) {
-  const configuredSecret =
-    process.env.CRON_SECRET?.trim() || "";
-
-  const authorization =
-    request.headers.get("authorization")?.trim() || "";
+  const configuredSecret = process.env.CRON_SECRET?.trim() || "";
+  const authorization = request.headers.get("authorization")?.trim() || "";
 
   if (!configuredSecret) {
-    console.error(
-      "[Coverage import] CRON_SECRET is missing."
-    );
-
+    console.error("[Coverage import] CRON_SECRET is missing.");
     return false;
   }
 
   return authorization === `Bearer ${configuredSecret}`;
 }
 
-async function publishedTopicExists(supabase, title) {
-  const slug = createSlug(title);
+function interleaveTopics(...groups) {
+  const output = [];
+  const maximumLength = Math.max(0, ...groups.map((group) => group.length));
 
-  if (!slug) {
-    return false;
+  for (let index = 0; index < maximumLength; index += 1) {
+    for (const group of groups) {
+      if (group[index]) output.push(group[index]);
+    }
   }
 
-  const { data, error } = await supabase
-    .from("articles")
-    .select("id")
-    .eq("slug", slug)
-    .maybeSingle();
+  return output;
+}
 
-  if (error) {
-    throw new Error(
-      `Published coverage check failed: ${error.message}`
-    );
-  }
-
-  return Boolean(data);
+function isTemporaryAiError(message = "") {
+  const value = String(message).toLowerCase();
+  return [
+    "429", "503", "quota", "rate limit", "resource_exhausted", "unavailable",
+    "high demand", "timeout", "timed out", "fetch failed",
+  ].some((term) => value.includes(term));
 }
 
 function toPublishingSource(topic) {
@@ -72,27 +56,17 @@ function toPublishingSource(topic) {
     description: topic.summary,
     content: topic.summary,
     url: topic.url,
-
-source: topic.source || "Trusted UPSC Source",
+    source: topic.source || "Trusted UPSC Source",
     sourceName: topic.source || "Trusted UPSC Source",
-
     publishedAt: topic.publishedAt,
-
-    category: topic.category || "General",
+    category: topic.category || "Polity & Governance",
     paper: topic.paper || "Prelims",
-
     importance: 10,
-
-    evaluation_reason:
-  `Selected by trusted UPSC current-affairs source ${
-    topic.source || "Trusted UPSC Source"
-  }.`,
-    keywords: Array.isArray(topic.keywords)
-      ? topic.keywords
-      : [],
-
+    evaluation_reason: `Selected by trusted UPSC current-affairs source ${
+      topic.source || "Trusted UPSC Source"
+    }.`,
+    keywords: Array.isArray(topic.keywords) ? topic.keywords : [],
     image_url: topic.imageUrl || null,
-
     trustedCoverage: true,
     generationMode: "trusted_coverage",
   };
@@ -103,11 +77,7 @@ export async function GET(request) {
 
   if (!isAuthorised(request)) {
     return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Unauthorised coverage publishing request.",
-      },
+      { success: false, message: "Unauthorised coverage publishing request." },
       { status: 401 }
     );
   }
@@ -116,10 +86,10 @@ export async function GET(request) {
     const supabase = createServerSupabase();
     const { searchParams } = new URL(request.url);
     const requestedSource = (searchParams.get("source") || "all").toLowerCase();
-    const requestedLimit = Number.parseInt(searchParams.get("limit") || "", 10);
-    const maxPublishesPerRun = Number.isFinite(requestedLimit)
-      ? Math.min(Math.max(requestedLimit, 1), MAX_ALLOWED_PUBLISHES_PER_RUN)
-      : DEFAULT_MAX_PUBLISHES_PER_RUN;
+    const parsedLimit = Number.parseInt(searchParams.get("limit") || "", 10);
+    const manualLimit = Number.isFinite(parsedLimit)
+      ? Math.min(Math.max(parsedLimit, 1), MAX_MANUAL_LIMIT)
+      : null;
 
     if (!["all", "vision", "drishti"].includes(requestedSource)) {
       return NextResponse.json(
@@ -128,50 +98,68 @@ export async function GET(request) {
       );
     }
 
-    const [visionTopics, drishtiTopics] = await Promise.all([
+    const [visionTopics, drishtiTopics, recentArticles] = await Promise.all([
       requestedSource === "all" || requestedSource === "vision"
         ? fetchVisionTopics()
         : Promise.resolve([]),
       requestedSource === "all" || requestedSource === "drishti"
         ? fetchDrishtiTopics()
         : Promise.resolve([]),
+      loadRecentArticles(supabase, { lookbackDays: 45, limit: 900 }),
     ]);
 
-    const topics = [...visionTopics, ...drishtiTopics];
+    const topics = deduplicateCoverageTopics(
+      interleaveTopics(visionTopics, drishtiTopics)
+    );
     const results = [];
     let publishedCount = 0;
+    let averagePublishDurationMs = MINIMUM_NEXT_PUBLISH_BUDGET_MS;
+    let aiUnavailable = false;
 
     for (const topic of topics) {
+      const duplicate = findDuplicateInArticles(
+        {
+          title: topic.title,
+          description: topic.summary,
+          publishedAt: topic.publishedAt,
+        },
+        recentArticles
+      );
+
+      if (duplicate) {
+        results.push({
+          status: "already_covered",
+          title: topic.title,
+          articleId: duplicate.id,
+          slug: duplicate.slug,
+        });
+        continue;
+      }
+
+      if (manualLimit !== null && publishedCount >= manualLimit) {
+        results.push({ status: "waiting_for_next_run", title: topic.title });
+        continue;
+      }
+
+      if (aiUnavailable) {
+        results.push({ status: "waiting_for_next_run", title: topic.title });
+        continue;
+      }
+
+      const expectedNextDuration = Math.max(
+        MINIMUM_NEXT_PUBLISH_BUDGET_MS,
+        Math.ceil(averagePublishDurationMs * 1.25)
+      );
+
+      if (Date.now() - startedAt + expectedNextDuration >= HARD_STOP_MS) {
+        results.push({ status: "waiting_for_next_run", title: topic.title });
+        continue;
+      }
+
+      const publishStartedAt = Date.now();
+
       try {
-        if (
-          await publishedTopicExists(
-            supabase,
-            topic.title
-          )
-        ) {
-          results.push({
-            status: "already_published",
-            title: topic.title,
-          });
-
-          continue;
-        }
-
-        if (
-          publishedCount >= maxPublishesPerRun
-        ) {
-          results.push({
-            status: "waiting_for_next_run",
-            title: topic.title,
-          });
-
-          continue;
-        }
-
-        const published = await publishArticle(
-          supabase,
-          toPublishingSource(topic)
-        );
+        const published = await publishArticle(supabase, toPublishingSource(topic));
 
         if (published.status === "duplicate") {
           results.push({
@@ -180,84 +168,62 @@ export async function GET(request) {
             articleId: published.articleId,
             slug: published.slug,
           });
-
-          continue;
+        } else {
+          publishedCount += 1;
+          results.push({
+            status: "published",
+            sourceTitle: topic.title,
+            articleId: published.articleId,
+            title: published.title,
+            slug: published.slug,
+            category: published.category,
+            paper: published.paper,
+          });
         }
-
-        publishedCount += 1;
-
-        results.push({
-          status: "published",
-          sourceTitle: topic.title,
-          articleId: published.articleId,
-          title: published.title,
-          slug: published.slug,
-          category: published.category,
-          paper: published.paper,
-        });
       } catch (error) {
         console.error(
           `[Coverage import] Failed for "${topic.title}":`,
           error?.message || error
         );
-
         results.push({
           status: "failed",
           title: topic.title,
-          error:
-            error?.message ||
-            "Trusted coverage publishing failed.",
+          error: error?.message || "Trusted coverage publishing failed.",
         });
+        aiUnavailable = isTemporaryAiError(error?.message);
       }
+
+      const publishDuration = Date.now() - publishStartedAt;
+      averagePublishDurationMs =
+        publishedCount <= 1
+          ? publishDuration
+          : Math.round((averagePublishDurationMs + publishDuration) / 2);
     }
 
-    const alreadyPublished = results.filter(
-      (result) =>
-        result.status === "already_published"
-    ).length;
-
-    const duplicate = results.filter(
-      (result) => result.status === "duplicate"
-    ).length;
-
-    const waitingForNextRun = results.filter(
-      (result) =>
-        result.status === "waiting_for_next_run"
-    ).length;
-
-    const failed = results.filter(
-      (result) => result.status === "failed"
-    ).length;
+    const countStatus = (status) =>
+      results.filter((result) => result.status === status).length;
 
     return NextResponse.json({
       success: true,
       requestedSource,
-      maxPublishesPerRun,
-      sources: {
-  vision: visionTopics.length,
-  drishti: drishtiTopics.length,
-},
-      fetched: topics.length,
+      manualLimit,
+      sources: { vision: visionTopics.length, drishti: drishtiTopics.length },
+      fetched: visionTopics.length + drishtiTopics.length,
+      uniqueTopics: topics.length,
       published: publishedCount,
-      alreadyPublished,
-      duplicate,
-      waitingForNextRun,
-      failed,
+      alreadyCovered: countStatus("already_covered"),
+      duplicate: countStatus("duplicate"),
+      waitingForNextRun: countStatus("waiting_for_next_run"),
+      failed: countStatus("failed"),
       durationMs: Date.now() - startedAt,
       results,
     });
   } catch (error) {
-    console.error(
-      "[Coverage import] Unexpected failure:",
-      error
-    );
-
+    console.error("[Coverage import] Unexpected failure:", error);
     return NextResponse.json(
       {
         success: false,
-        message:
-          error?.message ||
-          "Trusted coverage publishing failed.",
+        message: error?.message || "Trusted coverage publishing failed.",
         durationMs: Date.now() - startedAt,
       },
       { status: 500 }

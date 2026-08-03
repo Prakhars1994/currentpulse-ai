@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/auto-publish",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/process-queue",
+      "schedule": "5,35 * * * *"
+    },
+    {
+      "path": "/api/coverage-import",
+      "schedule": "15 * * * *"
+    }
+  ]
+}

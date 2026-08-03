@@ -4,27 +4,51 @@ import { publishArticle } from "@/lib/publisher/publishArticle";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 300;
+
+const HARD_STOP_MS = 280000;
+const MINIMUM_NEXT_ITEM_BUDGET_MS = 45000;
+const STALE_PROCESSING_MINUTES = 20;
 
 function isAuthorised(request) {
-  const configuredSecret =
-    process.env.CRON_SECRET?.trim() || "";
-
-  const authorization =
-    request.headers.get("authorization")?.trim() || "";
+  const configuredSecret = process.env.CRON_SECRET?.trim() || "";
+  const authorization = request.headers.get("authorization")?.trim() || "";
 
   if (!configuredSecret) {
-    console.error(
-      "[Queue processor] CRON_SECRET is missing."
-    );
-
+    console.error("[Queue processor] CRON_SECRET is missing.");
     return false;
   }
 
   return authorization === `Bearer ${configuredSecret}`;
 }
 
-async function getPendingQueueItem(supabase) {
+async function recoverStaleQueueItems(supabase) {
+  const cutoff = new Date(
+    Date.now() - STALE_PROCESSING_MINUTES * 60 * 1000
+  ).toISOString();
+  const now = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("article_queue")
+    .update({
+      status: "pending",
+      processing_started_at: null,
+      updated_at: now,
+      error: "Recovered after an interrupted processing attempt.",
+    })
+    .eq("status", "processing")
+    .lt("processing_started_at", cutoff)
+    .select("id");
+
+  if (error) {
+    console.error("[Queue processor] Stale-item recovery failed:", error.message);
+    return 0;
+  }
+
+  return data?.length || 0;
+}
+
+async function getPendingQueueItem(supabase, attemptedIds) {
   const { data, error } = await supabase
     .from("article_queue")
     .select("*")
@@ -32,21 +56,14 @@ async function getPendingQueueItem(supabase) {
     .lt("attempts", 3)
     .order("importance", { ascending: false })
     .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .limit(50);
 
-  if (error) {
-    throw new Error(
-      `Queue fetch failed: ${error.message}`
-    );
-  }
-
-  return data;
+  if (error) throw new Error(`Queue fetch failed: ${error.message}`);
+  return (data || []).find((item) => !attemptedIds.has(item.id)) || null;
 }
 
 async function claimQueueItem(supabase, queueItem) {
   const now = new Date().toISOString();
-
   const { data, error } = await supabase
     .from("article_queue")
     .update({
@@ -61,115 +78,67 @@ async function claimQueueItem(supabase, queueItem) {
     .select()
     .maybeSingle();
 
-  if (error) {
-    throw new Error(
-      `Queue claim failed: ${error.message}`
-    );
-  }
-
+  if (error) throw new Error(`Queue claim failed: ${error.message}`);
   return data;
 }
 
-async function markQueueDuplicate(
-  supabase,
-  queueItemId,
-  articleId
-) {
-  const now = new Date().toISOString();
-
+async function updateQueueItem(supabase, queueItemId, values, errorPrefix) {
   const { error } = await supabase
     .from("article_queue")
-    .update({
+    .update(values)
+    .eq("id", queueItemId);
+
+  if (error) throw new Error(`${errorPrefix}: ${error.message}`);
+}
+
+async function markQueueDuplicate(supabase, queueItemId, articleId) {
+  const now = new Date().toISOString();
+  await updateQueueItem(
+    supabase,
+    queueItemId,
+    {
       status: "duplicate",
       article_id: articleId,
       processing_started_at: null,
       processed_at: now,
       updated_at: now,
-      error: "Generated article already exists.",
-    })
-    .eq("id", queueItemId);
-
-  if (error) {
-    throw new Error(
-      `Queue duplicate update failed: ${error.message}`
-    );
-  }
+      error: "The same event is already represented by a published article.",
+    },
+    "Queue duplicate update failed"
+  );
 }
 
-async function markQueuePublished(
-  supabase,
-  queueItemId,
-  articleId
-) {
+async function markQueuePublished(supabase, queueItemId, articleId) {
   const now = new Date().toISOString();
-
-  const { error } = await supabase
-    .from("article_queue")
-    .update({
+  await updateQueueItem(
+    supabase,
+    queueItemId,
+    {
       status: "published",
       article_id: articleId,
       processing_started_at: null,
       processed_at: now,
       updated_at: now,
       error: null,
-    })
-    .eq("id", queueItemId);
-
-  if (error) {
-    throw new Error(
-      `Queue completion update failed: ${error.message}`
-    );
-  }
+    },
+    "Queue completion update failed"
+  );
 }
 
 function isTemporaryAiError(errorMessage = "") {
   const message = String(errorMessage).toLowerCase();
-
-  const temporaryTerms = [
-    "429",
-    "503",
-    "resource_exhausted",
-    "unavailable",
-    "quota",
-    "rate limit",
-    "high demand",
-    "try again later",
-    "temporarily unavailable",
-    "timeout",
-    "timed out",
-    "network error",
-    "fetch failed",
-  ];
-
-  return temporaryTerms.some((term) =>
-    message.includes(term)
-  );
+  return [
+    "429", "503", "resource_exhausted", "unavailable", "quota", "rate limit",
+    "high demand", "try again later", "temporarily unavailable", "timeout",
+    "timed out", "network error", "fetch failed",
+  ].some((term) => message.includes(term));
 }
 
-async function markQueueFailed(
-  supabase,
-  originalQueueItem,
-  errorMessage
-) {
-  const temporaryFailure =
-    isTemporaryAiError(errorMessage);
-
-  /*
-   * claimQueueItem already increased attempts by one.
-   * originalQueueItem still contains the attempt count
-   * from before the claim.
-   */
-  const previousAttempts = Number(
-    originalQueueItem.attempts || 0
-  );
-
-  const attempts = temporaryFailure
-    ? previousAttempts
-    : previousAttempts + 1;
-
-  const shouldRetry =
-    temporaryFailure || attempts < 3;
-
+async function markQueueFailed(supabase, originalQueueItem, errorMessage) {
+  const temporaryFailure = isTemporaryAiError(errorMessage);
+  const previousAttempts = Number(originalQueueItem.attempts || 0);
+  const attempts = temporaryFailure ? previousAttempts : previousAttempts + 1;
+  const shouldRetry = temporaryFailure || attempts < 3;
   const now = new Date().toISOString();
 
   const { error } = await supabase
@@ -187,11 +156,10 @@ async function markQueueFailed(
     .eq("id", originalQueueItem.id);
 
   if (error) {
-    console.error(
-      "[Queue processor] Failed to record queue error:",
-      error.message
-    );
+    console.error("[Queue processor] Failed to record queue error:", error.message);
   }
+
+  return { temporaryFailure, shouldRetry, attempts };
 }
 
 export async function GET(request) {
@@ -199,112 +167,115 @@ export async function GET(request) {
 
   if (!isAuthorised(request)) {
     return NextResponse.json(
-      {
-        success: false,
-        message:
-          "Unauthorised queue processing request.",
-      },
+      { success: false, message: "Unauthorised queue processing request." },
       { status: 401 }
     );
   }
 
   const supabase = createServerSupabase();
-  let queueItem = null;
+  const results = [];
+  const attemptedIds = new Set();
+  let averageItemDurationMs = MINIMUM_NEXT_ITEM_BUDGET_MS;
 
   try {
-    queueItem = await getPendingQueueItem(supabase);
+    const recovered = await recoverStaleQueueItems(supabase);
 
-    if (!queueItem) {
-      return NextResponse.json({
-        success: true,
-        message:
-          "No pending article exists in the queue.",
-        durationMs: Date.now() - startedAt,
-      });
-    }
-
-    const claimedItem = await claimQueueItem(
-      supabase,
-      queueItem
-    );
-
-    if (!claimedItem) {
-      return NextResponse.json({
-        success: true,
-        message:
-          "The queue item was already claimed by another process.",
-        durationMs: Date.now() - startedAt,
-      });
-    }
-
-    const published = await publishArticle(
-      supabase,
-      claimedItem
-    );
-
-    if (published.status === "duplicate") {
-      await markQueueDuplicate(
-        supabase,
-        claimedItem.id,
-        published.articleId
+    while (true) {
+      const elapsed = Date.now() - startedAt;
+      const expectedNextDuration = Math.max(
+        MINIMUM_NEXT_ITEM_BUDGET_MS,
+        Math.ceil(averageItemDurationMs * 1.25)
       );
 
-      return NextResponse.json({
-        success: true,
-        message:
-          "Queue item skipped because the article exists.",
-        result: {
-          status: "duplicate",
+      if (elapsed + expectedNextDuration >= HARD_STOP_MS) break;
+
+      const queueItem = await getPendingQueueItem(supabase, attemptedIds);
+      if (!queueItem) break;
+
+      const claimedItem = await claimQueueItem(supabase, queueItem);
+      if (!claimedItem) continue;
+      attemptedIds.add(claimedItem.id);
+
+      const itemStartedAt = Date.now();
+
+      try {
+        const published = await publishArticle(supabase, claimedItem);
+
+        if (published.status === "duplicate") {
+          await markQueueDuplicate(supabase, claimedItem.id, published.articleId);
+          results.push({
+            status: "duplicate",
+            queueId: claimedItem.id,
+            articleId: published.articleId,
+            title: published.title,
+            slug: published.slug,
+          });
+        } else {
+          await markQueuePublished(supabase, claimedItem.id, published.articleId);
+          results.push({
+            status: "published",
+            queueId: claimedItem.id,
+            articleId: published.articleId,
+            title: published.title,
+            slug: published.slug,
+            category: published.category,
+            paper: published.paper,
+          });
+        }
+      } catch (error) {
+        const errorMessage = error?.message || "Queue processing failed.";
+        console.error(`[Queue processor] Failed for "${claimedItem.title}":`, errorMessage);
+        const failure = await markQueueFailed(supabase, queueItem, errorMessage);
+
+        results.push({
+          status: failure.shouldRetry ? "retry_pending" : "failed",
           queueId: claimedItem.id,
-          articleId: published.articleId,
-          title: published.title,
-          slug: published.slug,
-        },
-        durationMs: Date.now() - startedAt,
-      });
+          title: claimedItem.title,
+          error: errorMessage,
+        });
+
+        if (failure.temporaryFailure) break;
+      }
+
+      const itemDuration = Date.now() - itemStartedAt;
+      averageItemDurationMs =
+        results.length === 1
+          ? itemDuration
+          : Math.round((averageItemDurationMs + itemDuration) / 2);
     }
 
-    await markQueuePublished(
-      supabase,
-      claimedItem.id,
-      published.articleId
-    );
+    const publishedCount = results.filter((item) => item.status === "published").length;
+    const duplicateCount = results.filter((item) => item.status === "duplicate").length;
+    const failedCount = results.filter((item) => item.status === "failed").length;
+    const retryPending = results.filter((item) => item.status === "retry_pending").length;
 
     return NextResponse.json({
       success: true,
-      message: "One queued article was published.",
-      result: {
-        status: "published",
-        queueId: claimedItem.id,
-        articleId: published.articleId,
-        title: published.title,
-        slug: published.slug,
-        category: published.category,
-        paper: published.paper,
+      message:
+        results.length > 0
+          ? `Processed ${results.length} queued article candidates.`
+          : "No pending article was ready for processing.",
+      stats: {
+        recovered,
+        processed: results.length,
+        published: publishedCount,
+        duplicate: duplicateCount,
+        failed: failedCount,
+        retryPending,
+        stoppedForRuntimeBudget:
+          Date.now() - startedAt + MINIMUM_NEXT_ITEM_BUDGET_MS >= HARD_STOP_MS,
+        durationMs: Date.now() - startedAt,
       },
-      durationMs: Date.now() - startedAt,
+      results,
     });
   } catch (error) {
-    const errorMessage =
-      error?.message || "Queue processing failed.";
-
-    console.error(
-      "[Queue processor] Processing failed:",
-      errorMessage
-    );
-
-    if (queueItem) {
-      await markQueueFailed(
-        supabase,
-        queueItem,
-        errorMessage
-      );
-    }
-
+    const errorMessage = error?.message || "Queue processing failed.";
+    console.error("[Queue processor] Unexpected failure:", errorMessage);
     return NextResponse.json(
       {
         success: false,
         message: errorMessage,
+        partialResults: results,
         durationMs: Date.now() - startedAt,
       },
       { status: 500 }

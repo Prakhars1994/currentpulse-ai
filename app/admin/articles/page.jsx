@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Pencil, Trash2, PlusCircle } from 'lucide-react'
@@ -10,11 +10,7 @@ export default function ArticlesPage() {
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    fetchArticles()
-  }, [])
-
-  async function fetchArticles() {
+  const fetchArticles = useCallback(async () => {
     setLoading(true)
 
     const { data, error } = await supabase
@@ -30,7 +26,15 @@ export default function ArticlesPage() {
     }
 
     setLoading(false)
-  }
+  }, [])
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      fetchArticles()
+    }, 0)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [fetchArticles])
 
   async function deleteArticle(id) {
     if (!confirm('Delete this article?')) return
