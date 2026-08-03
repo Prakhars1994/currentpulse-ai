@@ -98,6 +98,44 @@ body {
   .article-rich-content { font-size: 1rem; line-height: 1.75; }
 }
 
+.print-document .article-rich-content {
+  color: #334155;
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
+.print-document .article-rich-content h2,
+.print-document .article-rich-content h3,
+.print-document .article-rich-content h4,
+.print-document .article-rich-content p {
+  color: #1e293b;
+}
+
+.print-document .article-rich-content strong {
+  color: #78350f;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  body {
+    background: white;
+  }
+
+  .print-document .article-rich-content {
+    font-size: 10.5pt;
+    line-height: 1.55;
+  }
+
+  .print-document a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
 /* Improved readability for imported coaching notes */
 .article-rich-content p {
   max-width: 78ch;

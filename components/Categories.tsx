@@ -1,40 +1,19 @@
 import Link from "next/link";
+import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 
 export default function Categories() {
-  const categories = [
-    {
-      name: "🏛️ Polity",
-      link: "/category/polity",
-    },
-    {
-      name: "💰 Economy",
-      link: "/category/economy",
-    },
-    {
-      name: "🌍 International",
-      link: "/category/international",
-    },
-    {
-      name: "🔬 Science & Tech",
-      link: "/category/science-tech",
-    },
-    {
-      name: "🌱 Environment",
-      link: "/category/environment",
-    },
-    {
-      name: "⚽ Sports",
-      link: "/category/sports",
-    },
-    {
-      name: "🛰️ Space",
-      link: "/category/space",
-    },
-    {
-      name: "⚖️ Judiciary",
-      link: "/category/judiciary",
-    },
-  ];
+  const categories = CATEGORY_ROUTES.filter((category) =>
+    [
+      "polity",
+      "economy",
+      "international",
+      "science-tech",
+      "environment",
+      "sports",
+      "space",
+      "judiciary",
+    ].includes(category.slug)
+  );
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-20">
@@ -46,10 +25,10 @@ export default function Categories() {
         {categories.map((category, index) => (
           <Link
             key={index}
-            href={category.link}
+            href={`/category/${category.slug}`}
             className="rounded-2xl border border-slate-800 bg-slate-900 p-8 text-xl font-semibold transition hover:border-cyan-400 hover:bg-slate-800 text-center"
           >
-            {category.name}
+            {category.icon} {category.shortName || category.name}
           </Link>
         ))}
       </div>

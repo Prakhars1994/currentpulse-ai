@@ -10,7 +10,8 @@ import {
   Bot,
   FileText,
   House,
-  Mail,
+  NotebookPen,
+  LibraryBig,
   Shield,
 } from "lucide-react";
 
@@ -44,14 +45,19 @@ export default function Navbar() {
       icon: FileText,
     },
     {
+      name: "Notes",
+      href: "/notes",
+      icon: NotebookPen,
+    },
+    {
+      name: "PYQs",
+      href: "/pyq",
+      icon: LibraryBig,
+    },
+    {
       name: "AI",
       href: "/ai",
       icon: Bot,
-    },
-    {
-      name: "Contact",
-      href: "/contact",
-      icon: Mail,
     },
   ];
 
@@ -102,7 +108,7 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
 
-        <nav className="hidden items-center gap-7 lg:flex">
+        <nav className="hidden items-center gap-5 xl:flex">
           {links.map((item) => {
             const active = isActiveLink(item.href);
 
@@ -128,7 +134,7 @@ export default function Navbar() {
 
         {/* Desktop Right Buttons */}
 
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-3 xl:flex">
           <button
             type="button"
             onClick={() => setSearchOpen((current) => !current)}
@@ -155,7 +161,7 @@ export default function Navbar() {
           onClick={() => setOpen((current) => !current)}
           aria-label={open ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={open}
-          className="text-white lg:hidden"
+          className="text-white xl:hidden"
         >
           {open ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -164,7 +170,7 @@ export default function Navbar() {
       {/* Desktop Search Bar */}
 
       {searchOpen && (
-        <div className="hidden border-t border-slate-800 bg-slate-950 lg:block">
+        <div className="hidden border-t border-slate-800 bg-slate-950 xl:block">
           <form
             onSubmit={handleSearch}
             className="mx-auto flex max-w-3xl gap-3 px-6 py-5"
@@ -199,7 +205,7 @@ export default function Navbar() {
       {/* Mobile Navigation */}
 
       {open && (
-        <div className="border-t border-slate-800 bg-slate-950 lg:hidden">
+        <div className="border-t border-slate-800 bg-slate-950 xl:hidden">
           <div className="space-y-2 p-6">
             {/* Mobile Search */}
 

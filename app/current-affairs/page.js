@@ -3,15 +3,7 @@ export const revalidate = 0;
 
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-
-function createCategorySlug(category = "") {
-  return category
-    .toLowerCase()
-    .trim()
-    .replace(/&/g, "and")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+import { createCategorySlug } from "@/lib/categoryRouting";
 
 function stripHtml(content = "") {
   return content
@@ -113,7 +105,7 @@ export default async function CurrentAffairsPage() {
                         href={`/current-affairs/${article.slug}`}
                         className="font-semibold text-cyan-700 transition hover:text-cyan-900"
                       >
-                        Read More â†’
+                        Read More →
                       </Link>
                     </div>
                   </div>

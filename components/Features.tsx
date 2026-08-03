@@ -8,13 +8,13 @@ export default function Features() {
       link: "/current-affairs",
     },
     {
-      title: "🧠 AI Notes",
-      desc: "Short AI-generated notes for quick revision.",
+      title: "🧠 Revision Notes",
+      desc: "Create, search, auto-save and export personal study notes.",
       link: "/notes",
     },
     {
       title: "📄 Daily PDFs",
-      desc: "Download concise PDFs every day.",
+      desc: "Build printable daily, weekly and monthly compilations.",
       link: "/pdf",
     },
     {
@@ -24,12 +24,12 @@ export default function Features() {
     },
     {
       title: "📊 PYQ Analysis",
-      desc: "Previous year question analysis by topic.",
+      desc: "Filter PYQ themes and open structured answer frameworks.",
       link: "/pyq",
     },
     {
       title: "🎥 Video Library",
-      desc: "Watch current affairs video summaries.",
+      desc: "Discover topic-wise video explainers for recent articles.",
       link: "/videos",
     },
   ];
