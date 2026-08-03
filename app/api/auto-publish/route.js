@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { NEWS_SOURCES, UPSC_QUERY_TERMS } from "@/lib/news/sourceCatalog";
 import { fetchSourceRss } from "@/lib/news/rss";
 import { deduplicateArticles } from "@/lib/news/filter";
@@ -267,15 +267,8 @@ async function writeCandidates(supabase, candidates, status) {
   );
 }
 
-export async function GET(request) {
+async function executeAutoPublish() {
   const startedAt = Date.now();
-
-  if (!isAuthorised(request)) {
-    return NextResponse.json(
-      { success: false, message: "Unauthorised automatic publishing request." },
-      { status: 401 }
-    );
-  }
 
   try {
     const supabase = createServerSupabase();
@@ -329,4 +322,32 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(request) {
+  if (!isAuthorised(request)) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorised automatic publishing request." },
+      { status: 401 }
+    );
+  }
+
+  const waitForCompletion =
+    new URL(request.url).searchParams.get("wait") === "1";
+
+  if (waitForCompletion) return executeAutoPublish();
+
+  after(async () => {
+    const response = await executeAutoPublish();
+    console.log(`[Auto publish] Background run completed with HTTP ${response.status}.`);
+  });
+
+  return NextResponse.json(
+    {
+      success: true,
+      accepted: true,
+      message: "Automatic news collection was accepted for background processing.",
+    },
+    { status: 202 }
+  );
 }

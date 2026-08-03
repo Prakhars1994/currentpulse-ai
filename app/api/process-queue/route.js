@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { publishArticle } from "@/lib/publisher/publishArticle";
 
@@ -162,15 +162,8 @@ async function markQueueFailed(supabase, originalQueueItem, errorMessage) {
   return { temporaryFailure, shouldRetry, attempts };
 }
 
-export async function GET(request) {
+async function executeQueueProcessing() {
   const startedAt = Date.now();
-
-  if (!isAuthorised(request)) {
-    return NextResponse.json(
-      { success: false, message: "Unauthorised queue processing request." },
-      { status: 401 }
-    );
-  }
 
   const supabase = createServerSupabase();
   const results = [];
@@ -281,4 +274,32 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(request) {
+  if (!isAuthorised(request)) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorised queue processing request." },
+      { status: 401 }
+    );
+  }
+
+  const waitForCompletion =
+    new URL(request.url).searchParams.get("wait") === "1";
+
+  if (waitForCompletion) return executeQueueProcessing();
+
+  after(async () => {
+    const response = await executeQueueProcessing();
+    console.log(`[Queue processor] Background run completed with HTTP ${response.status}.`);
+  });
+
+  return NextResponse.json(
+    {
+      success: true,
+      accepted: true,
+      message: "Queue processing was accepted for background execution.",
+    },
+    { status: 202 }
+  );
 }

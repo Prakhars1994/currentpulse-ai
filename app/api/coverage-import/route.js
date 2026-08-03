@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { fetchVisionTopics } from "@/lib/coverage/adapters/vision";
 import { fetchDrishtiTopics } from "@/lib/coverage/adapters/drishti";
@@ -72,31 +72,11 @@ function toPublishingSource(topic) {
   };
 }
 
-export async function GET(request) {
+async function executeCoverageImport({ requestedSource, manualLimit }) {
   const startedAt = Date.now();
-
-  if (!isAuthorised(request)) {
-    return NextResponse.json(
-      { success: false, message: "Unauthorised coverage publishing request." },
-      { status: 401 }
-    );
-  }
 
   try {
     const supabase = createServerSupabase();
-    const { searchParams } = new URL(request.url);
-    const requestedSource = (searchParams.get("source") || "all").toLowerCase();
-    const parsedLimit = Number.parseInt(searchParams.get("limit") || "", 10);
-    const manualLimit = Number.isFinite(parsedLimit)
-      ? Math.min(Math.max(parsedLimit, 1), MAX_MANUAL_LIMIT)
-      : null;
-
-    if (!["all", "vision", "drishti"].includes(requestedSource)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid source. Use all, vision, or drishti." },
-        { status: 400 }
-      );
-    }
 
     const [visionTopics, drishtiTopics, recentArticles] = await Promise.all([
       requestedSource === "all" || requestedSource === "vision"
@@ -229,4 +209,48 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(request) {
+  if (!isAuthorised(request)) {
+    return NextResponse.json(
+      { success: false, message: "Unauthorised coverage publishing request." },
+      { status: 401 }
+    );
+  }
+
+  const { searchParams } = new URL(request.url);
+  const requestedSource = (searchParams.get("source") || "all").toLowerCase();
+  const parsedLimit = Number.parseInt(searchParams.get("limit") || "", 10);
+  const manualLimit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(parsedLimit, 1), MAX_MANUAL_LIMIT)
+    : null;
+
+  if (!["all", "vision", "drishti"].includes(requestedSource)) {
+    return NextResponse.json(
+      { success: false, message: "Invalid source. Use all, vision, or drishti." },
+      { status: 400 }
+    );
+  }
+
+  const waitForCompletion = searchParams.get("wait") === "1";
+  const run = () => executeCoverageImport({ requestedSource, manualLimit });
+
+  if (waitForCompletion) return run();
+
+  after(async () => {
+    const response = await run();
+    console.log(`[Coverage import] Background run completed with HTTP ${response.status}.`);
+  });
+
+  return NextResponse.json(
+    {
+      success: true,
+      accepted: true,
+      message: "Trusted coverage import was accepted for background processing.",
+      requestedSource,
+      manualLimit,
+    },
+    { status: 202 }
+  );
 }
