@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { hasCoachingSource } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 function stripHtml(value: string | null) {
@@ -34,7 +35,7 @@ export default async function Hero() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, why_news, image, image_url, image_source_url, created_at, status"
+        "id, title, slug, category, paper, why_news, image, image_url, image_source_url, created_at, status, article_sources(source_kind)"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })
@@ -85,6 +86,10 @@ export default async function Hero() {
   );
 
   const featuredImage = resolveDisplayImage(featured || {});
+  const featuredIsCurrentAffairs = hasCoachingSource(featured || {});
+  const featuredStreamLabel = featuredIsCurrentAffairs
+    ? "Coaching current affairs"
+    : "AI news analysis";
 
   return (
     <section className="relative overflow-hidden border-b border-white/5 bg-[radial-gradient(circle_at_12%_8%,rgba(6,182,212,.16),transparent_30%),radial-gradient(circle_at_90%_70%,rgba(37,99,235,.18),transparent_33%),linear-gradient(135deg,#020617,#0f172a_55%,#111827)]">
@@ -219,7 +224,7 @@ export default async function Hero() {
 
                 <div className="p-6 sm:p-8">
                   <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-[.12em]">
-                    <span className="rounded-full bg-cyan-400 px-3 py-1.5 text-slate-950">Latest brief</span>
+                    <span className="rounded-full bg-cyan-400 px-3 py-1.5 text-slate-950">{featuredStreamLabel}</span>
                     <span className="rounded-full border border-slate-700 bg-slate-950/80 px-3 py-1.5 text-slate-300">{featured.category || "Current Affairs"}</span>
                   </div>
 

@@ -1,10 +1,32 @@
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import {
+  coachingSourceLabel,
+  loadArticleStreams,
+} from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 export const revalidate = 0;
 
-function stripHtml(value: string | null) {
+type ArticleSource = {
+  source_kind?: string | null;
+  source_name?: string | null;
+};
+
+type StreamArticle = {
+  id: number | string;
+  title?: string | null;
+  slug: string;
+  category?: string | null;
+  paper?: string | null;
+  why_news?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  image_source_url?: string | null;
+  created_at?: string | null;
+  article_sources?: ArticleSource[];
+};
+
+function stripHtml(value?: string | null) {
   if (!value) return "";
 
   return value
@@ -17,7 +39,7 @@ function stripHtml(value: string | null) {
     .trim();
 }
 
-function formatDate(date: string | null) {
+function formatDate(date?: string | null) {
   if (!date) return "";
 
   return new Date(date).toLocaleDateString("en-IN", {
@@ -27,326 +49,196 @@ function formatDate(date: string | null) {
   });
 }
 
-function formatViews(views: number | null) {
-  const totalViews = Number(views || 0);
+function ArticleCard({
+  item,
+  stream,
+}: {
+  item: StreamArticle;
+  stream: "current-affairs" | "news";
+}) {
+  const isCurrentAffairs = stream === "current-affairs";
+  const accentText = isCurrentAffairs ? "text-cyan-300" : "text-amber-300";
+  const accentBorder = isCurrentAffairs
+    ? "hover:border-cyan-400/60 hover:shadow-cyan-950/25"
+    : "hover:border-amber-400/60 hover:shadow-amber-950/20";
+  const titleHover = isCurrentAffairs
+    ? "group-hover:text-cyan-300"
+    : "group-hover:text-amber-300";
+  const streamLabel = isCurrentAffairs
+    ? coachingSourceLabel(item)
+    : "CurrentPulse News Desk";
 
-  if (totalViews >= 1000000) {
-    return `${(totalViews / 1000000).toFixed(1)}M`;
-  }
+  return (
+    <article
+      className={`group overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/85 shadow-xl shadow-slate-950/20 transition duration-300 hover:-translate-y-1 hover:shadow-2xl ${accentBorder}`}
+    >
+      <Link
+        href={`/current-affairs/${item.slug}`}
+        className="block overflow-hidden"
+      >
+        <div className="relative">
+          <img
+            src={resolveDisplayImage(item)}
+            alt={item.title || (isCurrentAffairs ? "UPSC current affairs article" : "UPSC news analysis")}
+            className="h-52 w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+            loading="lazy"
+            decoding="async"
+          />
+          <span
+            className={`absolute left-4 top-4 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-xs font-black uppercase tracking-wide backdrop-blur ${accentText}`}
+          >
+            {isCurrentAffairs ? "Coaching CA" : "AI News"}
+          </span>
+        </div>
+      </Link>
 
-  if (totalViews >= 1000) {
-    return `${(totalViews / 1000).toFixed(1)}K`;
-  }
+      <div className="p-6">
+        <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+          <span className={`rounded-full bg-white/5 px-3 py-1.5 ${accentText}`}>
+            {item.category || "General Studies"}
+          </span>
+          <span className="rounded-full bg-blue-400/10 px-3 py-1.5 text-blue-300">
+            {item.paper || "UPSC"}
+          </span>
+        </div>
 
-  return totalViews.toString();
+        <Link href={`/current-affairs/${item.slug}`}>
+          <h3 className={`mt-4 line-clamp-3 text-xl font-black leading-snug text-white transition ${titleHover}`}>
+            {item.title}
+          </h3>
+        </Link>
+
+        <p className="mt-3 line-clamp-3 leading-7 text-slate-400">
+          {stripHtml(item.why_news) ||
+            (isCurrentAffairs
+              ? "Read the coaching-synthesised UPSC analysis."
+              : "Read the AI-selected UPSC news analysis.")}
+        </p>
+
+        <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-800 pt-4">
+          <div>
+            <p className={`max-w-[12rem] truncate text-xs font-bold ${accentText}`}>
+              {streamLabel}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">
+              {formatDate(item.created_at)}
+            </p>
+          </div>
+
+          <Link
+            href={`/current-affairs/${item.slug}`}
+            className={`shrink-0 text-sm font-black ${accentText}`}
+          >
+            Read →
+          </Link>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function StreamSection({
+  eyebrow,
+  title,
+  description,
+  articles,
+  stream,
+  href,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  articles: StreamArticle[];
+  stream: "current-affairs" | "news";
+  href: string;
+}) {
+  const isCurrentAffairs = stream === "current-affairs";
+  const accentText = isCurrentAffairs ? "text-cyan-400" : "text-amber-400";
+  const buttonStyle = isCurrentAffairs
+    ? "border-cyan-400/50 text-cyan-300 hover:bg-cyan-400 hover:text-slate-950"
+    : "border-amber-400/50 text-amber-300 hover:bg-amber-400 hover:text-slate-950";
+
+  return (
+    <section className={isCurrentAffairs ? "bg-slate-900 py-20" : "bg-slate-950 py-20"}>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+          <div>
+            <p className={`font-black uppercase tracking-[.2em] ${accentText}`}>
+              {eyebrow}
+            </p>
+            <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">
+              {title}
+            </h2>
+            <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">
+              {description}
+            </p>
+          </div>
+
+          <Link
+            href={href}
+            className={`w-fit rounded-xl border px-5 py-3 font-black transition ${buttonStyle}`}
+          >
+            View all →
+          </Link>
+        </div>
+
+        {articles.length > 0 ? (
+          <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-3">
+            {articles.map((article) => (
+              <ArticleCard key={article.id} item={article} stream={stream} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/60 p-10 text-center">
+            <h3 className="text-2xl font-black text-white">
+              {isCurrentAffairs
+                ? "Coaching current affairs are being prepared"
+                : "No new AI news analysis yet"}
+            </h3>
+            <p className="mt-3 text-slate-400">
+              This section updates automatically after its publishing pipeline completes.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
+  );
 }
 
 export default async function LatestNews() {
-  const [latestResult, trendingResult] = await Promise.all([
-    supabase
-      .from("articles")
-      .select(
-        "id, title, slug, category, paper, why_news, image, image_url, image_source_url, created_at, views"
-      )
-      .eq("status", "published")
-      .order("created_at", { ascending: false })
-      .limit(6),
+  const { currentAffairs, news, error } = await loadArticleStreams(320);
 
-    supabase
-      .from("articles")
-      .select(
-        "id, title, slug, category, paper, image, image_url, image_source_url, created_at, views"
-      )
-      .eq("status", "published")
-      .order("views", { ascending: false })
-      .order("created_at", { ascending: false })
-      .limit(5),
-  ]);
-
-  const news = latestResult.data;
-  const newsError = latestResult.error;
-
-  const trendingArticles = trendingResult.data;
-  const trendingError = trendingResult.error;
+  if (error) {
+    return (
+      <section className="bg-slate-950 py-16">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="rounded-2xl border border-red-500/40 bg-red-950/40 p-6 text-red-300">
+            Unable to separate article streams: {error.message}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>
-      {/* Trending Articles */}
-      <section className="bg-slate-900 py-20">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <p className="font-semibold uppercase tracking-widest text-orange-400">
-                Most Read
-              </p>
+      <StreamSection
+        eyebrow="Coaching-synthesised"
+        title="UPSC Current Affairs"
+        description="Exam-focused briefs sourced from trusted coaching coverage, merged across publishers and enriched with static concepts, Prelims facts and Mains dimensions."
+        articles={currentAffairs.slice(0, 6) as StreamArticle[]}
+        stream="current-affairs"
+        href="/current-affairs"
+      />
 
-              <h2 className="mt-3 text-4xl font-bold text-white">
-                🔥 Trending Articles
-              </h2>
-
-              <p className="mt-4 max-w-2xl text-gray-400">
-                Explore the current affairs articles receiving the most
-                attention from readers.
-              </p>
-            </div>
-
-            <Link
-              href="/current-affairs"
-              className="w-fit rounded-xl border border-orange-500 px-5 py-3 font-semibold text-orange-400 transition hover:bg-orange-500 hover:text-black"
-            >
-              Explore All →
-            </Link>
-          </div>
-
-          {trendingError && (
-            <div className="rounded-2xl border border-red-500/40 bg-red-950/40 p-6 text-red-300">
-              Unable to load trending articles: {trendingError.message}
-            </div>
-          )}
-
-          {!trendingError &&
-            trendingArticles &&
-            trendingArticles.length > 0 && (
-              <div className="grid gap-8 lg:grid-cols-5">
-                {/* Main Trending Article */}
-                <article className="overflow-hidden rounded-3xl border border-orange-500/40 bg-slate-950 lg:col-span-3">
-                  <Link
-                    href={`/current-affairs/${trendingArticles[0].slug}`}
-                    className="block"
-                  >
-                    <div className="relative overflow-hidden">
-                      <img
-                        src={resolveDisplayImage(trendingArticles[0])}
-                        alt={
-                          trendingArticles[0].title ||
-                          "Trending current affairs article"
-                        }
-                        className="h-72 w-full object-cover transition duration-500 hover:scale-105 md:h-96"
-                        loading="lazy"
-                      />
-
-                      <div className="absolute left-5 top-5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-black">
-                        #1 Trending
-                      </div>
-                    </div>
-
-                    <div className="p-7 md:p-9">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <span className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-bold text-black">
-                          {trendingArticles[0].category ||
-                            "Current Affairs"}
-                        </span>
-
-                        <span className="text-sm text-gray-400">
-                          {trendingArticles[0].paper ||
-                            "General Studies"}
-                        </span>
-
-                        <span className="text-sm font-semibold text-orange-400">
-                          👁️{" "}
-                          {formatViews(
-                            trendingArticles[0].views
-                          )}{" "}
-                          views
-                        </span>
-                      </div>
-
-                      <h3 className="mt-5 text-3xl font-bold leading-tight text-white md:text-4xl">
-                        {trendingArticles[0].title}
-                      </h3>
-
-                      <div className="mt-7 flex items-center justify-between gap-4">
-                        <span className="text-sm text-gray-500">
-                          {formatDate(
-                            trendingArticles[0].created_at
-                          )}
-                        </span>
-
-                        <span className="font-semibold text-orange-400">
-                          Read Article →
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </article>
-
-                {/* Remaining Trending Articles */}
-                <div className="space-y-4 lg:col-span-2">
-                  {trendingArticles.slice(1).map((item, index) => (
-                    <Link
-                      key={item.id}
-                      href={`/current-affairs/${item.slug}`}
-                      className="group flex gap-4 rounded-2xl border border-slate-800 bg-slate-950 p-4 transition hover:border-orange-500 hover:shadow-xl"
-                    >
-                      <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-xl">
-                        <img
-                          src={resolveDisplayImage(item)}
-                          alt={
-                            item.title ||
-                            "Trending current affairs article"
-                          }
-                          className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                          loading="lazy"
-                        />
-
-                        <div className="absolute left-2 top-2 rounded-md bg-orange-500 px-2 py-1 text-xs font-black text-black">
-                          #{index + 2}
-                        </div>
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-cyan-400">
-                          {item.category || "Current Affairs"}
-                        </p>
-
-                        <h3 className="mt-2 line-clamp-2 font-bold text-white transition group-hover:text-orange-400">
-                          {item.title}
-                        </h3>
-
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                          <span>
-                            👁️ {formatViews(item.views)} views
-                          </span>
-
-                          <span>
-                            {formatDate(item.created_at)}
-                          </span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          {!trendingError &&
-            (!trendingArticles ||
-              trendingArticles.length === 0) && (
-              <div className="rounded-2xl border border-slate-700 bg-slate-950 p-10 text-center">
-                <h3 className="text-2xl font-bold text-white">
-                  No Trending Articles Yet
-                </h3>
-
-                <p className="mt-4 text-gray-400">
-                  Trending articles will appear once readers start
-                  viewing your content.
-                </p>
-              </div>
-            )}
-        </div>
-      </section>
-      {/* Latest Current Affairs */}
-      <section className="bg-slate-950 py-20">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end">
-            <div>
-              <p className="font-semibold uppercase tracking-widest text-cyan-400">
-                Latest Updates
-              </p>
-
-              <h2 className="mt-3 text-4xl font-bold text-white">
-                Latest Current Affairs
-              </h2>
-            </div>
-
-            <Link
-              href="/current-affairs"
-              className="w-fit rounded-xl border border-cyan-500 px-5 py-3 text-cyan-400 transition hover:bg-cyan-500 hover:text-black"
-            >
-              View All →
-            </Link>
-          </div>
-
-          {newsError && (
-            <div className="mb-8 rounded-2xl border border-red-500/40 bg-red-950/40 p-6 text-red-300">
-              Unable to load articles: {newsError.message}
-            </div>
-          )}
-
-          {!newsError && news && news.length > 0 && (
-            <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
-              {news.map((item) => (
-                <article
-                  key={item.id}
-                  className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 transition duration-300 hover:-translate-y-2 hover:border-cyan-500 hover:shadow-2xl"
-                >
-                  <Link
-                    href={`/current-affairs/${item.slug}`}
-                    className="block overflow-hidden"
-                  >
-                    <img
-                      src={resolveDisplayImage(item)}
-                      alt={
-                        item.title ||
-                        "Current affairs article"
-                      }
-                      className="h-56 w-full object-cover transition duration-500 hover:scale-105"
-                      loading="lazy"
-                    />
-                  </Link>
-
-                  <div className="p-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="rounded-full bg-cyan-500 px-3 py-1 text-xs font-bold text-black">
-                        {item.category || "Current Affairs"}
-                      </span>
-
-                      <span className="text-sm text-gray-400">
-                        {item.paper || "General Studies"}
-                      </span>
-                    </div>
-
-                    <Link href={`/current-affairs/${item.slug}`}>
-                      <h3 className="mt-5 text-2xl font-bold text-white transition hover:text-cyan-400">
-                        {item.title}
-                      </h3>
-                    </Link>
-
-                    <p className="mt-4 line-clamp-3 text-gray-400">
-                      {stripHtml(item.why_news) ||
-                        "Read the complete current affairs analysis."}
-                    </p>
-
-                    <div className="mt-5 flex items-center gap-2 text-sm text-purple-400">
-                      <span>👁️</span>
-
-                      <span>
-                        {formatViews(item.views)} views
-                      </span>
-                    </div>
-
-                    <div className="mt-7 flex items-center justify-between">
-                      <span className="text-sm text-gray-500">
-                        {formatDate(item.created_at)}
-                      </span>
-
-                      <Link
-                        href={`/current-affairs/${item.slug}`}
-                        className="font-semibold text-cyan-400 transition hover:text-cyan-300"
-                      >
-                        Read More →
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-
-          {!newsError && (!news || news.length === 0) && (
-            <div className="rounded-2xl border border-slate-700 bg-slate-900 p-12 text-center">
-              <h3 className="text-2xl font-bold text-white">
-                No Articles Available Yet
-              </h3>
-
-              <p className="mt-4 text-gray-400">
-                Publish an article from the admin panel and it will appear here
-                automatically.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
+      <StreamSection
+        eyebrow="AI-selected developments"
+        title="Important News Analysis"
+        description="Important India-centric and globally systemic events collected by the CurrentPulse news engine, evaluated for UPSC relevance and converted into concise analysis."
+        articles={news.slice(0, 6) as StreamArticle[]}
+        stream="news"
+        href="/news"
+      />
     </>
   );
 }

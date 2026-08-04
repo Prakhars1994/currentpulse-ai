@@ -2,7 +2,10 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import {
+  coachingSourceLabel,
+  loadArticleStreams,
+} from "@/lib/articleStreams";
 import { createCategorySlug } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL } from "@/lib/siteUrl";
@@ -31,13 +34,7 @@ function stripHtml(content = "") {
 }
 
 export default async function CurrentAffairsPage() {
-  const { data: articles, error } = await supabase
-    .from("articles")
-    .select(
-      "id,title,slug,category,paper,why_news,image,image_url,image_source_url,created_at,status"
-    )
-    .eq("status", "published")
-    .order("created_at", { ascending: false });
+  const { currentAffairs: articles, error } = await loadArticleStreams(500);
 
   if (error) {
     console.error("Current affairs error:", error);
@@ -47,14 +44,14 @@ export default async function CurrentAffairsPage() {
     <main className="min-h-screen bg-slate-950 py-10 text-white sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400/15 bg-[radial-gradient(circle_at_90%_0%,rgba(6,182,212,.16),transparent_35%),linear-gradient(135deg,#0f172a,#08111f)] px-6 py-10 shadow-2xl shadow-slate-950/30 sm:px-10 sm:py-12">
-          <p className="font-black uppercase tracking-[.22em] text-cyan-400">Daily editorial desk</p>
+          <p className="font-black uppercase tracking-[.22em] text-cyan-400">Trusted coaching synthesis</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
             UPSC Current Affairs
           </h1>
 
           <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">
-            Selection-oriented briefs with syllabus links, static concepts,
-            verified evidence, Prelims traps and Mains answer frameworks.
+            Unique topics from trusted UPSC coaching coverage, merged across
+            sources and rebuilt as selection-oriented Prelims and Mains briefs.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link href="/categories" className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950 transition hover:bg-cyan-300">Browse by syllabus</Link>
@@ -112,18 +109,23 @@ export default async function CurrentAffairsPage() {
                     </p>
 
                     <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                      <span className="text-sm text-slate-500">
-                        {article.created_at
-                          ? new Date(article.created_at).toLocaleDateString(
-                              "en-IN",
-                              {
-                                day: "numeric",
-                                month: "short",
-                                year: "numeric",
-                              }
-                            )
-                          : "Date unavailable"}
-                      </span>
+                      <div>
+                        <p className="max-w-48 truncate text-xs font-bold text-cyan-300">
+                          {coachingSourceLabel(article)}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {article.created_at
+                            ? new Date(article.created_at).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                }
+                              )
+                            : "Date unavailable"}
+                        </p>
+                      </div>
 
                       <Link
                         href={`/current-affairs/${article.slug}`}

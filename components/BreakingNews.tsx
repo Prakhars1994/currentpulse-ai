@@ -1,13 +1,9 @@
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { loadArticleStreams } from "@/lib/articleStreams";
 
 export default async function BreakingNews() {
-  const { data: news, error } = await supabase
-    .from("articles")
-    .select("title, slug")
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const { news: newsStream, error } = await loadArticleStreams(120);
+  const news = newsStream.slice(0, 5);
 
   if (error) {
     console.error("Breaking News Error:", error.message);
@@ -57,7 +53,7 @@ export default async function BreakingNews() {
 
         {/* Explore link */}
         <Link
-          href="/current-affairs"
+          href="/news"
           className="hidden shrink-0 border-l border-red-800/60 px-5 py-3 text-sm font-semibold text-red-200 transition hover:bg-red-900 hover:text-white lg:block"
         >
           View All →

@@ -22,6 +22,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const publicPages = [
     "current-affairs",
+    "news",
     "categories",
     "quiz",
     "pdf",
@@ -33,8 +34,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "contact",
   ].map((path) => ({
     url: `${SITE_URL}/${path}`,
-    changeFrequency: path === "current-affairs" || path === "quiz" ? "daily" as const : "weekly" as const,
-    priority: path === "current-affairs" ? 0.95 : 0.7,
+    changeFrequency: path === "current-affairs" || path === "news" || path === "quiz" ? "daily" as const : "weekly" as const,
+    priority: path === "current-affairs" ? 0.95 : path === "news" ? 0.9 : 0.7,
   }));
 
   const categoryPages = CATEGORY_ROUTES.map((category) => ({

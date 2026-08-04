@@ -14,6 +14,7 @@ import {
   CircleHelp,
   Files,
   Newspaper,
+  BookOpenCheck,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -33,6 +34,11 @@ export default function Navbar() {
     {
       name: "Current Affairs",
       href: "/current-affairs",
+      icon: BookOpenCheck,
+    },
+    {
+      name: "News",
+      href: "/news",
       icon: Newspaper,
     },
     {
