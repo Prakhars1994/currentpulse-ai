@@ -5,6 +5,11 @@ import {
   publishArticle,
 } from "@/lib/publisher/publishArticle";
 import { generateDailyQuiz } from "@/lib/quiz/generateDailyQuiz";
+import { recordArticleSources } from "@/lib/coverage/sourceRegistry";
+import {
+  toCoveragePublishingSource,
+  topicWithCoverageSources,
+} from "@/lib/coverage/coveragePayload";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,6 +19,66 @@ const HARD_STOP_MS = 280000;
 const MINIMUM_NEXT_ITEM_BUDGET_MS = 45000;
 const STALE_PROCESSING_MINUTES = 20;
 const PROCESSING_CONCURRENCY = 2;
+
+function isCoverageQueueItem(item = {}) {
+  return ["coaching", "coaching_enrichment"].includes(item.pipeline_kind);
+}
+
+function coverageTopicFromQueue(item = {}) {
+  const references = Array.isArray(item.coverage_sources)
+    ? item.coverage_sources
+    : [];
+
+  return topicWithCoverageSources(
+    {
+      title: item.title,
+      summary: item.description,
+      url: item.url,
+      source: item.source,
+      publishedAt: item.published_at,
+      category: item.category,
+      paper: item.paper,
+      keywords: item.keywords,
+      imageUrl: item.image_url,
+      eventKey: item.coverage_event_key,
+    },
+    references
+  );
+}
+
+async function processCoverageQueueItem(supabase, item) {
+  const topic = coverageTopicFromQueue(item);
+  const sourceItem = toCoveragePublishingSource(topic);
+
+  if (!sourceItem.sourceReferences.length) {
+    throw new Error(
+      "Coaching queue item has no retained source references. Run coverage collection again."
+    );
+  }
+
+  let result;
+
+  if (item.target_article_id) {
+    result = await enrichPublishedArticle(
+      supabase,
+      item.target_article_id,
+      sourceItem
+    );
+  } else {
+    result = await publishArticle(supabase, sourceItem);
+
+    if (result.status === "duplicate") {
+      result = await enrichPublishedArticle(
+        supabase,
+        result.articleId,
+        sourceItem
+      );
+    }
+  }
+
+  await recordArticleSources(supabase, result.articleId, topic);
+  return result;
+}
 
 async function upgradeLegacyArticles(supabase, limit = 2) {
   const { data: articles, error } = await supabase
@@ -260,9 +325,11 @@ async function executeQueueProcessing() {
         const itemStartedAt = Date.now();
 
         try {
-          const published = await publishArticle(supabase, claimedItem);
+          const published = isCoverageQueueItem(claimedItem)
+            ? await processCoverageQueueItem(supabase, claimedItem)
+            : await publishArticle(supabase, claimedItem);
 
-          if (published.status === "duplicate") {
+          if (!isCoverageQueueItem(claimedItem) && published.status === "duplicate") {
             await markQueueDuplicate(supabase, claimedItem.id, published.articleId);
             results.push({
               status: "duplicate",
@@ -275,7 +342,11 @@ async function executeQueueProcessing() {
           } else {
             await markQueuePublished(supabase, claimedItem.id, published.articleId);
             results.push({
-              status: "published",
+              status:
+                isCoverageQueueItem(claimedItem) && published.status === "enriched"
+                  ? "enriched"
+                  : "published",
+              pipeline: claimedItem.pipeline_kind || "news",
               worker: workerNumber,
               queueId: claimedItem.id,
               articleId: published.articleId,
@@ -333,6 +404,7 @@ async function executeQueueProcessing() {
     }
 
     const publishedCount = results.filter((item) => item.status === "published").length;
+    const enrichedCount = results.filter((item) => item.status === "enriched").length;
     const duplicateCount = results.filter((item) => item.status === "duplicate").length;
     const failedCount = results.filter((item) => item.status === "failed").length;
     const retryPending = results.filter((item) => item.status === "retry_pending").length;
@@ -347,6 +419,7 @@ async function executeQueueProcessing() {
         recovered,
         processed: results.length,
         published: publishedCount,
+        enriched: enrichedCount,
         duplicate: duplicateCount,
         failed: failedCount,
         retryPending,

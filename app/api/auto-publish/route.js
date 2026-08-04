@@ -11,6 +11,7 @@ import {
 } from "@/lib/news/duplicateRepository";
 import { classifyCategory, resolvePaper } from "@/lib/contentTaxonomy";
 import { assessUpscRelevance } from "@/lib/news/upscRelevanceGate";
+import { queueCoverageImport } from "@/lib/coverage/queueCoverageImport";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -336,6 +337,41 @@ async function executeAutoPublish() {
   }
 }
 
+async function executeUnifiedCollection() {
+  const [newsResult, coverageResult] = await Promise.allSettled([
+    executeAutoPublish().then(async (response) => ({
+      httpStatus: response.status,
+      ...(await response.json()),
+    })),
+    queueCoverageImport({
+      requestedSource: "all",
+      maxCandidates: 200,
+    }),
+  ]);
+
+  const news = newsResult.status === "fulfilled"
+    ? newsResult.value
+    : {
+        success: false,
+        message: newsResult.reason?.message || "News collection failed.",
+      };
+  const coverage = coverageResult.status === "fulfilled"
+    ? coverageResult.value
+    : {
+        success: false,
+        message:
+          coverageResult.reason?.message || "Coaching coverage collection failed.",
+      };
+
+  return NextResponse.json({
+    success: Boolean(news.success || coverage.success),
+    message:
+      "AI news and trusted coaching coverage collection completed independently.",
+    news,
+    coverage,
+  });
+}
+
 export async function GET(request) {
   if (!isAuthorised(request)) {
     return NextResponse.json(
@@ -347,32 +383,13 @@ export async function GET(request) {
   const waitForCompletion =
     new URL(request.url).searchParams.get("wait") === "1";
 
-  if (waitForCompletion) return executeAutoPublish();
+  if (waitForCompletion) return executeUnifiedCollection();
 
   after(async () => {
-    const response = await executeAutoPublish();
-    console.log(`[Auto publish] Background run completed with HTTP ${response.status}.`);
-    try {
-      const coverageUrl = new URL(
-        "/api/coverage-import?source=all&limit=3",
-        request.url
-      );
-      const coverageResponse = await fetch(coverageUrl, {
-        method: "GET",
-        headers: {
-          authorization: request.headers.get("authorization") || "",
-        },
-        cache: "no-store",
-      });
-      console.log(
-        `[Auto publish] Integrated coaching coverage accepted with HTTP ${coverageResponse.status}.`
-      );
-    } catch (error) {
-      console.error(
-        "[Auto publish] Integrated coaching coverage failed:",
-        error?.message || error
-      );
-    }
+    const response = await executeUnifiedCollection();
+    console.log(
+      `[Auto publish] Unified background collection completed with HTTP ${response.status}.`
+    );
   });
 
   return NextResponse.json(

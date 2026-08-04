@@ -5,6 +5,7 @@ import ArticleViewTracker from "@/components/ArticleViewTracker";
 import ArticleContent from "@/components/ArticleContent";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
+import RelatedYouTubeVideo from "@/components/RelatedYouTubeVideo";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 
 // Remove HTML tags for SEO descriptions and reading-time calculation
@@ -394,9 +395,6 @@ export default async function ArticlePage({ params }) {
           )}
 
           <ArticleStudyVisuals
-            title={article.title}
-            visualSummary={article.visual_summary}
-            memoryTrick={article.memory_trick}
             mapLocations={article.map_locations}
           />
 
@@ -434,6 +432,11 @@ export default async function ArticlePage({ params }) {
           </section>
 
         </article>
+
+        <RelatedYouTubeVideo
+          title={article.title}
+          category={article.category}
+        />
 
         {articleSources?.length > 0 && (
           <section className="mt-10 rounded-2xl border border-slate-700 bg-slate-900/70 p-6">
