@@ -14,6 +14,7 @@ import {
   finishAutomationRun,
   startAutomationRun,
 } from "@/lib/automation/runLog";
+import { isCoverageNoiseTitle } from "@/lib/coverage/noiseFilter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -184,7 +185,14 @@ async function getPendingQueueItem(supabase, attemptedIds) {
     .limit(50);
 
   if (error) throw new Error(`Queue fetch failed: ${error.message}`);
-  return (data || []).find((item) => !attemptedIds.has(item.id)) || null;
+  const priority = { coaching: 0, news: 1, coaching_enrichment: 2 };
+  return (data || [])
+    .filter((item) => !attemptedIds.has(item.id))
+    .sort(
+      (left, right) =>
+        (priority[left.pipeline_kind || "news"] ?? 1) -
+        (priority[right.pipeline_kind || "news"] ?? 1)
+    )[0] || null;
 }
 
 async function claimQueueItem(supabase, queueItem) {
@@ -247,6 +255,22 @@ async function markQueuePublished(supabase, queueItemId, articleId) {
       error: null,
     },
     "Queue completion update failed"
+  );
+}
+
+async function markQueueRejected(supabase, queueItemId, reason) {
+  const now = new Date().toISOString();
+  await updateQueueItem(
+    supabase,
+    queueItemId,
+    {
+      status: "rejected",
+      processing_started_at: null,
+      processed_at: now,
+      updated_at: now,
+      error: reason,
+    },
+    "Queue rejection update failed"
   );
 }
 
@@ -329,6 +353,20 @@ async function executeQueueProcessing() {
         const itemStartedAt = Date.now();
 
         try {
+          if (isCoverageQueueItem(claimedItem) && isCoverageNoiseTitle(claimedItem.title)) {
+            const reason = "Rejected publisher navigation, generic digest wrapper or non-article page.";
+            await markQueueRejected(supabase, claimedItem.id, reason);
+            results.push({
+              status: "rejected",
+              pipeline: claimedItem.pipeline_kind,
+              worker: workerNumber,
+              queueId: claimedItem.id,
+              title: claimedItem.title,
+              reason,
+            });
+            continue;
+          }
+
           const published = isCoverageQueueItem(claimedItem)
             ? await processCoverageQueueItem(supabase, claimedItem)
             : await publishArticle(supabase, claimedItem);
@@ -347,7 +385,9 @@ async function executeQueueProcessing() {
             await markQueuePublished(supabase, claimedItem.id, published.articleId);
             results.push({
               status:
-                isCoverageQueueItem(claimedItem) && published.status === "enriched"
+                published.status === "published_source_brief"
+                  ? "published_source_brief"
+                  : isCoverageQueueItem(claimedItem) && published.status === "enriched"
                   ? "enriched"
                   : "published",
               pipeline: claimedItem.pipeline_kind || "news",
@@ -409,6 +449,8 @@ async function executeQueueProcessing() {
 
     const publishedCount = results.filter((item) => item.status === "published").length;
     const enrichedCount = results.filter((item) => item.status === "enriched").length;
+    const sourceBriefCount = results.filter((item) => item.status === "published_source_brief").length;
+    const rejectedCount = results.filter((item) => item.status === "rejected").length;
     const duplicateCount = results.filter((item) => item.status === "duplicate").length;
     const failedCount = results.filter((item) => item.status === "failed").length;
     const retryPending = results.filter((item) => item.status === "retry_pending").length;
@@ -424,6 +466,8 @@ async function executeQueueProcessing() {
         processed: results.length,
         published: publishedCount,
         enriched: enrichedCount,
+        sourceBriefs: sourceBriefCount,
+        rejected: rejectedCount,
         duplicate: duplicateCount,
         failed: failedCount,
         retryPending,
