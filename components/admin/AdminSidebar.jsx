@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, PlusCircle, FolderOpen, Settings, LogOut } from 'lucide-react'
+import { LayoutDashboard, FileText, PlusCircle, LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
@@ -10,8 +10,6 @@ const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'All Articles', href: '/admin/articles', icon: FileText },
   { name: 'Create Article', href: '/admin/articles/create', icon: PlusCircle },
-  { name: 'Categories', href: '/admin/categories', icon: FolderOpen },
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 
 export default function AdminSidebar() {
@@ -20,7 +18,9 @@ export default function AdminSidebar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
-    router.push('/admin/login')
+    await fetch('/api/admin/session', { method: 'DELETE' })
+    router.replace('/admin/login')
+    router.refresh()
   }
 
   return (

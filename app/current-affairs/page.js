@@ -5,6 +5,21 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { createCategorySlug } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
+import { SITE_URL } from "@/lib/siteUrl";
+
+export const metadata = {
+  title: "Daily UPSC Current Affairs — Prelims & Mains Analysis",
+  description:
+    "Read daily UPSC current affairs with exact syllabus linkage, India relevance, static foundation, Prelims facts, data, examples and Mains answer frameworks.",
+  alternates: { canonical: `${SITE_URL}/current-affairs` },
+  openGraph: {
+    title: "Daily UPSC Current Affairs | CurrentPulse AI",
+    description:
+      "Selection-oriented current affairs connected to UPSC Prelims, Mains and static subjects.",
+    url: `${SITE_URL}/current-affairs`,
+    type: "website",
+  },
+};
 
 function stripHtml(content = "") {
   return content
@@ -29,20 +44,27 @@ export default async function CurrentAffairsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 py-12">
-      <div className="mx-auto max-w-6xl px-6">
-        <div>
-          <h1 className="text-4xl font-bold text-slate-900">
-            Daily Current Affairs
+    <main className="min-h-screen bg-slate-950 py-10 text-white sm:py-14">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400/15 bg-[radial-gradient(circle_at_90%_0%,rgba(6,182,212,.16),transparent_35%),linear-gradient(135deg,#0f172a,#08111f)] px-6 py-10 shadow-2xl shadow-slate-950/30 sm:px-10 sm:py-12">
+          <p className="font-black uppercase tracking-[.22em] text-cyan-400">Daily editorial desk</p>
+          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+            UPSC Current Affairs
           </h1>
 
-          <p className="mt-2 text-gray-600">
-            UPSC, PCS, SSC and Banking exam-focused current affairs.
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">
+            Selection-oriented briefs with syllabus links, static concepts,
+            verified evidence, Prelims traps and Mains answer frameworks.
           </p>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <Link href="/categories" className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950 transition hover:bg-cyan-300">Browse by syllabus</Link>
+            <Link href="/quiz" className="rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3 font-bold text-slate-100 transition hover:border-cyan-400">Attempt today&apos;s quiz</Link>
+            <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-slate-300">{articles?.length || 0} published briefs</span>
+          </div>
         </div>
 
         {articles && articles.length > 0 ? (
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
+          <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {articles.map((article) => {
               const categorySlug = createCategorySlug(article.category);
 
@@ -53,40 +75,44 @@ export default async function CurrentAffairsPage() {
               return (
                 <article
                   key={article.id}
-                  className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
+                  className="group overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/80 shadow-xl shadow-slate-950/20 transition hover:-translate-y-1 hover:border-cyan-400/50 hover:shadow-2xl hover:shadow-cyan-950/20"
                 >
-                  <img
-                    src={resolveDisplayImage(article)}
-                    alt={article.title || "Current affairs article"}
-                    className="h-52 w-full object-cover"
-                  />
+                  <Link href={`/current-affairs/${article.slug}`} className="block overflow-hidden">
+                    <img
+                      src={resolveDisplayImage(article)}
+                      alt={article.title || "Current affairs article"}
+                      loading="lazy"
+                      decoding="async"
+                      className="h-48 w-full object-cover transition duration-700 group-hover:scale-[1.04] sm:h-52"
+                    />
+                  </Link>
 
                   <div className="p-6">
                     <div className="flex flex-wrap items-center gap-2">
                       {article.category && (
                         <Link
                           href={`/category/${categorySlug}`}
-                          className="rounded-full bg-cyan-100 px-3 py-1 text-xs font-semibold text-cyan-800 transition hover:bg-cyan-200"
+                          className="rounded-full bg-cyan-400/10 px-3 py-1.5 text-xs font-bold text-cyan-300 ring-1 ring-cyan-400/20 transition hover:bg-cyan-400/20"
                         >
                           {article.category}
                         </Link>
                       )}
 
-                      <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
+                      <span className="rounded-full bg-blue-400/10 px-3 py-1.5 text-xs font-bold text-blue-300 ring-1 ring-blue-400/15">
                         {article.paper || "General Studies"}
                       </span>
                     </div>
 
-                    <h2 className="mt-4 text-2xl font-bold text-slate-900">
-                      {article.title || "Untitled article"}
-                    </h2>
+                    <Link href={`/current-affairs/${article.slug}`}>
+                      <h2 className="mt-4 text-xl font-black leading-snug tracking-tight text-white transition group-hover:text-cyan-300 sm:text-2xl">{article.title || "Untitled article"}</h2>
+                    </Link>
 
-                    <p className="mt-3 line-clamp-3 text-gray-600">
+                    <p className="mt-3 line-clamp-3 leading-7 text-slate-400">
                       {description}
                     </p>
 
                     <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-slate-500">
                         {article.created_at
                           ? new Date(article.created_at).toLocaleDateString(
                               "en-IN",
@@ -101,7 +127,7 @@ export default async function CurrentAffairsPage() {
 
                       <Link
                         href={`/current-affairs/${article.slug}`}
-                        className="font-semibold text-cyan-700 transition hover:text-cyan-900"
+                        className="font-bold text-cyan-400 transition hover:text-cyan-300"
                       >
                         Read More →
                       </Link>
@@ -112,12 +138,12 @@ export default async function CurrentAffairsPage() {
             })}
           </div>
         ) : (
-          <div className="mt-10 rounded-2xl border border-gray-200 bg-white p-10 text-center shadow-sm">
-            <h2 className="text-2xl font-bold text-slate-900">
+          <div className="mt-10 rounded-3xl border border-slate-800 bg-slate-900 p-10 text-center shadow-xl">
+            <h2 className="text-2xl font-bold text-white">
               No current affairs articles found
             </h2>
 
-            <p className="mt-3 text-gray-600">
+            <p className="mt-3 text-slate-400">
               Published articles will appear here.
             </p>
           </div>

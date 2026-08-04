@@ -10,6 +10,7 @@ import {
   resolveCategoryRoute,
 } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
+import { SITE_URL } from "@/lib/siteUrl";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -36,6 +37,26 @@ function plainText(value = "") {
     .replace(/[#*_`>~-]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+export async function generateMetadata({ params }: Props) {
+  const { slug } = await params;
+  const route = resolveCategoryRoute(slug);
+  if (!route) return { title: "UPSC Current Affairs Category", robots: { index: false } };
+
+  const title = `${route.name} Current Affairs for UPSC`;
+  const description = `Latest ${route.name} current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.`;
+  return {
+    title,
+    description,
+    alternates: { canonical: `${SITE_URL}/category/${route.slug}` },
+    openGraph: {
+      title: `${title} | CurrentPulse AI`,
+      description,
+      url: `${SITE_URL}/category/${route.slug}`,
+      type: "website",
+    },
+  };
 }
 
 export default async function CategoryPage({ params }: Props) {
@@ -97,7 +118,9 @@ export default async function CategoryPage({ params }: Props) {
               >
                 <img
                   src={resolveDisplayImage(article)}
-                  alt=""
+                  alt={article.title}
+                  loading="lazy"
+                  decoding="async"
                   className="h-44 w-full object-cover"
                 />
                 <div className="p-6">

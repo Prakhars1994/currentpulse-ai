@@ -2,10 +2,8 @@
 
 import { useState, useCallback } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { supabase } from '@/lib/supabase'
 import { X, Upload } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { v4 as uuidv4 } from 'uuid'
 
 export default function ImageUpload({
   imageUrl,
@@ -33,31 +31,21 @@ export default function ImageUpload({
       setUploading(true)
 
       try {
-        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-        const fileName = `${uuidv4()}.${fileExt}`
-        const filePath = `articles/${fileName}`
+        const formData = new FormData()
+        formData.append('file', file)
 
-        const { error: uploadError } = await supabase.storage
-          .from('article-images')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false,
-            contentType: file.type,
-          })
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
 
-        if (uploadError) {
-          throw uploadError
+        const result = await response.json()
+
+        if (!response.ok || !result.success || !result.imageUrl) {
+          throw new Error(result.message || 'Unable to upload the image')
         }
 
-        const { data } = supabase.storage
-          .from('article-images')
-          .getPublicUrl(filePath)
-
-        if (!data?.publicUrl) {
-          throw new Error('Unable to generate image URL')
-        }
-
-        onImageUpload(data.publicUrl)
+        onImageUpload(result.imageUrl)
         toast.success('Image uploaded successfully!')
       } catch (error) {
         console.error('Error uploading image:', error)

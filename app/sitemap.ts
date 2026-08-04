@@ -1,22 +1,23 @@
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import type { MetadataRoute } from "next";
 import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
-
-const BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL || "https://currentpulseai.com";
+import { SITE_URL } from "@/lib/siteUrl";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const { data: articles } = isSupabaseConfigured
     ? await supabase
         .from("articles")
-        .select("slug,updated_at")
+        .select("slug,created_at,updated_at,image,image_url")
         .eq("status", "published")
     : { data: [] };
 
   const articleRoutes =
     articles?.map((article) => ({
-      url: `${BASE_URL}/current-affairs/${article.slug}`,
-      lastModified: article.updated_at || new Date(),
+      url: `${SITE_URL}/current-affairs/${article.slug}`,
+      lastModified: article.updated_at || article.created_at || undefined,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+      images: [article.image || article.image_url].filter(Boolean) as string[],
     })) || [];
 
   const publicPages = [
@@ -31,19 +32,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "ai",
     "contact",
   ].map((path) => ({
-    url: `${BASE_URL}/${path}`,
-    lastModified: new Date(),
+    url: `${SITE_URL}/${path}`,
+    changeFrequency: path === "current-affairs" || path === "quiz" ? "daily" as const : "weekly" as const,
+    priority: path === "current-affairs" ? 0.95 : 0.7,
   }));
 
   const categoryPages = CATEGORY_ROUTES.map((category) => ({
-    url: `${BASE_URL}/category/${category.slug}`,
-    lastModified: new Date(),
+    url: `${SITE_URL}/category/${category.slug}`,
+    changeFrequency: "daily" as const,
+    priority: 0.75,
   }));
 
   return [
     {
-      url: BASE_URL,
-      lastModified: new Date(),
+      url: SITE_URL,
+      changeFrequency: "daily",
+      priority: 1,
     },
     ...publicPages,
     ...categoryPages,

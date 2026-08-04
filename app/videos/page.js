@@ -9,6 +9,7 @@ import { resolveDisplayImage } from "@/lib/news/categoryImage";
 export const metadata = {
   title: "Current Affairs Video Discovery",
   description: "Find UPSC video explainers for the latest published current-affairs topics.",
+  alternates: { canonical: "/videos" },
 };
 
 export default async function VideosPage() {
@@ -41,7 +42,9 @@ export default async function VideosPage() {
                   <div className="relative">
                     <img
                       src={resolveDisplayImage(article)}
-                      alt=""
+                      alt={`Video resources for ${article.title}`}
+                      loading="lazy"
+                      decoding="async"
                       className="h-44 w-full object-cover opacity-80"
                     />
                     <PlayCircle className="absolute left-1/2 top-1/2 h-14 w-14 -translate-x-1/2 -translate-y-1/2 text-white drop-shadow-xl" />

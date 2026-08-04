@@ -8,20 +8,24 @@ import QuizPlayer from "@/components/QuizPlayer";
 export const metadata = {
   title: "Daily Current Affairs Quiz",
   description: "Automatically updated current-affairs quiz for UPSC and PCS preparation.",
+  alternates: { canonical: "/quiz" },
 };
 
 export default async function QuizPage() {
   const { data, error } = await supabase
     .from("quiz_questions")
-    .select("id,quiz_date,prompt,options,correct_index,explanation,difficulty,category,paper,source_slug,source_title,created_at")
+    .select("id,quiz_date,prompt,options,correct_index,explanation,difficulty,category,paper,source_slug,source_title,generation_provider,created_at")
     .order("quiz_date", { ascending: false })
     .order("created_at", { ascending: true })
     .limit(24);
 
   if (error) console.error("Stored quiz fetch failed:", error.message);
-  const newestDate = data?.[0]?.quiz_date || null;
+  const approved = (data || []).filter((question) =>
+    String(question.generation_provider || "").includes("upsc-v2")
+  );
+  const newestDate = approved[0]?.quiz_date || null;
   const storedQuestions = mapStoredQuiz(
-    newestDate ? data.filter((question) => question.quiz_date === newestDate) : []
+    newestDate ? approved.filter((question) => question.quiz_date === newestDate) : []
   );
   const questions = storedQuestions.length >= 10 ? storedQuestions : UPSC_FOUNDATION_FALLBACK;
   const usingFallback = storedQuestions.length < 10;

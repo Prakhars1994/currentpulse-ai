@@ -2,31 +2,35 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 import { Pencil, Trash2, PlusCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 export default function ArticlesPage() {
+  const router = useRouter()
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
 
   const fetchArticles = useCallback(async () => {
     setLoading(true)
 
-    const { data, error } = await supabase
-      .from('articles')
-      .select('*')
-      .order('created_at', { ascending: false })
+    const response = await fetch('/api/articles', { cache: 'no-store' })
+    const result = await response.json()
 
-    if (error) {
-      console.error(error)
+    if (response.status === 401 || response.status === 403) {
+      router.replace('/admin/login')
+      return
+    }
+
+    if (!response.ok) {
+      console.error(result.message)
       toast.error('Failed to load articles')
     } else {
-      setArticles(data || [])
+      setArticles(result.articles || [])
     }
 
     setLoading(false)
-  }, [])
+  }, [router])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -39,13 +43,13 @@ export default function ArticlesPage() {
   async function deleteArticle(id) {
     if (!confirm('Delete this article?')) return
 
-    const { error } = await supabase
-      .from('articles')
-      .delete()
-      .eq('id', id)
+    const response = await fetch(`/api/articles?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    })
+    const result = await response.json()
 
-    if (error) {
-      toast.error(error.message)
+    if (!response.ok) {
+      toast.error(result.message || 'Unable to delete article')
       return
     }
 

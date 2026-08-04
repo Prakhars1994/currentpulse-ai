@@ -20,7 +20,7 @@ async function execute(limit) {
   const supabase = createServerSupabase();
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,category,why_news,prelims,mains,image,image_url,image_source_url,image_search_query,visual_summary,memory_trick,map_locations,created_at")
+    .select("id,title,slug,category,why_news,india_relevance,static_foundation,data_examples,prelims,mains,image,image_url,image_source_url,image_search_query,visual_summary,memory_trick,map_locations,created_at")
     .eq("status", "published")
     .order("created_at", { ascending: false })
     .limit(1000);

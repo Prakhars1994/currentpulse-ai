@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { generateArticle } from "@/lib/ai/generateArticle";
+import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 
 export async function POST(request) {
   try {
+    const auth = await requireAuthenticatedAdmin(request);
+    if (!auth.ok) return auth.response;
+
     const body = await request.json();
 
     const newsUrl = body.newsUrl?.trim() || "";

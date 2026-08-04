@@ -7,6 +7,10 @@ import Features from "@/components/Features";
 import Categories from "@/components/Categories";
 import LatestNews from "@/components/LatestNews";
 
+export const metadata = {
+  alternates: { canonical: "/" },
+};
+
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">

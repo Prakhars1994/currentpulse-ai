@@ -9,6 +9,7 @@ import { indiaDate } from "@/lib/study/digestDates";
 export const metadata = {
   title: "Current Affairs PDF Digests",
   description: "Automatically updated daily, weekly and monthly printable UPSC current-affairs digests.",
+  alternates: { canonical: "/pdf" },
 };
 
 export default async function PdfPage() {

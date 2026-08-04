@@ -5,9 +5,7 @@ import ArticleViewTracker from "@/components/ArticleViewTracker";
 import ArticleContent from "@/components/ArticleContent";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
-
-const BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 
 // Remove HTML tags for SEO descriptions and reading-time calculation
 function stripHtml(html = "") {
@@ -22,8 +20,13 @@ function stripHtml(html = "") {
 function calculateReadingTime(article) {
   const text = [
     article?.why_news,
+    article?.syllabus_linkage,
+    article?.india_relevance,
+    article?.static_foundation,
+    article?.data_examples,
     article?.prelims,
     article?.mains,
+    article?.answer_framework,
     article?.question,
   ]
     .filter(Boolean)
@@ -51,9 +54,7 @@ function formatDate(date) {
 }
 
 function absoluteImageUrl(value) {
-  if (!value) return "";
-  if (/^https?:\/\//i.test(value)) return value;
-  return `${BASE_URL.replace(/\/$/, "")}${value.startsWith("/") ? value : `/${value}`}`;
+  return value ? absoluteSiteUrl(value) : "";
 }
 
 // ============================
@@ -98,13 +99,13 @@ export async function generateMetadata({ params }) {
       : article.tags || "",
 
     alternates: {
-      canonical: `${BASE_URL}/current-affairs/${slug}`,
+      canonical: `${SITE_URL}/current-affairs/${slug}`,
     },
 
     openGraph: {
       title: article.title,
       description: plainDescription,
-      url: `${BASE_URL}/current-affairs/${slug}`,
+      url: `${SITE_URL}/current-affairs/${slug}`,
       images: [
         {
           url: image,
@@ -115,6 +116,8 @@ export async function generateMetadata({ params }) {
       type: "article",
       publishedTime: article.created_at,
       modifiedTime: article.updated_at || article.created_at,
+      section: article.category || "UPSC Current Affairs",
+      authors: ["CurrentPulse Editorial Desk"],
     },
 
     twitter: {
@@ -123,6 +126,9 @@ export async function generateMetadata({ params }) {
       description: plainDescription,
       images: [image],
     },
+    authors: [{ name: "CurrentPulse Editorial Desk", url: SITE_URL }],
+    category: "education",
+    robots: { index: true, follow: true },
   };
 }
 
@@ -207,7 +213,9 @@ export default async function ArticlePage({ params }) {
 
   const structuredData = {
     "@context": "https://schema.org",
+    "@graph": [{
     "@type": "NewsArticle",
+    "@id": `${SITE_URL}/current-affairs/${slug}#article`,
     headline: article.title,
     description:
       stripHtml(article.seo_description || "") ||
@@ -218,19 +226,34 @@ export default async function ArticlePage({ params }) {
     author: {
       "@type": "Organization",
       name: "CurrentPulse AI",
+      url: SITE_URL,
     },
     publisher: {
       "@type": "Organization",
       name: "CurrentPulse AI",
       logo: {
         "@type": "ImageObject",
-        url: `${BASE_URL}/logo.png`,
+        url: `${SITE_URL}/icon.svg`,
       },
     },
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `${BASE_URL}/current-affairs/${slug}`,
+      "@id": `${SITE_URL}/current-affairs/${slug}`,
     },
+    articleSection: article.category || "UPSC Current Affairs",
+    keywords: Array.isArray(article.tags) ? article.tags.join(", ") : article.tags || article.category,
+    isAccessibleForFree: true,
+    citation: (articleSources || []).map((source) => source.source_url).filter(Boolean),
+    about: [article.category, article.paper].filter(Boolean).map((name) => ({ "@type": "Thing", name })),
+  }, {
+    "@type": "BreadcrumbList",
+    "@id": `${SITE_URL}/current-affairs/${slug}#breadcrumb`,
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      { "@type": "ListItem", position: 2, name: "Current Affairs", item: `${SITE_URL}/current-affairs` },
+      { "@type": "ListItem", position: 3, name: article.title, item: `${SITE_URL}/current-affairs/${slug}` },
+    ],
+  }],
   };
 
   return (
@@ -273,8 +296,12 @@ export default async function ArticlePage({ params }) {
         <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-300">
 
           <span>
-            📅 {formatDate(article.created_at)}
+            📅 Published {formatDate(article.created_at)}
           </span>
+
+          {article.updated_at && article.updated_at !== article.created_at && (
+            <><span>•</span><span>Updated {formatDate(article.updated_at)}</span></>
+          )}
 
           <span>•</span>
 
@@ -308,7 +335,7 @@ export default async function ArticlePage({ params }) {
                   <a
                     href={article.image_source_url}
                     target="_blank"
-                    rel="noopener noreferrer nofollow"
+                    rel="noopener noreferrer"
                   >
                     Image source ↗
                   </a>
@@ -317,15 +344,54 @@ export default async function ArticlePage({ params }) {
             )}
           </figure>
         )}
+
+        <nav className="article-jump-nav" aria-label="Article sections">
+          <span>Jump to</span>
+          <a href="#why-in-news">News</a>
+          <a href="#syllabus">Syllabus</a>
+          {article.static_foundation && <a href="#static-foundation">Static</a>}
+          {article.data_examples && <a href="#evidence">Evidence</a>}
+          <a href="#prelims">Prelims</a>
+          <a href="#mains">Mains</a>
+          {article.answer_framework && <a href="#answer-framework">Answer plan</a>}
+        </nav>
+
         <article className="mt-10 space-y-8">
 
-          <section className="article-section border-purple-500/30 bg-purple-500/10">
+          <section id="why-in-news" className="article-section article-section--context scroll-mt-28">
             <h2 className="article-section-title text-purple-200">📌 Why in News?</h2>
             <ArticleContent
               content={article.why_news}
               fallback="Why in News will be updated soon."
             />
           </section>
+
+          <section id="syllabus" className="article-section article-section--syllabus scroll-mt-28">
+            <h2 className="article-section-title">🎯 Syllabus & Exam Relevance</h2>
+            <ArticleContent
+              content={article.syllabus_linkage || `- **Paper:** ${article.paper || "General Studies"}\n- **Theme:** ${article.category || "Current Affairs"}`}
+            />
+            {article.india_relevance && (
+              <div className="article-relevance-callout">
+                <h3>Why it matters for India</h3>
+                <ArticleContent content={article.india_relevance} />
+              </div>
+            )}
+          </section>
+
+          {article.static_foundation && (
+            <section id="static-foundation" className="article-section article-section--static scroll-mt-28">
+              <h2 className="article-section-title">🏛️ Static Foundation</h2>
+              <ArticleContent content={article.static_foundation} />
+            </section>
+          )}
+
+          {article.data_examples && (
+            <section id="evidence" className="article-section article-section--evidence scroll-mt-28">
+              <h2 className="article-section-title">📊 Data, Reports, Cases & Examples</h2>
+              <ArticleContent content={article.data_examples} />
+            </section>
+          )}
 
           <ArticleStudyVisuals
             title={article.title}
@@ -334,43 +400,28 @@ export default async function ArticlePage({ params }) {
             mapLocations={article.map_locations}
           />
 
-          <section className="article-section">
-            <h2 className="article-section-title">🎯 UPSC Relevance</h2>
-
-            <div className="rounded-xl border border-cyan-400/20 bg-slate-900/80 p-6">
-              <ul className="space-y-3 text-slate-100">
-                <li>
-                  <strong>Paper:</strong>{" "}
-                  {article.paper || "Not specified"}
-                </li>
-
-                <li>
-                  <strong>Category:</strong>{" "}
-                  {article.category || "Not specified"}
-                </li>
-
-                <li>
-                  Important for UPSC Civil Services Examination.
-                </li>
-              </ul>
-            </div>
-          </section>
-
-          <section className="article-section">
-            <h2 className="article-section-title">📚 Prelims Facts</h2>
+          <section id="prelims" className="article-section article-section--prelims scroll-mt-28">
+            <h2 className="article-section-title">📚 Prelims Toolkit</h2>
             <ArticleContent
               content={article.prelims}
               fallback="Prelims facts will be updated soon."
             />
           </section>
 
-          <section className="article-section">
+          <section id="mains" className="article-section article-section--mains scroll-mt-28">
             <h2 className="article-section-title">✍️ Mains Perspective</h2>
             <ArticleContent
               content={article.mains}
               fallback="Detailed Mains analysis will be updated soon."
             />
           </section>
+
+          {article.answer_framework && (
+            <section id="answer-framework" className="article-section article-section--answer scroll-mt-28">
+              <h2 className="article-section-title">🧭 Mains Answer Framework</h2>
+              <ArticleContent content={article.answer_framework} />
+            </section>
+          )}
 
           <section className="article-section border-blue-500/30 bg-blue-500/10">
             <h2 className="article-section-title text-blue-200">📝 Possible UPSC Mains Question</h2>
@@ -398,7 +449,7 @@ export default async function ArticlePage({ params }) {
                   <a
                     href={source.source_url}
                     target="_blank"
-                    rel="noopener noreferrer nofollow"
+                rel="noopener noreferrer"
                     className="block rounded-xl border border-slate-700 bg-slate-950/70 p-4 transition hover:border-cyan-500"
                   >
                     <span className="font-bold text-cyan-300">
@@ -424,7 +475,7 @@ export default async function ArticlePage({ params }) {
           <div className="flex flex-wrap gap-3">
             <a
               href={`https://wa.me/?text=${encodeURIComponent(
-                `${article.title} ${BASE_URL}/current-affairs/${article.slug}`
+                `${article.title} ${SITE_URL}/current-affairs/${article.slug}`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -435,7 +486,7 @@ export default async function ArticlePage({ params }) {
 
             <a
               href={`https://t.me/share/url?url=${encodeURIComponent(
-                `${BASE_URL}/current-affairs/${article.slug}`
+                `${SITE_URL}/current-affairs/${article.slug}`
               )}&text=${encodeURIComponent(article.title)}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -448,7 +499,7 @@ export default async function ArticlePage({ params }) {
               href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
                 article.title
               )}&url=${encodeURIComponent(
-                `${BASE_URL}/current-affairs/${article.slug}`
+                  `${SITE_URL}/current-affairs/${article.slug}`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -459,7 +510,7 @@ export default async function ArticlePage({ params }) {
 
             <a
               href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(
-                `${BASE_URL}/current-affairs/${article.slug}`
+                `${SITE_URL}/current-affairs/${article.slug}`
               )}`}
               target="_blank"
               rel="noopener noreferrer"

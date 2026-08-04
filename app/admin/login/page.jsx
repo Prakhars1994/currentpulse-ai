@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -12,6 +13,40 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  useEffect(() => {
+    let active = true;
+
+    async function restoreExistingSession() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!active || !session) return;
+
+      const response = await fetch("/api/admin/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          access_token: session.access_token,
+          expires_in: session.expires_in,
+        }),
+      });
+
+      if (active && response.ok) {
+        router.replace("/admin");
+        router.refresh();
+      }
+    }
+
+    restoreExistingSession();
+
+    return () => {
+      active = false;
+    };
+  }, [router]);
+
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -19,13 +54,37 @@ export default function AdminLoginPage() {
     setErrorMessage("");
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
       if (error) {
         throw error;
+      }
+
+      if (!data.session) {
+        throw new Error("Unable to create a login session.");
+      }
+
+      const sessionResponse = await fetch("/api/admin/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          access_token: data.session.access_token,
+          expires_in: data.session.expires_in,
+        }),
+      });
+
+      const sessionResult = await sessionResponse.json();
+
+      if (!sessionResponse.ok) {
+        await supabase.auth.signOut();
+        throw new Error(
+          sessionResult.message || "This account is not authorised as admin."
+        );
       }
 
       router.replace("/admin");
@@ -203,6 +262,20 @@ export default function AdminLoginPage() {
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
+
+          <div style={{ marginTop: "18px", textAlign: "center" }}>
+            <Link
+              href="/admin/forgot-password"
+              style={{
+                color: "#2563eb",
+                fontSize: "14px",
+                fontWeight: 600,
+                textDecoration: "none",
+              }}
+            >
+              Forgot password?
+            </Link>
+          </div>
         </form>
 
         <button

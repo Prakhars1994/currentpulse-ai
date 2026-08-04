@@ -5,6 +5,7 @@ import Link from "next/link";
 export const metadata = {
   title: "UPSC PYQ Explorer",
   description: "Filter previous-year question themes and build structured UPSC mains answers.",
+  alternates: { canonical: "/pyq" },
 };
 
 export default function PyqPage() {

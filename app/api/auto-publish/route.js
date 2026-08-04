@@ -10,6 +10,7 @@ import {
   loadRecentArticles,
 } from "@/lib/news/duplicateRepository";
 import { classifyCategory, resolvePaper } from "@/lib/contentTaxonomy";
+import { assessUpscRelevance } from "@/lib/news/upscRelevanceGate";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -139,16 +140,18 @@ function localEvaluation(article) {
   const text = `${article.title || ""} ${article.description || ""}`;
   const category = classifyCategory(text);
   const preliminaryScore = Number(article.preliminaryScore || 0);
-  const relevant = preliminaryScore >= 1;
+  const scope = assessUpscRelevance(article);
+  const relevant = !scope.hardReject && scope.eligible && preliminaryScore >= 2;
 
   return {
     relevant,
+    scope: relevant ? scope.scope : "Reject",
     importance: relevant ? Math.min(10, Math.max(5, preliminaryScore + 4)) : 2,
     category,
     paper: resolvePaper(category),
     reason: relevant
-      ? "Selected by local UPSC syllabus, source and policy-keyword scoring because AI evaluation was unavailable."
-      : "No sufficiently strong UPSC syllabus signal was found by the local fallback evaluator.",
+      ? `Selected by local UPSC scoring because AI evaluation was unavailable. ${scope.reason}`
+      : `Rejected by the local fallback evaluator. ${scope.reason}`,
     keywords: [],
   };
 }
@@ -197,6 +200,11 @@ async function evaluateCandidates(supabase, articles) {
       eligible.map((article) => ({
         title: article.title,
         description: article.description || article.summary || article.title,
+        source: article.source,
+        sourceGroup: article.sourceGroup,
+        region: article.region,
+        relevanceScope: article.relevanceScope,
+        relevanceReason: article.relevanceReason,
       }))
     );
   } catch (error) {
@@ -215,7 +223,11 @@ async function evaluateCandidates(supabase, articles) {
     const evaluation = evaluations[index] || localEvaluation(article);
     const candidate = { article, evaluation };
 
-    if (evaluation.relevant && evaluation.importance >= MINIMUM_IMPORTANCE) {
+    if (
+      evaluation.relevant &&
+      evaluation.scope !== "Reject" &&
+      evaluation.importance >= MINIMUM_IMPORTANCE
+    ) {
       accepted.push(candidate);
     } else {
       rejected.push(candidate);
@@ -340,13 +352,35 @@ export async function GET(request) {
   after(async () => {
     const response = await executeAutoPublish();
     console.log(`[Auto publish] Background run completed with HTTP ${response.status}.`);
+    try {
+      const coverageUrl = new URL(
+        "/api/coverage-import?source=all&limit=3",
+        request.url
+      );
+      const coverageResponse = await fetch(coverageUrl, {
+        method: "GET",
+        headers: {
+          authorization: request.headers.get("authorization") || "",
+        },
+        cache: "no-store",
+      });
+      console.log(
+        `[Auto publish] Integrated coaching coverage accepted with HTTP ${coverageResponse.status}.`
+      );
+    } catch (error) {
+      console.error(
+        "[Auto publish] Integrated coaching coverage failed:",
+        error?.message || error
+      );
+    }
   });
 
   return NextResponse.json(
     {
       success: true,
       accepted: true,
-      message: "Automatic news collection was accepted for background processing.",
+      message:
+        "Automatic news collection and hybrid coaching coverage were accepted for background processing.",
     },
     { status: 202 }
   );

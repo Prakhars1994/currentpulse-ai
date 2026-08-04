@@ -1,18 +1,14 @@
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminHeader from "@/components/admin/AdminHeader";
+import AdminShell from "@/components/admin/AdminShell";
+
+export const metadata = {
+  title: "Admin",
+  robots: {
+    index: false,
+    follow: false,
+    noarchive: true,
+  },
+};
 
 export default function AdminLayout({ children }) {
-  return (
-    <div className="min-h-screen bg-gray-100">
-      <AdminSidebar />
-
-      <div className="lg:pl-64">
-        <AdminHeader />
-
-        <main className="p-6">
-          {children}
-        </main>
-      </div>
-    </div>
-  );
+  return <AdminShell>{children}</AdminShell>;
 }

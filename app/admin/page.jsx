@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useRouter } from 'next/navigation'
 import { FileText, TrendingUp, Clock, CheckCircle } from 'lucide-react'
 
 export default function AdminDashboard() {
+  const router = useRouter()
   const [stats, setStats] = useState({ totalArticles: 0, published: 0, drafts: 0 })
   const [recentArticles, setRecentArticles] = useState([])
   const [loading, setLoading] = useState(true)
@@ -12,28 +13,24 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const { count: total } = await supabase
-          .from('articles')
-          .select('*', { count: 'exact', head: true })
+        const response = await fetch('/api/articles', { cache: 'no-store' })
+        const result = await response.json()
 
-        const { count: published } = await supabase
-          .from('articles')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'published')
+        if (response.status === 401 || response.status === 403) {
+          router.replace('/admin/login')
+          return
+        }
 
-        const { count: drafts } = await supabase
-          .from('articles')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'draft')
+        if (!response.ok) {
+          throw new Error(result.message || 'Unable to load dashboard data')
+        }
 
-        const { data: recent } = await supabase
-          .from('articles')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(5)
+        const articles = result.articles || []
+        const published = articles.filter((article) => article.status === 'published').length
+        const drafts = articles.filter((article) => article.status !== 'published').length
 
-        setStats({ totalArticles: total || 0, published: published || 0, drafts: drafts || 0 })
-        setRecentArticles(recent || [])
+        setStats({ totalArticles: articles.length, published, drafts })
+        setRecentArticles(articles.slice(0, 5))
       } catch (error) {
         console.error('Error fetching stats:', error)
       } finally {
@@ -42,7 +39,7 @@ export default function AdminDashboard() {
     }
 
     fetchStats()
-  }, [])
+  }, [router])
 
   if (loading) {
     return (

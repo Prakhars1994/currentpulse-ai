@@ -8,11 +8,12 @@ import {
   X,
   Search,
   Bot,
-  FileText,
   House,
   NotebookPen,
   LibraryBig,
-  Shield,
+  CircleHelp,
+  Files,
+  Newspaper,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -32,17 +33,17 @@ export default function Navbar() {
     {
       name: "Current Affairs",
       href: "/current-affairs",
-      icon: FileText,
+      icon: Newspaper,
     },
     {
       name: "Quiz",
       href: "/quiz",
-      icon: FileText,
+      icon: CircleHelp,
     },
     {
       name: "PDF",
       href: "/pdf",
-      icon: FileText,
+      icon: Files,
     },
     {
       name: "Notes",
@@ -91,29 +92,29 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800/70 bg-slate-950/90 backdrop-blur-lg">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
+    <header className="sticky top-0 z-50 border-b border-white/8 bg-slate-950/86 shadow-[0_12px_35px_rgba(2,6,23,.28)] backdrop-blur-xl">
+      <div className="mx-auto flex h-[4.75rem] max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
 
-        <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-cyan-500 text-xl font-bold text-black">
+        <Link href="/" className="group flex items-center gap-3" aria-label="CurrentPulse AI home">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 via-cyan-500 to-blue-600 text-lg font-black text-slate-950 shadow-lg shadow-cyan-500/20 ring-1 ring-white/20 transition group-hover:scale-105">
             CP
           </div>
 
           <div>
-            <h1 className="text-xl font-bold text-white">
+            <p className="text-lg font-black tracking-tight text-white sm:text-xl">
               CurrentPulse AI
-            </h1>
+            </p>
 
             <p className="text-xs text-gray-400">
-              UPSC Preparation Platform
+              Daily · Static · PYQ-linked
             </p>
           </div>
         </Link>
 
         {/* Desktop Navigation */}
 
-        <nav className="hidden items-center gap-5 xl:flex">
+        <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary navigation">
           {links.map((item) => {
             const active = isActiveLink(item.href);
 
@@ -121,17 +122,14 @@ export default function Navbar() {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`relative py-2 text-sm font-medium transition ${
+                className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                   active
-                    ? "text-cyan-400"
-                    : "text-gray-300 hover:text-cyan-400"
+                    ? "bg-cyan-400/12 text-cyan-300"
+                    : "text-slate-300 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 {item.name}
 
-                {active && (
-                  <span className="absolute inset-x-0 -bottom-1 h-0.5 rounded-full bg-cyan-400" />
-                )}
               </Link>
             );
           })}
@@ -145,18 +143,11 @@ export default function Navbar() {
             onClick={() => setSearchOpen((current) => !current)}
             aria-label={searchOpen ? "Close search" : "Open search"}
             aria-expanded={searchOpen}
-            className="rounded-xl border border-slate-700 p-3 text-gray-300 transition hover:border-cyan-500 hover:text-cyan-400"
+            className="rounded-xl border border-slate-700/80 bg-slate-900/60 p-3 text-slate-300 transition hover:border-cyan-400/70 hover:bg-cyan-400/10 hover:text-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
           >
             {searchOpen ? <X size={18} /> : <Search size={18} />}
           </button>
 
-          <Link
-            href="/admin/login"
-            className="flex items-center gap-2 rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-black transition hover:bg-cyan-400"
-          >
-            <Shield size={18} />
-            Admin
-          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -166,7 +157,7 @@ export default function Navbar() {
           onClick={() => setOpen((current) => !current)}
           aria-label={open ? "Close navigation menu" : "Open navigation menu"}
           aria-expanded={open}
-          className="text-white xl:hidden"
+          className="rounded-xl border border-slate-700 bg-slate-900 p-2.5 text-white xl:hidden"
         >
           {open ? <X size={28} /> : <Menu size={28} />}
         </button>
@@ -210,8 +201,8 @@ export default function Navbar() {
       {/* Mobile Navigation */}
 
       {open && (
-        <div className="border-t border-slate-800 bg-slate-950 xl:hidden">
-          <div className="space-y-2 p-6">
+        <div className="max-h-[calc(100vh-4.75rem)] overflow-y-auto border-t border-slate-800 bg-slate-950/98 xl:hidden">
+          <div className="space-y-2 p-4 sm:p-6">
             {/* Mobile Search */}
 
             <form onSubmit={handleSearch} className="mb-5 flex gap-2">
@@ -267,14 +258,6 @@ export default function Navbar() {
               );
             })}
 
-            <Link
-              href="/admin/login"
-              onClick={() => setOpen(false)}
-              className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-black transition hover:bg-cyan-400"
-            >
-              <Shield size={18} />
-              Admin Login
-            </Link>
           </div>
         </div>
       )}

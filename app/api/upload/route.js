@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -11,18 +11,8 @@ const ALLOWED_IMAGE_TYPES = [
 
 export async function POST(request) {
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Supabase environment variables are missing.",
-        },
-        { status: 500 }
-      );
-    }
+    const auth = await requireAuthenticatedAdmin(request);
+    if (!auth.ok) return auth.response;
 
     const formData = await request.formData();
     const file = formData.get("file");
@@ -57,13 +47,6 @@ export async function POST(request) {
       );
     }
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
-    });
-
     const originalExtension =
       file.name.split(".").pop()?.toLowerCase() || "jpg";
 
@@ -77,7 +60,7 @@ export async function POST(request) {
 
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await auth.supabase.storage
       .from("article-images")
       .upload(filePath, fileBuffer, {
         contentType: file.type,
@@ -97,7 +80,7 @@ export async function POST(request) {
       );
     }
 
-    const { data: publicUrlData } = supabase.storage
+    const { data: publicUrlData } = auth.supabase.storage
       .from("article-images")
       .getPublicUrl(filePath);
 

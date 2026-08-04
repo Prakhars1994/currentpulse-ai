@@ -5,6 +5,13 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { CATEGORY_ROUTES, articleMatchesCategory } from "@/lib/categoryRouting";
 
+export const metadata = {
+  title: "UPSC Current Affairs by Subject",
+  description:
+    "Browse UPSC current affairs by Polity, Economy, International Relations, Environment, Science, Geography, History, Security and Social Issues.",
+  alternates: { canonical: "/categories" },
+};
+
 export default async function CategoriesPage() {
   const { data, error } = await supabase
     .from("articles")

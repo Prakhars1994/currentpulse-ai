@@ -3,6 +3,7 @@ import NotesWorkspace from "@/components/NotesWorkspace";
 export const metadata = {
   title: "Revision Notes",
   description: "Create, search and export personal UPSC current-affairs revision notes.",
+  alternates: { canonical: "/notes" },
 };
 
 export default function NotesPage() {

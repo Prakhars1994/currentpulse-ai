@@ -1,6 +1,10 @@
 import { after, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
-import { publishArticle } from "@/lib/publisher/publishArticle";
+import {
+  enrichPublishedArticle,
+  publishArticle,
+} from "@/lib/publisher/publishArticle";
+import { generateDailyQuiz } from "@/lib/quiz/generateDailyQuiz";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -10,6 +14,57 @@ const HARD_STOP_MS = 280000;
 const MINIMUM_NEXT_ITEM_BUDGET_MS = 45000;
 const STALE_PROCESSING_MINUTES = 20;
 const PROCESSING_CONCURRENCY = 2;
+
+async function upgradeLegacyArticles(supabase, limit = 2) {
+  const { data: articles, error } = await supabase
+    .from("articles")
+    .select("*")
+    .eq("status", "published")
+    .lt("quality_version", 2)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    // This remains non-blocking until the idempotent production migration is run.
+    console.error("[Queue processor] Legacy quality lookup skipped:", error.message);
+    return [];
+  }
+  if (!articles?.length) return [];
+
+  const settled = await Promise.allSettled(
+    articles.map((article) => {
+      const sourceContent = [
+        article.why_news,
+        article.prelims,
+        article.mains,
+        article.question,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      return enrichPublishedArticle(supabase, article.id, {
+        title: article.title,
+        content: sourceContent,
+        source: "CurrentPulse quality upgrade",
+        category: article.category,
+        paper: article.paper,
+        trustedCoverage: true,
+        generationMode: "trusted_coverage",
+      });
+    })
+  );
+
+  return settled.map((result, index) =>
+    result.status === "fulfilled"
+      ? result.value
+      : {
+          status: "failed",
+          articleId: articles[index].id,
+          title: articles[index].title,
+          error: result.reason?.message || "Quality upgrade failed.",
+        }
+  );
+}
 
 function isAuthorised(request) {
   const configuredSecret = process.env.CRON_SECRET?.trim() || "";
@@ -259,6 +314,24 @@ async function executeQueueProcessing() {
       )
     );
 
+    let qualityUpgrades = [];
+    if (results.length === 0 && Date.now() - startedAt < HARD_STOP_MS - 70000) {
+      try {
+        qualityUpgrades = await upgradeLegacyArticles(supabase, 2);
+      } catch (error) {
+        console.error("[Queue processor] Legacy article upgrade failed:", error?.message || error);
+      }
+    }
+
+    let quiz = null;
+    if (Date.now() - startedAt < HARD_STOP_MS - 60000) {
+      try {
+        quiz = await generateDailyQuiz(supabase);
+      } catch (error) {
+        console.error("[Queue processor] Daily quiz refresh skipped:", error?.message || error);
+      }
+    }
+
     const publishedCount = results.filter((item) => item.status === "published").length;
     const duplicateCount = results.filter((item) => item.status === "duplicate").length;
     const failedCount = results.filter((item) => item.status === "failed").length;
@@ -279,8 +352,11 @@ async function executeQueueProcessing() {
         retryPending,
         concurrency: PROCESSING_CONCURRENCY,
         stoppedForRuntimeBudget,
+        qualityUpgrades: qualityUpgrades.filter((item) => item.status !== "failed").length,
+        quizReady: Boolean(quiz && (quiz.generated || quiz.reason === "already_ready")),
         durationMs: Date.now() - startedAt,
       },
+      maintenance: { qualityUpgrades, quiz },
       results,
     });
   } catch (error) {

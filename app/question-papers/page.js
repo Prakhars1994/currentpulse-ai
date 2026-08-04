@@ -4,6 +4,7 @@ import { OFFICIAL_UPSC_PAPERS } from "@/lib/upsc/questionPapers";
 export const metadata = {
   title: "Official UPSC Previous Question Papers",
   description: "Download original UPSC Civil Services Prelims and Mains question papers from upsc.gov.in.",
+  alternates: { canonical: "/question-papers" },
 };
 
 export default function QuestionPapersPage() {
