@@ -1,4 +1,4 @@
-import { after, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import {
   COVERAGE_SOURCE_IDS,
   queueCoverageImport,
@@ -48,46 +48,29 @@ export async function GET(request) {
     );
   }
 
-  const run = () => queueCoverageImport({ requestedSource, maxCandidates });
+  // Collection performs no AI generation, so return its real result. A bare
+  // 202 previously hid missing Supabase columns and source-adapter failures.
+  try {
+    const result = await queueCoverageImport({ requestedSource, maxCandidates });
 
-  if (searchParams.get("wait") === "1") {
-    try {
-      return NextResponse.json(await run());
-    } catch (error) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: error?.message || "Coaching coverage collection failed.",
-        },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json(result, {
+      status: 200,
+      headers: { "Cache-Control": "no-store, max-age=0" },
+    });
+  } catch (error) {
+    console.error("[Coverage import] Collection failed:", error?.message || error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: error?.message || "Coaching coverage collection failed.",
+        requestedSource,
+        maxCandidates,
+      },
+      {
+        status: 500,
+        headers: { "Cache-Control": "no-store, max-age=0" },
+      }
+    );
   }
-
-  after(async () => {
-    try {
-      const result = await run();
-      console.log(
-        `[Coverage import] Queued ${result.queued}, updated ${result.queueUpdated}, already merged ${result.alreadyMerged}.`
-      );
-    } catch (error) {
-      console.error(
-        "[Coverage import] Background collection failed:",
-        error?.message || error
-      );
-    }
-  });
-
-  return NextResponse.json(
-    {
-      success: true,
-      accepted: true,
-      message:
-        "All usable coaching topics were accepted for fast queue collection.",
-      requestedSource,
-      maxCandidates,
-    },
-    { status: 202 }
-  );
 }
-

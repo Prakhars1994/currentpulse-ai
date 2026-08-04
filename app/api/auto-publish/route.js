@@ -12,6 +12,10 @@ import {
 import { classifyCategory, resolvePaper } from "@/lib/contentTaxonomy";
 import { assessUpscRelevance } from "@/lib/news/upscRelevanceGate";
 import { queueCoverageImport } from "@/lib/coverage/queueCoverageImport";
+import {
+  finishAutomationRun,
+  startAutomationRun,
+} from "@/lib/automation/runLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -386,10 +390,50 @@ export async function GET(request) {
   if (waitForCompletion) return executeUnifiedCollection();
 
   after(async () => {
-    const response = await executeUnifiedCollection();
-    console.log(
-      `[Auto publish] Unified background collection completed with HTTP ${response.status}.`
-    );
+    const runId = await startAutomationRun("auto_publish");
+
+    try {
+      const response = await executeUnifiedCollection();
+      const payload = await response.json();
+      const coverage = payload.coverage || {};
+      const news = payload.news || {};
+
+      await finishAutomationRun(runId, {
+        success: Boolean(payload.success),
+        summary: {
+          news: {
+            success: Boolean(news.success),
+            collected: news.stats?.collected || 0,
+            queued: news.stats?.queued || 0,
+            failed: news.stats?.failed || 0,
+          },
+          coverage: {
+            success: Boolean(coverage.success),
+            sources: coverage.sources || {},
+            sourceErrors: coverage.sourceErrors || {},
+            fetched: coverage.fetched || 0,
+            hybridEvents: coverage.hybridEvents || 0,
+            queued: coverage.queued || 0,
+            queueUpdated: coverage.queueUpdated || 0,
+            alreadyMerged: coverage.alreadyMerged || 0,
+            failed: coverage.failed || 0,
+          },
+        },
+        error: payload.success
+          ? null
+          : coverage.message || news.message || "Unified collection failed.",
+      });
+
+      console.log(
+        `[Auto publish] Unified background collection completed with HTTP ${response.status}.`
+      );
+    } catch (error) {
+      await finishAutomationRun(runId, {
+        success: false,
+        error: error?.message || "Unified background collection failed.",
+      });
+      console.error("[Auto publish] Unified background collection failed:", error?.message || error);
+    }
   });
 
   return NextResponse.json(

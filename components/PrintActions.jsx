@@ -24,7 +24,7 @@ export default function PrintActions() {
       <button
         type="button"
         onClick={copyLink}
-        className="inline-flex items-center gap-2 rounded-xl border border-slate-700 px-5 py-3 font-semibold text-white"
+        className="inline-flex items-center gap-2 rounded-xl border border-slate-400 bg-white px-5 py-3 font-semibold text-slate-800 shadow-sm hover:bg-slate-50"
       >
         {copied ? <Check size={18} /> : <Copy size={18} />}
         {copied ? "Copied" : "Copy digest link"}

@@ -510,6 +510,68 @@ body {
   background: rgb(30 41 59 / 0.34);
 }
 
+/* The printable digest is light even when the website theme is dark. Keep
+   these rules after the general article rules so dark list/table colours do
+   not leak into the PDF preview or the printed document. */
+.print-document .article-rich-content,
+.print-document .article-rich-content p,
+.print-document .article-rich-content li,
+.print-document .article-rich-content h2,
+.print-document .article-rich-content h3,
+.print-document .article-rich-content h4 {
+  color: #1e293b;
+}
+
+.print-document .article-rich-content li {
+  background: transparent;
+}
+
+.print-document .article-rich-content li:nth-child(odd) {
+  background: #f8fafc;
+}
+
+.print-document .article-rich-content strong {
+  color: #7c2d12;
+  background: linear-gradient(180deg, transparent 55%, #ffedd5 55%);
+}
+
+.print-document .article-rich-content blockquote {
+  border-left-color: #0891b2;
+  background: #ecfeff;
+  color: #334155;
+}
+
+.print-document .article-rich-content th {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.print-document .article-rich-content td,
+.print-document .article-rich-content tr:nth-child(even) td {
+  background: #fff;
+  color: #1e293b;
+}
+
+@media print {
+  .print-document,
+  .print-document * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .print-document .article-rich-content p,
+  .print-document .article-rich-content li,
+  .print-document .article-rich-content h2,
+  .print-document .article-rich-content h3,
+  .print-document .article-rich-content h4 {
+    color: #111827 !important;
+  }
+
+  .print-document .article-rich-content li:nth-child(odd) {
+    background: #f8fafc !important;
+  }
+}
+
 .study-visual-grid {
   display: grid;
   gap: 1rem;

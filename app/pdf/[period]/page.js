@@ -18,8 +18,9 @@ export default async function DigestPage({ params, searchParams }) {
   const range = resolveDigestRange(period, query?.date);
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,category,paper,why_news,prelims,mains,question,created_at")
+    .select("id,title,slug,category,paper,why_news,prelims,mains,question,created_at,article_sources!inner(source_kind)")
     .eq("status", "published")
+    .eq("article_sources.source_kind", "coaching")
     .gte("created_at", range.start.toISOString())
     .lt("created_at", range.end.toISOString())
     .order("created_at", { ascending: true });
@@ -39,7 +40,9 @@ export default async function DigestPage({ params, searchParams }) {
           <p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-400 print:text-slate-600">CurrentPulse AI</p>
           <h1 className="mt-3 text-4xl font-black capitalize">{period} current-affairs digest</h1>
           <p className="mt-3 text-slate-300 print:text-slate-600">{range.label}</p>
-          <p className="mt-5 text-sm text-slate-400 print:text-slate-600">{articles.length} published {articles.length === 1 ? "article" : "articles"}</p>
+          <p className="mt-5 text-sm text-slate-400 print:text-slate-600">
+            {articles.length} coaching-synthesised {articles.length === 1 ? "brief" : "briefs"} in this date range
+          </p>
         </header>
 
         {articles.length ? (
@@ -91,7 +94,7 @@ export default async function DigestPage({ params, searchParams }) {
         )}
 
         <footer className="mt-8 hidden border-t border-slate-300 pt-4 text-xs text-slate-500 print:block">
-          Generated automatically from published CurrentPulse AI current-affairs articles.
+          Generated from the trusted-coaching Current Affairs stream. AI-collected news remains separate under News.
         </footer>
       </div>
     </main>

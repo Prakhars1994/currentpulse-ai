@@ -10,6 +10,10 @@ import {
   toCoveragePublishingSource,
   topicWithCoverageSources,
 } from "@/lib/coverage/coveragePayload";
+import {
+  finishAutomationRun,
+  startAutomationRun,
+} from "@/lib/automation/runLog";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -461,8 +465,27 @@ export async function GET(request) {
   if (waitForCompletion) return executeQueueProcessing();
 
   after(async () => {
-    const response = await executeQueueProcessing();
-    console.log(`[Queue processor] Background run completed with HTTP ${response.status}.`);
+    const runId = await startAutomationRun("process_queue");
+
+    try {
+      const response = await executeQueueProcessing();
+      const payload = await response.json();
+
+      await finishAutomationRun(runId, {
+        success: Boolean(payload.success),
+        summary: payload.stats || {
+          processed: payload.partialResults?.length || 0,
+        },
+        error: payload.success ? null : payload.message,
+      });
+      console.log(`[Queue processor] Background run completed with HTTP ${response.status}.`);
+    } catch (error) {
+      await finishAutomationRun(runId, {
+        success: false,
+        error: error?.message || "Queue processor background run failed.",
+      });
+      console.error("[Queue processor] Background run failed:", error?.message || error);
+    }
   });
 
   return NextResponse.json(
