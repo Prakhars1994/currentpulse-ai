@@ -17,7 +17,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: article.updated_at || article.created_at || undefined,
       changeFrequency: "monthly" as const,
       priority: 0.8,
-      images: [article.image || article.image_url].filter(Boolean) as string[],
     })) || [];
 
   const publicPages = [
@@ -55,3 +54,4 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...articleRoutes,
   ];
 }
+
