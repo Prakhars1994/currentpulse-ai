@@ -1,29 +1,89 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MapPin } from "lucide-react";
+import { Globe2, MapPin, Map as MapIcon } from "lucide-react";
 
-const INDIA_POINTS = {
-  india: [49, 50], "new delhi": [43, 29], delhi: [43, 29], mumbai: [31, 57],
-  maharashtra: [36, 55], gujarat: [26, 43], rajasthan: [34, 31], punjab: [38, 20],
-  haryana: [41, 27], "uttar pradesh": [53, 34], bihar: [67, 37], "west bengal": [76, 44],
-  assam: [84, 34], sikkim: [72, 30], odisha: [65, 53], "madhya pradesh": [48, 49],
-  chhattisgarh: [58, 52], jharkhand: [68, 46], karnataka: [42, 69], kerala: [43, 83],
-  "tamil nadu": [51, 82], telangana: [49, 62], "andhra pradesh": [57, 67], goa: [35, 66],
-  "jammu and kashmir": [42, 11], ladakh: [50, 12], uttarakhand: [51, 25], himachal: [45, 19],
-  bengaluru: [43, 70], chennai: [55, 80], hyderabad: [49, 63], kolkata: [75, 47],
-  dehradun: [49, 25], visakhapatnam: [61, 64], gwalior: [45, 40],
+const INDIA_LOCATIONS = {
+  india: { label: "India", point: [46, 52] },
+  "new delhi": { label: "New Delhi", point: [35, 29], state: "Delhi" },
+  delhi: { label: "Delhi", point: [35, 29], state: "Delhi" },
+  mumbai: { label: "Mumbai", point: [26, 67], state: "Maharashtra" },
+  maharashtra: { label: "Maharashtra", point: [29, 62] },
+  gujarat: { label: "Gujarat", point: [15, 54] },
+  rajasthan: { label: "Rajasthan", point: [23, 42] },
+  punjab: { label: "Punjab", point: [29, 24] },
+  haryana: { label: "Haryana", point: [31, 31] },
+  "uttar pradesh": { label: "Uttar Pradesh", point: [48, 40] },
+  bihar: { label: "Bihar", point: [65, 42] },
+  "west bengal": { label: "West Bengal", point: [72, 51] },
+  assam: { label: "Assam", point: [83, 39] },
+  sikkim: { label: "Sikkim", point: [73, 35] },
+  odisha: { label: "Odisha", point: [61, 59] },
+  "madhya pradesh": { label: "Madhya Pradesh", point: [39, 53] },
+  chhattisgarh: { label: "Chhattisgarh", point: [50, 58] },
+  jharkhand: { label: "Jharkhand", point: [63, 50] },
+  karnataka: { label: "Karnataka", point: [32, 77], state: "Karnataka" },
+  bengaluru: { label: "Bengaluru", point: [34, 81], state: "Karnataka", city: "Bengaluru", localPoint: [63, 78] },
+  bangalore: { label: "Bengaluru", point: [34, 81], state: "Karnataka", city: "Bengaluru", localPoint: [63, 78] },
+  banglore: { label: "Bengaluru", point: [34, 81], state: "Karnataka", city: "Bengaluru", localPoint: [63, 78] },
+  kerala: { label: "Kerala", point: [34, 89] },
+  "tamil nadu": { label: "Tamil Nadu", point: [41, 88] },
+  chennai: { label: "Chennai", point: [44, 86], state: "Tamil Nadu", city: "Chennai" },
+  telangana: { label: "Telangana", point: [39, 69] },
+  hyderabad: { label: "Hyderabad", point: [40, 69], state: "Telangana", city: "Hyderabad" },
+  "andhra pradesh": { label: "Andhra Pradesh", point: [45, 73] },
+  visakhapatnam: { label: "Visakhapatnam", point: [54, 67], state: "Andhra Pradesh", city: "Visakhapatnam" },
+  goa: { label: "Goa", point: [27, 72] },
+  "jammu and kashmir": { label: "Jammu & Kashmir", point: [32, 13] },
+  ladakh: { label: "Ladakh", point: [42, 13] },
+  uttarakhand: { label: "Uttarakhand", point: [41, 28] },
+  "himachal pradesh": { label: "Himachal Pradesh", point: [35, 22] },
+  himachal: { label: "Himachal Pradesh", point: [35, 22] },
+  dehradun: { label: "Dehradun", point: [40, 29], state: "Uttarakhand", city: "Dehradun" },
+  gwalior: { label: "Gwalior", point: [38, 43], state: "Madhya Pradesh", city: "Gwalior" },
+  kolkata: { label: "Kolkata", point: [72, 54], state: "West Bengal", city: "Kolkata" },
 };
 
-const WORLD_POINTS = {
-  india: [69, 55], china: [73, 39], pakistan: [64, 48], bangladesh: [75, 52], nepal: [70, 47],
-  bhutan: [74, 47], myanmar: [78, 55], "sri lanka": [70, 65], maldives: [65, 66], afghanistan: [62, 42],
-  japan: [88, 39], vietnam: [81, 58], indonesia: [81, 72], australia: [86, 82], russia: [69, 23],
-  ukraine: [56, 31], germany: [50, 31], france: [47, 35], greece: [54, 39], italy: [51, 39],
-  "united kingdom": [46, 29], uk: [46, 29], "united states": [20, 39], usa: [20, 39], canada: [18, 25],
-  brazil: [31, 69], venezuela: [27, 59], cuba: [22, 51], "south africa": [54, 78], sudan: [57, 58],
-  iran: [61, 47], israel: [56, 47], egypt: [55, 51], "red sea": [58, 54], "indian ocean": [68, 70],
-  "bay of bengal": [75, 60], "arabian sea": [64, 59], "strait of hormuz": [63, 50], taiwan: [84, 46],
+const WORLD_LOCATIONS = {
+  india: { label: "India", point: [69, 55], country: "India" },
+  china: { label: "China", point: [73, 39], country: "China" },
+  pakistan: { label: "Pakistan", point: [64, 48], country: "Pakistan" },
+  bangladesh: { label: "Bangladesh", point: [75, 52], country: "Bangladesh" },
+  nepal: { label: "Nepal", point: [70, 47], country: "Nepal" },
+  bhutan: { label: "Bhutan", point: [74, 47], country: "Bhutan" },
+  myanmar: { label: "Myanmar", point: [78, 55], country: "Myanmar" },
+  "sri lanka": { label: "Sri Lanka", point: [70, 65], country: "Sri Lanka" },
+  maldives: { label: "Maldives", point: [65, 66], country: "Maldives" },
+  afghanistan: { label: "Afghanistan", point: [62, 42], country: "Afghanistan" },
+  japan: { label: "Japan", point: [88, 39], country: "Japan" },
+  vietnam: { label: "Vietnam", point: [81, 58], country: "Vietnam" },
+  indonesia: { label: "Indonesia", point: [81, 72], country: "Indonesia" },
+  australia: { label: "Australia", point: [86, 82], country: "Australia" },
+  russia: { label: "Russia", point: [69, 23], country: "Russia" },
+  ukraine: { label: "Ukraine", point: [56, 31], country: "Ukraine" },
+  germany: { label: "Germany", point: [50, 31], country: "Germany" },
+  france: { label: "France", point: [47, 35], country: "France" },
+  greece: { label: "Greece", point: [54, 39], country: "Greece" },
+  italy: { label: "Italy", point: [51, 39], country: "Italy" },
+  "united kingdom": { label: "United Kingdom", point: [46, 29], country: "United Kingdom" },
+  uk: { label: "United Kingdom", point: [46, 29], country: "United Kingdom" },
+  "united states": { label: "United States", point: [20, 39], country: "United States" },
+  usa: { label: "United States", point: [20, 39], country: "United States" },
+  canada: { label: "Canada", point: [18, 25], country: "Canada" },
+  brazil: { label: "Brazil", point: [31, 69], country: "Brazil" },
+  venezuela: { label: "Venezuela", point: [27, 59], country: "Venezuela" },
+  cuba: { label: "Cuba", point: [22, 51], country: "Cuba" },
+  "south africa": { label: "South Africa", point: [54, 78], country: "South Africa" },
+  sudan: { label: "Sudan", point: [57, 58], country: "Sudan" },
+  iran: { label: "Iran", point: [61, 47], country: "Iran" },
+  israel: { label: "Israel", point: [56, 47], country: "Israel" },
+  egypt: { label: "Egypt", point: [55, 51], country: "Egypt" },
+  "red sea": { label: "Red Sea", point: [58, 54], country: "World" },
+  "indian ocean": { label: "Indian Ocean", point: [68, 70], country: "World" },
+  "bay of bengal": { label: "Bay of Bengal", point: [75, 60], country: "World" },
+  "arabian sea": { label: "Arabian Sea", point: [64, 59], country: "World" },
+  "strait of hormuz": { label: "Strait of Hormuz", point: [63, 50], country: "World" },
+  taiwan: { label: "Taiwan", point: [84, 46], country: "Taiwan" },
 };
 
 function normaliseLocations(value) {
@@ -41,23 +101,74 @@ function keyFor(value = "") {
   return String(value).toLowerCase().replace(/\s+/g, " ").trim();
 }
 
-function IndiaMap({ point, label }) {
+function resolveLocation(location = "") {
+  const key = keyFor(location);
+  if (INDIA_LOCATIONS[key]) {
+    const item = INDIA_LOCATIONS[key];
+    return {
+      mapType: "india",
+      label: item.label || location,
+      country: "India",
+      state: item.state || (item.city ? "" : item.label),
+      city: item.city || "",
+      point: item.point,
+      localPoint: item.localPoint || null,
+      localAsset: item.state === "Karnataka" || item.label === "Karnataka" ? "/maps/karnataka-districts.svg" : "",
+    };
+  }
+
+  if (WORLD_LOCATIONS[key]) {
+    const item = WORLD_LOCATIONS[key];
+    return {
+      mapType: "world",
+      label: item.label || location,
+      country: item.country || item.label,
+      state: "",
+      city: "",
+      point: item.point,
+      localPoint: null,
+      localAsset: "",
+    };
+  }
+
+  return {
+    mapType: "world",
+    label: location,
+    country: "World",
+    state: "",
+    city: "",
+    point: null,
+    localPoint: null,
+    localAsset: "",
+  };
+}
+
+function Marker({ point, label, compact = false }) {
+  if (!point) return null;
   return (
-    <svg viewBox="0 0 100 100" role="img" aria-label={`Schematic India locator for ${label}`}>
-      <path className="map-land" d="M43 6 L54 8 59 16 62 23 70 28 73 38 68 45 66 55 61 62 57 72 52 92 47 84 44 74 38 66 34 55 27 46 31 37 35 28 37 18 Z" />
-      <path className="map-boundary" d="M35 28 L62 23 M31 37 L68 45 M34 55 L61 62 M44 74 L57 72" />
-      {point && <><circle className="map-pulse" cx={point[0]} cy={point[1]} r="5" /><circle className="map-marker" cx={point[0]} cy={point[1]} r="2.4" /></>}
-    </svg>
+    <span className={`atlas-marker${compact ? " atlas-marker--compact" : ""}`} style={{ left: `${point[0]}%`, top: `${point[1]}%` }}>
+      <i />
+      {!compact && <b>{label}</b>}
+    </span>
   );
 }
 
-function WorldMap({ point, label }) {
+function LocationTrail({ meta }) {
+  const trail = [meta.country];
+  if (meta.state && meta.state !== meta.country) trail.push(meta.state);
+  if (meta.city) trail.push(meta.city);
+  else if (meta.label && !trail.includes(meta.label)) trail.push(meta.label);
+
   return (
-    <svg viewBox="0 0 100 100" role="img" aria-label={`Schematic world locator for ${label}`}>
-      <path className="map-land" d="M7 25 L20 18 31 23 34 34 27 43 25 57 17 67 11 53 6 43 Z M39 24 L50 18 60 24 66 36 61 45 56 50 54 67 48 82 43 69 45 53 37 41 Z M64 22 L79 19 94 28 91 43 82 49 79 61 70 58 66 45 Z M78 70 L90 68 96 78 90 88 80 84 Z" />
-      <path className="map-grid" d="M5 50 H95 M50 12 V90" />
-      {point && <><circle className="map-pulse" cx={point[0]} cy={point[1]} r="5" /><circle className="map-marker" cx={point[0]} cy={point[1]} r="2.4" /></>}
-    </svg>
+    <div className="atlas-location-trail" aria-label="Location hierarchy">
+      {trail.map((item, index) => (
+        <span key={`${item}-${index}`}>
+          <small>{index === 0 ? "Country" : index === 1 && meta.mapType === "india" ? "State" : index === trail.length - 1 ? "Place" : "Region"}</small>
+          <strong>{item}</strong>
+          {index < trail.length - 1 && <em>→</em>}
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -66,38 +177,66 @@ export default function ArticleStudyVisuals({ mapLocations }) {
   const [selectedLocation, setSelectedLocation] = useState(locations[0] || "");
   if (!locations.length) return null;
 
-  const selectedKey = keyFor(selectedLocation);
-  const indiaPoint = INDIA_POINTS[selectedKey];
-  const worldPoint = WORLD_POINTS[selectedKey];
-  const mapType = indiaPoint ? "india" : "world";
-  const point = indiaPoint || worldPoint || null;
+  const meta = resolveLocation(selectedLocation);
+  const overviewAsset = meta.mapType === "india" ? "/maps/india-states-en.svg" : "/maps/world-political-blank.svg";
+  const zoomPosition = meta.point ? `${meta.point[0]}% ${meta.point[1]}%` : "50% 50%";
 
   return (
-    <section className="static-locator-card" aria-label="Static article locator map">
-      <div className="static-locator-head">
+    <section className="atlas-locator-card" aria-label="Static location map for this article">
+      <div className="atlas-locator-head">
         <div>
-          <span className="static-locator-kicker"><MapPin size={16} /> Map focus</span>
+          <span><MapPin size={15} /> Map focus</span>
           <h2>Locate the place</h2>
         </div>
-        <span className="static-map-type">{mapType === "india" ? "India political schematic" : "World political schematic"}</span>
+        <small>{meta.mapType === "india" ? <><MapIcon size={14} /> India political locator</> : <><Globe2 size={14} /> World political locator</>}</small>
       </div>
-      <div className="static-locator-layout">
-        <div className="static-map-canvas">
-          {mapType === "india" ? <IndiaMap point={point} label={selectedLocation} /> : <WorldMap point={point} label={selectedLocation} />}
-          <div className="static-map-caption">
-            <strong>{selectedLocation}</strong>
-            <span>{point ? "Approximate locator for revision" : "Location listed in source; precise marker unavailable"}</span>
-          </div>
+
+      <LocationTrail meta={meta} />
+
+      <div className="atlas-composite-map">
+        <div className="atlas-overview-map">
+          <img src={overviewAsset} alt={meta.mapType === "india" ? "Political map of India with states" : "Political world map"} />
+          <Marker point={meta.point} label={meta.label} />
+          <span className="atlas-overview-tag">Overview</span>
         </div>
-        <div className="static-map-tabs" aria-label="Locations mentioned in article">
-          {locations.map((location) => (
-            <button key={location} type="button" onClick={() => setSelectedLocation(location)} className={selectedLocation === location ? "is-active" : ""}>
-              <MapPin size={14} /> {location}
-            </button>
-          ))}
-          <p>Schematic only · not to scale · no live map tracking.</p>
+
+        <div className="atlas-local-inset">
+          <span className="atlas-overview-tag">Closer view</span>
+          {meta.localAsset ? (
+            <div className="atlas-inset-image">
+              <img src={meta.localAsset} alt={`${meta.state || meta.label} local map`} />
+              <Marker point={meta.localPoint || [63, 78]} label={meta.city || meta.label} compact />
+              <div className="atlas-inset-label"><strong>{meta.state || meta.label}</strong><span>{meta.city || meta.label}</span></div>
+            </div>
+          ) : (
+            <div className="atlas-inset-zoom" style={{ backgroundImage: `url(${overviewAsset})`, backgroundPosition: zoomPosition }}>
+              <span className="atlas-inset-center"><i /></span>
+              <div className="atlas-inset-label"><strong>{meta.state || meta.country}</strong><span>{meta.city || meta.label}</span></div>
+            </div>
+          )}
         </div>
       </div>
+
+      {locations.length > 1 && (
+        <div className="atlas-location-tabs" aria-label="Other places mentioned in article">
+          {locations.map((location) => {
+            const item = resolveLocation(location);
+            return (
+              <button key={location} type="button" onClick={() => setSelectedLocation(location)} className={selectedLocation === location ? "is-active" : ""}>
+                <MapPin size={13} /> {item.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <p className="atlas-map-note">
+        Static revision aid · approximate marker placement · map base: {meta.mapType === "india" ? (
+          <a href="https://commons.wikimedia.org/wiki/File:India-map-en.svg" target="_blank" rel="noopener noreferrer">Wikimedia Commons (CC BY-SA 3.0)</a>
+        ) : (
+          <a href="https://commons.wikimedia.org/wiki/File:BlankMap-World.svg" target="_blank" rel="noopener noreferrer">Wikimedia Commons (public domain)</a>
+        )}.
+      </p>
     </section>
   );
 }

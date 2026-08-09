@@ -8,13 +8,14 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const DEFAULT_MAX_CANDIDATES = 200;
-const MAX_MANUAL_CANDIDATES = 250;
+// Coverage collection does not generate AI articles. Allow a full rolling
+// multi-source scan so valid CA is not silently cut off before dedup/merge.
+const DEFAULT_MAX_CANDIDATES = 600;
+const MAX_MANUAL_CANDIDATES = 800;
 
 function isAuthorised(request) {
   const configuredSecret = process.env.CRON_SECRET?.trim() || "";
   const authorization = request.headers.get("authorization")?.trim() || "";
-
   if (!configuredSecret) {
     console.error("[Coverage import] CRON_SECRET is missing.");
     return false;
@@ -48,18 +49,14 @@ export async function GET(request) {
     );
   }
 
-  // Collection performs no AI generation, so return its real result. A bare
-  // 202 previously hid missing Supabase columns and source-adapter failures.
   try {
     const result = await queueCoverageImport({ requestedSource, maxCandidates });
-
     return NextResponse.json(result, {
       status: 200,
       headers: { "Cache-Control": "no-store, max-age=0" },
     });
   } catch (error) {
     console.error("[Coverage import] Collection failed:", error?.message || error);
-
     return NextResponse.json(
       {
         success: false,

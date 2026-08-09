@@ -3,9 +3,11 @@ import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import ArticleContent from "@/components/ArticleContent";
 import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
+import EvidenceHighlights from "@/components/EvidenceHighlights";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
+import { isObviousLowValueNews } from "@/lib/news/newsQuality";
 
 function stripHtml(value = "") {
   return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -45,7 +47,9 @@ export async function generateMetadata({ params }) {
       ...(image ? { images: [{ url: absoluteSiteUrl(image), width: 1200, height: 630 }] } : {}),
     },
     twitter: { card: image ? "summary_large_image" : "summary", title: article.title, description, ...(image ? { images: [absoluteSiteUrl(image)] } : {}) },
-    robots: { index: true, follow: true },
+    robots: isObviousLowValueNews(article)
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
   };
 }
 
@@ -81,10 +85,36 @@ export default async function NewsArticlePage({ params }) {
 
           {image && <figure className="news-article-figure"><img src={image} alt={article.image_alt || article.title} />{article.image_caption && <figcaption>{article.image_caption}</figcaption>}</figure>}
 
-          <section className="news-article-lead"><h2>What happened</h2><ArticleContent content={article.why_news} /></section>
-          {article.data_examples && <section className="news-article-section news-article-facts"><h2>Key facts</h2><ArticleContent content={article.data_examples} /></section>}
-          {article.static_foundation && <section className="news-article-section"><h2>Context</h2><ArticleContent content={article.static_foundation} /></section>}
-          {article.india_relevance && <section className="news-article-section news-article-why"><h2>Why it matters</h2><ArticleContent content={article.india_relevance} /></section>}
+          <section className="news-article-lead">
+            <div className="news-section-kicker">The development</div>
+            <h2>What happened</h2>
+            <ArticleContent content={article.why_news} />
+          </section>
+
+          {article.data_examples && (
+            <section className="news-article-section news-article-facts">
+              <div className="news-section-kicker">At a glance</div>
+              <h2>Key facts</h2>
+              <EvidenceHighlights content={article.data_examples} limit={5} />
+            </section>
+          )}
+
+          {article.static_foundation && (
+            <section className="news-article-section">
+              <div className="news-section-kicker">Background</div>
+              <h2>Context</h2>
+              <ArticleContent content={article.static_foundation} />
+            </section>
+          )}
+
+          {article.india_relevance && (
+            <section className="news-article-section news-article-why">
+              <div className="news-section-kicker">Significance</div>
+              <h2>Why it matters</h2>
+              <ArticleContent content={article.india_relevance} />
+            </section>
+          )}
+
           <ArticleStudyVisuals mapLocations={article.map_locations} />
 
           {sources.length > 0 && <section className="news-source-box"><h2>Sources</h2><ul>{sources.map((source) => <li key={source.id}><a href={source.source_url} target="_blank" rel="noopener noreferrer"><strong>{source.source_name}</strong>{source.source_title ? ` — ${source.source_title}` : ""}</a></li>)}</ul></section>}
