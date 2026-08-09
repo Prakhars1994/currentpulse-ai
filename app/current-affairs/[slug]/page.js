@@ -21,6 +21,14 @@ function stripHtml(html = "") {
     .trim();
 }
 
+function hasStudyReadyContent(article = {}) {
+  return (
+    String(article?.syllabus_linkage || "").trim().length >= 20 &&
+    String(article?.prelims || "").trim().length >= 60 &&
+    String(article?.mains || "").trim().length >= 100
+  );
+}
+
 function calculateReadingTime(article) {
   const text = [
     article?.why_news,
@@ -97,7 +105,8 @@ export async function generateMetadata({ params }) {
     .select("source_kind")
     .eq("article_id", article.id);
   const isCoaching = (sourceKinds || []).some((source) => source.source_kind === "coaching");
-  const canonicalPath = isCoaching ? `/current-affairs/${slug}` : `/news/${slug}`;
+  const isStudyReady = hasStudyReadyContent(article);
+  const canonicalPath = (isCoaching || isStudyReady) ? `/current-affairs/${slug}` : `/news/${slug}`;
   const resolvedImage = resolveDisplayImage(article);
   const image = resolvedImage ? absoluteImageUrl(resolvedImage) : "";
 
@@ -177,7 +186,9 @@ export default async function ArticlePage({ params }) {
   }
 
   const isCoachingArticle = (articleSources || []).some((source) => source.source_kind === "coaching");
-  if (!isCoachingArticle) {
+  const hasNewsVersion = (articleSources || []).some((source) => source.source_kind === "news");
+  const isStudyReadyArticle = hasStudyReadyContent(article);
+  if (!isCoachingArticle && !isStudyReadyArticle) {
     permanentRedirect(`/news/${slug}`);
   }
 
@@ -336,6 +347,12 @@ export default async function ArticlePage({ params }) {
           <span className="bg-green-100 text-green-700 px-2 py-1 rounded">
             {article.paper}
           </span>
+
+          {hasNewsVersion && (
+            <Link href={`/news/${slug}`} className="rounded bg-cyan-950/70 px-2 py-1 font-bold text-cyan-300 ring-1 ring-cyan-800 hover:text-cyan-200">
+              News version →
+            </Link>
+          )}
 
         </div>
 

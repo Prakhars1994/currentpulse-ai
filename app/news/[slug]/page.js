@@ -8,6 +8,7 @@ import ArticleViewTracker from "@/components/ArticleViewTracker";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 import { isObviousLowValueNews } from "@/lib/news/newsQuality";
+import { parseNewsPresentation } from "@/lib/news/newsPresentation";
 
 function stripHtml(value = "") {
   return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -36,17 +37,18 @@ export async function generateMetadata({ params }) {
   const article = await getArticle(slug);
   if (!article) return { title: "News Not Found | CurrentPulse AI", robots: { index: false, follow: false } };
   const image = resolveDisplayImage(article);
-  const description = stripHtml(article.seo_description || article.why_news).slice(0, 160);
+  const newsPresentation = parseNewsPresentation(article.content);
+  const description = stripHtml(newsPresentation?.lead || article.seo_description || article.why_news).slice(0, 160);
   return {
-    title: article.seo_title || article.title,
+    title: newsPresentation?.title || article.seo_title || article.title,
     description,
     alternates: { canonical: `${SITE_URL}/news/${slug}` },
     openGraph: {
-      title: article.title, description, url: `${SITE_URL}/news/${slug}`, type: "article",
+      title: newsPresentation?.title || article.title, description, url: `${SITE_URL}/news/${slug}`, type: "article",
       publishedTime: article.created_at, modifiedTime: article.updated_at || article.created_at,
       ...(image ? { images: [{ url: absoluteSiteUrl(image), width: 1200, height: 630 }] } : {}),
     },
-    twitter: { card: image ? "summary_large_image" : "summary", title: article.title, description, ...(image ? { images: [absoluteSiteUrl(image)] } : {}) },
+    twitter: { card: image ? "summary_large_image" : "summary", title: newsPresentation?.title || article.title, description, ...(image ? { images: [absoluteSiteUrl(image)] } : {}) },
     robots: isObviousLowValueNews(article)
       ? { index: false, follow: true }
       : { index: true, follow: true },
@@ -58,18 +60,29 @@ export default async function NewsArticlePage({ params }) {
   const article = await getArticle(slug);
   if (!article) notFound();
   const sources = await getSources(article.id);
-  if (sources.some((source) => source.source_kind === "coaching")) permanentRedirect(`/current-affairs/${slug}`);
+  const newsSources = sources.filter((source) => source.source_kind === "news");
+  const hasCoachingSource = sources.some((source) => source.source_kind === "coaching");
+  if (!newsSources.length && hasCoachingSource) permanentRedirect(`/current-affairs/${slug}`);
 
+  const newsPresentation = parseNewsPresentation(article.content);
+  const newsLead = newsPresentation?.lead || article.why_news;
+  const newsFacts = newsPresentation?.keyFacts || article.data_examples;
+  const newsContext = newsPresentation?.context || article.static_foundation;
+  const newsWhyItMatters = newsPresentation?.whyItMatters || article.india_relevance;
+  const hasCurrentAffairsView =
+    String(article.syllabus_linkage || "").trim().length >= 20 &&
+    String(article.prelims || "").trim().length >= 60 &&
+    String(article.mains || "").trim().length >= 100;
   const image = resolveDisplayImage(article);
   const canonical = `${SITE_URL}/news/${slug}`;
   const structuredData = {
-    "@context": "https://schema.org", "@type": "NewsArticle", headline: article.title,
-    description: stripHtml(article.why_news), datePublished: article.created_at,
+    "@context": "https://schema.org", "@type": "NewsArticle", headline: newsPresentation?.title || article.title,
+    description: stripHtml(newsLead), datePublished: article.created_at,
     dateModified: article.updated_at || article.created_at, mainEntityOfPage: canonical,
     ...(image ? { image: [absoluteSiteUrl(image)] } : {}),
     author: { "@type": "Organization", name: "CurrentPulse Newsroom", url: SITE_URL },
     publisher: { "@type": "Organization", name: "CurrentPulse AI", url: SITE_URL },
-    citation: sources.map((source) => source.source_url).filter(Boolean),
+    citation: newsSources.map((source) => source.source_url).filter(Boolean),
   };
 
   return (
@@ -80,10 +93,16 @@ export default async function NewsArticlePage({ params }) {
         <article className="news-article-shell">
           <nav className="news-article-breadcrumb"><Link href="/">Home</Link> / <Link href="/news">News</Link> / <span>{article.category}</span></nav>
           <p className="news-article-category">{article.category || "Latest News"}</p>
-          <h1>{article.title}</h1>
+          <h1>{newsPresentation?.title || article.title}</h1>
           <div className="news-article-byline"><span>CurrentPulse Newsroom</span><time>Published {formatDate(article.created_at)}</time>{article.updated_at !== article.created_at && <time>Updated {formatDate(article.updated_at)}</time>}</div>
+          {hasCurrentAffairsView && (
+            <div className="news-upsc-bridge">
+              <span>Preparing for UPSC?</span>
+              <Link href={`/current-affairs/${slug}`}>Open the Current Affairs analysis →</Link>
+            </div>
+          )}
 
-          {image && <figure className="news-article-figure"><img src={image} alt={article.image_alt || article.title} />{article.image_caption && <figcaption>{article.image_caption}</figcaption>}</figure>}
+          {image && <figure className="news-article-figure"><img src={image} alt={article.image_alt || newsPresentation?.title || article.title} />{article.image_caption && <figcaption>{article.image_caption}</figcaption>}</figure>}
 
           <section className="news-article-lead">
             <div className="news-section-kicker">The development</div>

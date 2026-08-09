@@ -1,7 +1,9 @@
 import { after, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import {
+  attachNewsPresentationToExistingArticle,
   enrichPublishedArticle,
+  promotePublishedNewsToCurrentAffairs,
   publishArticle,
 } from "@/lib/publisher/publishArticle";
 import { generateDailyQuiz } from "@/lib/quiz/generateDailyQuiz";
@@ -367,19 +369,43 @@ async function executeQueueProcessing() {
             continue;
           }
 
-          const published = isCoverageQueueItem(claimedItem)
+          const coverageItem = isCoverageQueueItem(claimedItem);
+          const published = coverageItem
             ? await processCoverageQueueItem(supabase, claimedItem)
             : await publishArticle(supabase, claimedItem);
 
-          if (!isCoverageQueueItem(claimedItem) && published.status === "duplicate") {
-            await markQueueDuplicate(supabase, claimedItem.id, published.articleId);
+          if (!coverageItem) {
+            // Every item that reaches the news publishing queue has already
+            // passed the UPSC relevance gate. Keep one database article, but
+            // preserve a newsroom presentation and also build a UPSC study
+            // presentation for the Current Affairs stream.
+            if (published.status === "duplicate") {
+              await attachNewsPresentationToExistingArticle(
+                supabase,
+                published.articleId,
+                claimedItem
+              );
+            }
+
+            const promoted = await promotePublishedNewsToCurrentAffairs(
+              supabase,
+              published.articleId,
+              claimedItem
+            );
+
+            await markQueuePublished(supabase, claimedItem.id, published.articleId);
             results.push({
-              status: "duplicate",
+              status: "dual_stream",
+              pipeline: "news+current_affairs",
               worker: workerNumber,
               queueId: claimedItem.id,
               articleId: published.articleId,
               title: published.title,
               slug: published.slug,
+              category: promoted.category || published.category,
+              paper: promoted.paper || published.paper,
+              newsStatus: published.status,
+              currentAffairsStatus: promoted.status,
             });
           } else {
             await markQueuePublished(supabase, claimedItem.id, published.articleId);
@@ -387,10 +413,10 @@ async function executeQueueProcessing() {
               status:
                 published.status === "published_source_brief"
                   ? "published_source_brief"
-                  : isCoverageQueueItem(claimedItem) && published.status === "enriched"
+                  : published.status === "enriched"
                   ? "enriched"
                   : "published",
-              pipeline: claimedItem.pipeline_kind || "news",
+              pipeline: claimedItem.pipeline_kind || "coaching",
               worker: workerNumber,
               queueId: claimedItem.id,
               articleId: published.articleId,
@@ -447,7 +473,8 @@ async function executeQueueProcessing() {
       }
     }
 
-    const publishedCount = results.filter((item) => item.status === "published").length;
+    const publishedCount = results.filter((item) => ["published", "dual_stream"].includes(item.status)).length;
+    const dualStreamCount = results.filter((item) => item.status === "dual_stream").length;
     const enrichedCount = results.filter((item) => item.status === "enriched").length;
     const sourceBriefCount = results.filter((item) => item.status === "published_source_brief").length;
     const rejectedCount = results.filter((item) => item.status === "rejected").length;
@@ -465,6 +492,7 @@ async function executeQueueProcessing() {
         recovered,
         processed: results.length,
         published: publishedCount,
+        dualStream: dualStreamCount,
         enriched: enrichedCount,
         sourceBriefs: sourceBriefCount,
         rejected: rejectedCount,

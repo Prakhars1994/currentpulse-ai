@@ -1,6 +1,8 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { SITE_URL } from "@/lib/siteUrl";
 import { isSameEvent } from "@/lib/news/eventCluster";
+import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
+import { hasNewsPresentation } from "@/lib/news/newsPresentation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,14 +11,14 @@ function escapeXml(value = "") {
   return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
 
-function hasCoachingSource(article = {}) {
-  return (article.article_sources || []).some((source) => source?.source_kind === "coaching");
+function hasNewsSource(article = {}) {
+  return (article.article_sources || []).some((source) => source?.source_kind === "news");
 }
 
 function dedupe(rows = []) {
   const kept = [];
   for (const article of rows) {
-    if (hasCoachingSource(article)) continue;
+    if (!hasNewsSource(article) || (!hasNewsPresentation(article) && !isDisplayWorthyNews(article))) continue;
     const duplicate = kept.some((existing) => isSameEvent(
       { title: article.title, description: article.why_news || "", publishedAt: article.created_at },
       { title: existing.title, description: existing.why_news || "", publishedAt: existing.created_at }
@@ -30,7 +32,7 @@ export async function GET() {
   const cutoff = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
   const { data, error } = await createServerSupabase()
     .from("articles")
-    .select("title,slug,why_news,created_at,updated_at,article_sources(source_kind)")
+    .select("title,slug,why_news,content,created_at,updated_at,article_sources(source_kind,source_published_at)")
     .eq("status", "published").gte("created_at", cutoff)
     .order("created_at", { ascending: false }).limit(1000);
 

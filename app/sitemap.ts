@@ -3,6 +3,8 @@ import type { MetadataRoute } from "next";
 import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
 import { generateEventKey, normalizeText } from "@/lib/news/eventCluster";
+import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
+import { hasNewsPresentation } from "@/lib/news/newsPresentation";
 
 // The sitemap depends on live Supabase data. Keep it out of the static-build
 // prerender path so a slow database/network call cannot fail `next build`.
@@ -16,14 +18,32 @@ type SitemapArticle = {
   slug: string;
   title: string;
   why_news?: string | null;
+  syllabus_linkage?: string | null;
+  prelims?: string | null;
+  mains?: string | null;
+  content?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
-  article_sources?: Array<{ source_kind?: string | null }> | null;
+  article_sources?: Array<{ source_kind?: string | null; source_published_at?: string | null }> | null;
 };
 
 function isCoaching(article: SitemapArticle) {
   return (article.article_sources || []).some(
     (source) => source?.source_kind === "coaching"
+  );
+}
+
+function hasNewsSource(article: SitemapArticle) {
+  return (article.article_sources || []).some(
+    (source) => source?.source_kind === "news"
+  );
+}
+
+function isStudyReady(article: SitemapArticle) {
+  return (
+    String(article.syllabus_linkage || "").trim().length >= 20 &&
+    String(article.prelims || "").trim().length >= 60 &&
+    String(article.mains || "").trim().length >= 100
   );
 }
 
@@ -73,7 +93,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ? await supabase
         .from("articles")
         .select(
-          "slug,title,why_news,created_at,updated_at,article_sources(source_kind)"
+          "slug,title,why_news,syllabus_linkage,prelims,mains,content,created_at,updated_at,article_sources(source_kind,source_published_at)"
         )
         .eq("status", "published")
         .order("created_at", { ascending: false })
@@ -86,12 +106,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const articleRoutes = dedupeArticles(
     (articles || []) as SitemapArticle[]
-  ).map((article) => ({
-    url: `${SITE_URL}${isCoaching(article) ? "/current-affairs" : "/news"}/${article.slug}`,
-    lastModified: article.updated_at || article.created_at || undefined,
-    changeFrequency: "weekly" as const,
-    priority: isCoaching(article) ? 0.85 : 0.75,
-  }));
+  ).flatMap((article) => {
+    const routes: MetadataRoute.Sitemap = [];
+    const currentAffairsReady = isCoaching(article) || isStudyReady(article);
+    const newsReady = hasNewsSource(article) && (hasNewsPresentation(article) || isDisplayWorthyNews(article));
+
+    if (currentAffairsReady) {
+      routes.push({
+        url: `${SITE_URL}/current-affairs/${article.slug}`,
+        lastModified: article.updated_at || article.created_at || undefined,
+        changeFrequency: "weekly" as const,
+        priority: 0.85,
+      });
+    }
+
+    if (newsReady) {
+      routes.push({
+        url: `${SITE_URL}/news/${article.slug}`,
+        lastModified: article.updated_at || article.created_at || undefined,
+        changeFrequency: "weekly" as const,
+        priority: 0.75,
+      });
+    }
+
+    return routes;
+  });
 
   const publicPages = [
     "current-affairs",
