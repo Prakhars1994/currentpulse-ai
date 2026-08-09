@@ -163,8 +163,8 @@ function localEvaluation(article) {
 
 async function evaluateCandidates(supabase, articles) {
   const recentArticles = await loadRecentArticles(supabase, {
-    lookbackDays: 10,
-    limit: 600,
+    lookbackDays: 45,
+    limit: 900,
   });
 
   const eligible = [];

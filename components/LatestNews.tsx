@@ -64,30 +64,28 @@ function ArticleCard({
   const titleHover = isCurrentAffairs
     ? "group-hover:text-cyan-300"
     : "group-hover:text-amber-300";
-  const streamLabel = isCurrentAffairs
-    ? coachingSourceLabel(item)
-    : "CurrentPulse News Desk";
+  const streamLabel = isCurrentAffairs ? coachingSourceLabel(item) : "CurrentPulse Newsroom";
+  const articlePath = `/${stream}/${item.slug}`;
+  const image = resolveDisplayImage(item);
 
   return (
     <article
       className={`group overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/85 shadow-xl shadow-slate-950/20 transition duration-300 hover:-translate-y-1 hover:shadow-2xl ${accentBorder}`}
     >
       <Link
-        href={`/current-affairs/${item.slug}`}
+        href={articlePath}
         className="block overflow-hidden"
       >
         <div className="relative">
-          <img
-            src={resolveDisplayImage(item)}
-            alt={item.title || (isCurrentAffairs ? "UPSC current affairs article" : "UPSC news analysis")}
-            className="h-52 w-full object-cover transition duration-700 group-hover:scale-[1.04]"
-            loading="lazy"
-            decoding="async"
-          />
+          {image ? (
+            <img src={image} alt={item.title || (isCurrentAffairs ? "UPSC current affairs article" : "News article")} className="h-52 w-full object-cover transition duration-700 group-hover:scale-[1.04]" loading="lazy" decoding="async" />
+          ) : (
+            <div className={`h-36 ${isCurrentAffairs ? "bg-gradient-to-br from-slate-900 to-cyan-950" : "bg-gradient-to-br from-stone-900 to-red-950"}`} />
+          )}
           <span
             className={`absolute left-4 top-4 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-xs font-black uppercase tracking-wide backdrop-blur ${accentText}`}
           >
-            {isCurrentAffairs ? "Coaching CA" : "AI News"}
+            {isCurrentAffairs ? "Coaching CA" : "News"}
           </span>
         </div>
       </Link>
@@ -98,11 +96,11 @@ function ArticleCard({
             {item.category || "General Studies"}
           </span>
           <span className="rounded-full bg-blue-400/10 px-3 py-1.5 text-blue-300">
-            {item.paper || "UPSC"}
+            {isCurrentAffairs ? (item.paper || "UPSC") : "News"}
           </span>
         </div>
 
-        <Link href={`/current-affairs/${item.slug}`}>
+        <Link href={articlePath}>
           <h3 className={`mt-4 line-clamp-3 text-xl font-black leading-snug text-white transition ${titleHover}`}>
             {item.title}
           </h3>
@@ -112,7 +110,7 @@ function ArticleCard({
           {stripHtml(item.why_news) ||
             (isCurrentAffairs
               ? "Read the coaching-synthesised UPSC analysis."
-              : "Read the AI-selected UPSC news analysis.")}
+              : "Read the concise source-backed news story.")}
         </p>
 
         <div className="mt-6 flex items-center justify-between gap-3 border-t border-slate-800 pt-4">
@@ -126,7 +124,7 @@ function ArticleCard({
           </div>
 
           <Link
-            href={`/current-affairs/${item.slug}`}
+            href={articlePath}
             className={`shrink-0 text-sm font-black ${accentText}`}
           >
             Read →
@@ -232,9 +230,9 @@ export default async function LatestNews() {
       />
 
       <StreamSection
-        eyebrow="AI-selected developments"
-        title="Important News Analysis"
-        description="Important India-centric and globally systemic events collected by the CurrentPulse news engine, evaluated for UPSC relevance and converted into concise analysis."
+        eyebrow="CurrentPulse newsroom"
+        title="Latest News"
+        description="Concise source-backed India and world news for everyone — separate from the UPSC Current Affairs format."
         articles={news.slice(0, 6) as StreamArticle[]}
         stream="news"
         href="/news"

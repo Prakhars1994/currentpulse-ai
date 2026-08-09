@@ -29,6 +29,7 @@ type Article = {
   image_url: string | null;
   image_source_url: string | null;
   created_at: string | null;
+  article_sources?: Array<{ source_kind?: string | null }>;
 };
 
 function plainText(value = "") {
@@ -67,7 +68,7 @@ export default async function CategoryPage({ params }: Props) {
   const { data, error } = await supabase
     .from("articles")
     .select(
-      "id,title,slug,category,paper,why_news,prelims,mains,image,image_url,image_source_url,created_at"
+      "id,title,slug,category,paper,why_news,prelims,mains,image,image_url,image_source_url,created_at,article_sources(source_kind)"
     )
     .eq("status", "published")
     .order("created_at", { ascending: false })
@@ -76,7 +77,8 @@ export default async function CategoryPage({ params }: Props) {
   if (error) console.error("Category fetch failed:", error.message);
 
   const articles = ((data || []) as Article[]).filter((article) =>
-    articleMatchesCategory(article, route)
+    articleMatchesCategory(article, route) &&
+    (article.article_sources || []).some((source) => source?.source_kind === "coaching")
   );
 
   const related = CATEGORY_ROUTES.filter((item) => item.slug !== route.slug).slice(
@@ -116,13 +118,11 @@ export default async function CategoryPage({ params }: Props) {
                 key={article.id}
                 className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl"
               >
-                <img
-                  src={resolveDisplayImage(article)}
-                  alt={article.title}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-44 w-full object-cover"
-                />
+                {resolveDisplayImage(article) ? (
+                  <img src={resolveDisplayImage(article)} alt={article.title} loading="lazy" decoding="async" className="h-44 w-full object-cover" />
+                ) : (
+                  <div className="ca-card-noimage"><span>{article.category || route.name}</span></div>
+                )}
                 <div className="p-6">
                   <div className="flex flex-wrap gap-2 text-xs font-bold">
                     <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-cyan-300">

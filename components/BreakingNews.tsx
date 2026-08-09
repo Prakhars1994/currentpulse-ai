@@ -32,7 +32,7 @@ export default async function BreakingNews() {
                 className="flex items-center"
               >
                 <Link
-                  href={`/current-affairs/${article.slug}`}
+                  href={`/news/${article.slug}`}
                   className="px-6 py-3 text-sm font-medium text-white transition hover:text-cyan-300 sm:px-8"
                 >
                   {article.title}

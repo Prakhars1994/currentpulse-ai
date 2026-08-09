@@ -1,21 +1,23 @@
 import OfficialPapers from "@/components/OfficialPapers";
 import { OFFICIAL_UPSC_PAPERS } from "@/lib/upsc/questionPapers";
+import { SITE_URL } from "@/lib/siteUrl";
 
 export const metadata = {
-  title: "Official UPSC Previous Question Papers",
-  description: "Download original UPSC Civil Services Prelims and Mains question papers from upsc.gov.in.",
-  alternates: { canonical: "/question-papers" },
+  title: "12 Years UPSC Previous Question Papers (2015–2026)",
+  description: "Browse 12 years of official UPSC Civil Services Prelims and Mains papers, organised separately by stage and year.",
+  alternates: { canonical: `${SITE_URL}/question-papers` },
 };
 
 export default function QuestionPapersPage() {
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-14 text-white">
+    <main className="paper-library-page min-h-screen px-6 py-14">
       <div className="mx-auto max-w-6xl">
-        <p className="font-bold uppercase tracking-[0.24em] text-cyan-400">Original UPSC PDFs</p>
-        <h1 className="mt-3 text-4xl font-black sm:text-5xl">Previous question papers</h1>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">
-          Download Civil Services Prelims GS/CSAT and Mains Essay/General Studies papers directly from the official UPSC website. CurrentPulse does not alter these papers.
-        </p>
+        <header className="paper-library-hero">
+          <p>Official UPSC archive</p>
+          <h1>12 Years of Prelims & Mains Papers</h1>
+          <span>2015 → 2026</span>
+          <p className="paper-library-description">A clean academic library for original Civil Services question papers. Prelims and Mains stay separate so you can revise year-wise without mixing stages.</p>
+        </header>
         <div className="mt-10"><OfficialPapers papers={OFFICIAL_UPSC_PAPERS} /></div>
       </div>
     </main>

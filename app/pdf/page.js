@@ -15,8 +15,9 @@ export const metadata = {
 export default async function PdfPage() {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,created_at")
+    .select("id,created_at,article_sources!inner(source_kind)")
     .eq("status", "published")
+    .eq("article_sources.source_kind", "coaching")
     .order("created_at", { ascending: false })
     .limit(1000);
 
@@ -33,9 +34,9 @@ export default async function PdfPage() {
   const month = today.slice(0, 7);
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-14 text-white">
+    <main className="pdf-library-theme min-h-screen px-6 py-14 text-white">
       <div className="mx-auto max-w-6xl">
-        <p className="font-bold uppercase tracking-[0.24em] text-cyan-400">Automatic digest builder</p>
+        <p className="font-bold uppercase tracking-[0.24em] text-emerald-300">Automatic digest builder</p>
         <h1 className="mt-3 text-4xl font-black sm:text-5xl">Current-affairs PDFs</h1>
         <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">
           Digests are assembled directly from published articles. Open any digest,

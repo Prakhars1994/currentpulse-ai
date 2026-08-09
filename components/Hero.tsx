@@ -87,9 +87,8 @@ export default async function Hero() {
 
   const featuredImage = resolveDisplayImage(featured || {});
   const featuredIsCurrentAffairs = hasCoachingSource(featured || {});
-  const featuredStreamLabel = featuredIsCurrentAffairs
-    ? "Coaching current affairs"
-    : "AI news analysis";
+  const featuredStreamLabel = featuredIsCurrentAffairs ? "Coaching current affairs" : "Latest news";
+  const featuredPath = featured ? `${featuredIsCurrentAffairs ? "/current-affairs" : "/news"}/${featured.slug}` : "/current-affairs";
 
   return (
     <section className="relative overflow-hidden border-b border-white/5 bg-[radial-gradient(circle_at_12%_8%,rgba(6,182,212,.16),transparent_30%),radial-gradient(circle_at_90%_70%,rgba(37,99,235,.18),transparent_33%),linear-gradient(135deg,#020617,#0f172a_55%,#111827)]">
@@ -208,18 +207,14 @@ export default async function Hero() {
             {featured ? (
               <article className="group overflow-hidden rounded-[1.75rem] border border-cyan-400/20 bg-slate-900/90 shadow-2xl shadow-slate-950/50 ring-1 ring-white/5">
                 <Link
-                  href={`/current-affairs/${featured.slug}`}
+                  href={featuredPath}
                   className="block overflow-hidden"
                 >
-                  <img
-                    src={featuredImage}
-                    alt={
-                      featured.title ||
-                      "Featured current affairs article"
-                    }
-                    className="h-60 w-full object-cover transition duration-700 group-hover:scale-[1.035] sm:h-72"
-                    loading="eager"
-                  />
+                  {featuredImage ? (
+                    <img src={featuredImage} alt={featured.title || "Featured article"} className="h-60 w-full object-cover transition duration-700 group-hover:scale-[1.035] sm:h-72" loading="eager" />
+                  ) : (
+                    <div className="h-36 bg-gradient-to-br from-slate-900 via-cyan-950/70 to-blue-950 sm:h-44" />
+                  )}
                 </Link>
 
                 <div className="p-6 sm:p-8">
@@ -228,7 +223,7 @@ export default async function Hero() {
                     <span className="rounded-full border border-slate-700 bg-slate-950/80 px-3 py-1.5 text-slate-300">{featured.category || "Current Affairs"}</span>
                   </div>
 
-                  <Link href={`/current-affairs/${featured.slug}`}>
+                  <Link href={featuredPath}>
                     <h2 className="mt-5 text-2xl font-black leading-tight tracking-tight text-white transition hover:text-cyan-300 sm:text-3xl">
                       {featured.title}
                     </h2>
@@ -243,7 +238,7 @@ export default async function Hero() {
                     <div className="text-sm text-slate-400"><span className="font-bold text-blue-300">{featured.paper || "General Studies"}</span> · {formatDate(featured.created_at)}</div>
 
                     <Link
-                      href={`/current-affairs/${featured.slug}`}
+                      href={featuredPath}
                       className="font-bold text-cyan-400 transition hover:text-cyan-300"
                     >
                       Read Article →

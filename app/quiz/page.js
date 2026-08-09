@@ -31,9 +31,9 @@ export default async function QuizPage() {
   const usingFallback = storedQuestions.length < 10;
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-14 text-white">
+    <main className="quiz-page-theme min-h-screen px-6 py-14 text-white">
       <div className="mx-auto max-w-4xl">
-        <p className="font-bold uppercase tracking-[0.24em] text-cyan-400">
+        <p className="font-bold uppercase tracking-[0.24em] text-violet-300">
           {usingFallback ? "UPSC foundation practice" : `Daily set · ${newestDate}`}
         </p>
         <h1 className="mt-3 text-4xl font-black sm:text-5xl">Daily current-affairs quiz</h1>

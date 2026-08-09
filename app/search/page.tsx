@@ -20,6 +20,7 @@ type Article = {
   image_source_url: string | null;
   created_at: string | null;
   status: string | null;
+  article_sources?: Array<{ source_kind?: string | null }>;
 };
 
 function stripHtml(content: string) {
@@ -52,7 +53,7 @@ export default async function SearchPage({
       const { data, error } = await supabase
         .from("articles")
         .select(
-          "id,title,slug,category,paper,why_news,image,image_url,image_source_url,created_at,status"
+          "id,title,slug,category,paper,why_news,image,image_url,image_source_url,created_at,status,article_sources(source_kind)"
         )
         .eq("status", "published")
         .or(
@@ -127,6 +128,9 @@ export default async function SearchPage({
           ) : articles.length > 0 ? (
             <div className="space-y-6">
               {articles.map((article) => {
+                const isCurrentAffairs = (article.article_sources || []).some((source) => source?.source_kind === "coaching");
+                const articlePath = `${isCurrentAffairs ? "/current-affairs" : "/news"}/${article.slug}`;
+                const image = resolveDisplayImage(article);
                 const description = article.why_news
                   ? stripHtml(article.why_news)
                   : "Read the complete UPSC current affairs analysis.";
@@ -134,15 +138,15 @@ export default async function SearchPage({
                 return (
                   <Link
                     key={article.id}
-                    href={`/current-affairs/${article.slug}`}
+                    href={articlePath}
                     className="block overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl"
                   >
                     <div className="flex flex-col md:flex-row">
-                      <img
-                        src={resolveDisplayImage(article)}
-                        alt={article.title || "Current affairs article"}
-                        className="h-52 w-full object-cover md:h-auto md:w-64"
-                      />
+                      {image ? (
+                        <img src={image} alt={article.title || "Article"} className="h-52 w-full object-cover md:h-auto md:w-64" />
+                      ) : (
+                        <div className={`h-28 w-full md:h-auto md:w-40 ${isCurrentAffairs ? "bg-gradient-to-br from-cyan-950 to-slate-900" : "bg-gradient-to-br from-red-950 to-stone-900"}`} />
+                      )}
 
                       <div className="flex-1 p-6">
                         <div className="flex flex-wrap items-center gap-3">
@@ -151,7 +155,7 @@ export default async function SearchPage({
                           </span>
 
                           <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
-                            {article.paper || "General Studies"}
+                            {isCurrentAffairs ? (article.paper || "General Studies") : "News"}
                           </span>
                         </div>
 

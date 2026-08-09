@@ -64,6 +64,7 @@ export default async function CurrentAffairsPage() {
           <div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {articles.map((article) => {
               const categorySlug = createCategorySlug(article.category);
+              const image = resolveDisplayImage(article);
 
               const description = article.why_news
                 ? stripHtml(article.why_news)
@@ -74,15 +75,13 @@ export default async function CurrentAffairsPage() {
                   key={article.id}
                   className="group overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/80 shadow-xl shadow-slate-950/20 transition hover:-translate-y-1 hover:border-cyan-400/50 hover:shadow-2xl hover:shadow-cyan-950/20"
                 >
-                  <Link href={`/current-affairs/${article.slug}`} className="block overflow-hidden">
-                    <img
-                      src={resolveDisplayImage(article)}
-                      alt={article.title || "Current affairs article"}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-48 w-full object-cover transition duration-700 group-hover:scale-[1.04] sm:h-52"
-                    />
-                  </Link>
+                  {image ? (
+                    <Link href={`/current-affairs/${article.slug}`} className="block overflow-hidden">
+                      <img src={image} alt={article.title || "Current affairs article"} loading="lazy" decoding="async" className="h-48 w-full object-cover transition duration-700 group-hover:scale-[1.04] sm:h-52" />
+                    </Link>
+                  ) : (
+                    <div className="ca-card-noimage" aria-hidden="true"><span>{article.category || "Current Affairs"}</span></div>
+                  )}
 
                   <div className="p-6">
                     <div className="flex flex-wrap items-center gap-2">

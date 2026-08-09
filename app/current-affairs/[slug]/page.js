@@ -1,10 +1,13 @@
 import { supabase } from "@/lib/supabase";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import ArticleContent from "@/components/ArticleContent";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
+import CompactMarkdownSection from "@/components/CompactMarkdownSection";
+import EvidenceHighlights from "@/components/EvidenceHighlights";
+import MainsAccordion from "@/components/MainsAccordion";
 import RelatedYouTubeVideo from "@/components/RelatedYouTubeVideo";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 
@@ -58,6 +61,11 @@ function absoluteImageUrl(value) {
   return value ? absoluteSiteUrl(value) : "";
 }
 
+function articleRoute(item = {}) {
+  const coaching = (item.article_sources || []).some((source) => source?.source_kind === "coaching");
+  return `${coaching ? "/current-affairs" : "/news"}/${item.slug}`;
+}
+
 // ============================
 // Dynamic SEO
 // ============================
@@ -84,7 +92,14 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const image = absoluteImageUrl(resolveDisplayImage(article));
+  const { data: sourceKinds } = await supabase
+    .from("article_sources")
+    .select("source_kind")
+    .eq("article_id", article.id);
+  const isCoaching = (sourceKinds || []).some((source) => source.source_kind === "coaching");
+  const canonicalPath = isCoaching ? `/current-affairs/${slug}` : `/news/${slug}`;
+  const resolvedImage = resolveDisplayImage(article);
+  const image = resolvedImage ? absoluteImageUrl(resolvedImage) : "";
 
   const plainDescription =
     stripHtml(article.seo_description || "") ||
@@ -100,20 +115,14 @@ export async function generateMetadata({ params }) {
       : article.tags || "",
 
     alternates: {
-      canonical: `${SITE_URL}/current-affairs/${slug}`,
+      canonical: `${SITE_URL}${canonicalPath}`,
     },
 
     openGraph: {
       title: article.title,
       description: plainDescription,
-      url: `${SITE_URL}/current-affairs/${slug}`,
-      images: [
-        {
-          url: image,
-          width: 1200,
-          height: 630,
-        },
-      ],
+      url: `${SITE_URL}${canonicalPath}`,
+      ...(image ? { images: [{ url: image, width: 1200, height: 630 }] } : {}),
       type: "article",
       publishedTime: article.created_at,
       modifiedTime: article.updated_at || article.created_at,
@@ -122,10 +131,10 @@ export async function generateMetadata({ params }) {
     },
 
     twitter: {
-      card: "summary_large_image",
+      card: image ? "summary_large_image" : "summary",
       title: article.title,
       description: plainDescription,
-      images: [image],
+      ...(image ? { images: [image] } : {}),
     },
     authors: [{ name: "CurrentPulse Editorial Desk", url: SITE_URL }],
     category: "education",
@@ -159,7 +168,7 @@ export default async function ArticlePage({ params }) {
 
   const { data: articleSources, error: sourcesError } = await supabase
     .from("article_sources")
-    .select("id, source_name, source_title, source_url, source_published_at")
+    .select("id, source_kind, source_name, source_title, source_url, source_published_at")
     .eq("article_id", article.id)
     .order("created_at", { ascending: true });
 
@@ -167,11 +176,17 @@ export default async function ArticlePage({ params }) {
     console.error("Article sources fetch error:", sourcesError);
   }
 
+  const isCoachingArticle = (articleSources || []).some((source) => source.source_kind === "coaching");
+  if (!isCoachingArticle) {
+    permanentRedirect(`/news/${slug}`);
+  }
+
   // Only published related articles
   const { data: relatedArticles, error: relatedError } = await supabase
     .from("articles")
-    .select("id,title,slug,category,created_at")
+    .select("id,title,slug,category,created_at,article_sources!inner(source_kind)")
     .eq("status", "published")
+    .eq("article_sources.source_kind", "coaching")
     .eq("category", article.category)
     .neq("slug", slug)
     .order("created_at", { ascending: false })
@@ -184,8 +199,9 @@ export default async function ArticlePage({ params }) {
   // Only published previous article
   const { data: previousArticle, error: previousError } = await supabase
     .from("articles")
-    .select("title,slug")
+    .select("title,slug,article_sources!inner(source_kind)")
     .eq("status", "published")
+    .eq("article_sources.source_kind", "coaching")
     .lt("id", article.id)
     .order("id", { ascending: false })
     .limit(1)
@@ -199,8 +215,9 @@ export default async function ArticlePage({ params }) {
   // Only published next article
   const { data: nextArticle, error: nextError } = await supabase
     .from("articles")
-    .select("title,slug")
+    .select("title,slug,article_sources!inner(source_kind)")
     .eq("status", "published")
+    .eq("article_sources.source_kind", "coaching")
     .gt("id", article.id)
     .order("id", { ascending: true })
     .limit(1)
@@ -215,13 +232,13 @@ export default async function ArticlePage({ params }) {
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [{
-    "@type": "NewsArticle",
+    "@type": "Article",
     "@id": `${SITE_URL}/current-affairs/${slug}#article`,
     headline: article.title,
     description:
       stripHtml(article.seo_description || "") ||
       stripHtml(article.why_news || ""),
-    image: [absoluteImageUrl(articleImage)],
+    ...(articleImage ? { image: [absoluteImageUrl(articleImage)] } : {}),
     datePublished: article.created_at,
     dateModified: article.updated_at || article.created_at,
     author: {
@@ -353,8 +370,7 @@ export default async function ArticlePage({ params }) {
           {article.static_foundation && <a href="#static-foundation">Static</a>}
           {article.data_examples && <a href="#evidence">Evidence</a>}
           <a href="#prelims">Prelims</a>
-          <a href="#mains">Mains</a>
-          {article.answer_framework && <a href="#answer-framework">Answer plan</a>}
+          {(article.mains || article.answer_framework) && <a href="#mains">Mains</a>}
         </nav>
 
         <article className="mt-10 space-y-8">
@@ -367,69 +383,46 @@ export default async function ArticlePage({ params }) {
             />
           </section>
 
-          <section id="syllabus" className="article-section article-section--syllabus scroll-mt-28">
-            <h2 className="article-section-title">🎯 Syllabus & Exam Relevance</h2>
-            <ArticleContent
-              content={article.syllabus_linkage || `- **Paper:** ${article.paper || "General Studies"}\n- **Theme:** ${article.category || "Current Affairs"}`}
+          <section id="syllabus" className="compact-syllabus-card scroll-mt-28">
+            <div className="compact-section-heading">
+              <span>🎯</span>
+              <div><small>Exam map</small><h2>Syllabus & Relevance</h2></div>
+            </div>
+            <CompactMarkdownSection
+              content={article.syllabus_linkage || `- **Paper:** ${article.paper || "General Studies"}
+- **Theme:** ${article.category || "Current Affairs"}`}
+              limit={3}
             />
             {article.india_relevance && (
-              <div className="article-relevance-callout">
-                <h3>Why it matters for India</h3>
-                <ArticleContent content={article.india_relevance} />
-              </div>
+              <details className="compact-inline-details">
+                <summary>Why it matters for India</summary>
+                <CompactMarkdownSection content={article.india_relevance} limit={4} />
+              </details>
             )}
           </section>
 
           {article.static_foundation && (
-            <section id="static-foundation" className="article-section article-section--static scroll-mt-28">
-              <h2 className="article-section-title">🏛️ Static Foundation</h2>
-              <ArticleContent content={article.static_foundation} />
+            <section id="static-foundation" className="compact-study-section compact-study-section--static scroll-mt-28">
+              <div className="compact-section-heading"><span>🏛️</span><div><small>Quick base</small><h2>Static Foundation</h2></div></div>
+              <CompactMarkdownSection content={article.static_foundation} limit={7} />
             </section>
           )}
 
           {article.data_examples && (
-            <section id="evidence" className="article-section article-section--evidence scroll-mt-28">
-              <h2 className="article-section-title">📊 Data, Reports, Cases & Examples</h2>
-              <ArticleContent content={article.data_examples} />
+            <section id="evidence" className="compact-study-section compact-study-section--evidence scroll-mt-28">
+              <div className="compact-section-heading"><span>📊</span><div><small>Answer enrichment</small><h2>Data, Reports, Cases & Examples</h2></div></div>
+              <EvidenceHighlights content={article.data_examples} limit={6} />
             </section>
           )}
 
-          <ArticleStudyVisuals
-            mapLocations={article.map_locations}
-          />
+          <ArticleStudyVisuals mapLocations={article.map_locations} />
 
-          <section id="prelims" className="article-section article-section--prelims scroll-mt-28">
-            <h2 className="article-section-title">📚 Prelims Toolkit</h2>
-            <ArticleContent
-              content={article.prelims}
-              fallback="Prelims facts will be updated soon."
-            />
+          <section id="prelims" className="compact-study-section compact-study-section--prelims scroll-mt-28">
+            <div className="compact-section-heading"><span>🎯</span><div><small>Rapid revision</small><h2>Prelims Quick Facts</h2></div></div>
+            <CompactMarkdownSection content={article.prelims} limit={8} fallback="Prelims facts will be updated soon." />
           </section>
 
-          <section id="mains" className="article-section article-section--mains scroll-mt-28">
-            <h2 className="article-section-title">✍️ Mains Perspective</h2>
-            <ArticleContent
-              content={article.mains}
-              fallback="Detailed Mains analysis will be updated soon."
-            />
-          </section>
-
-          {article.answer_framework && (
-            <section id="answer-framework" className="article-section article-section--answer scroll-mt-28">
-              <h2 className="article-section-title">🧭 Mains Answer Framework</h2>
-              <ArticleContent content={article.answer_framework} />
-            </section>
-          )}
-
-          <section className="article-section border-blue-500/30 bg-blue-500/10">
-            <h2 className="article-section-title text-blue-200">📝 Possible UPSC Mains Question</h2>
-            <div className="rounded-xl border-l-4 border-blue-400 bg-slate-900/80 p-6 text-lg leading-8 text-slate-100">
-              <ArticleContent
-                content={article.question}
-                fallback="Discuss the significance of this topic for India."
-              />
-            </div>
-          </section>
+          <MainsAccordion mains={article.mains} answerFramework={article.answer_framework} question={article.question} />
 
         </article>
 
@@ -538,7 +531,7 @@ export default async function ArticlePage({ params }) {
 
             {previousArticle ? (
               <Link
-                href={`/current-affairs/${previousArticle.slug}`}
+                href={articleRoute(previousArticle)}
                 className="rounded-xl border border-slate-700 bg-slate-900/70 p-6 transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
               >
                 <p className="mb-2 text-sm text-slate-400">
@@ -555,7 +548,7 @@ export default async function ArticlePage({ params }) {
 
             {nextArticle ? (
               <Link
-                href={`/current-affairs/${nextArticle.slug}`}
+                href={articleRoute(nextArticle)}
                 className="rounded-xl border border-slate-700 bg-slate-900/70 p-6 text-right transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
               >
                 <p className="mb-2 text-sm text-slate-400">
@@ -585,7 +578,7 @@ export default async function ArticlePage({ params }) {
               {relatedArticles.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/current-affairs/${item.slug}`}
+                  href={articleRoute(item)}
                   className="rounded-xl border border-slate-700 bg-slate-900/70 p-5 transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
                 >
                   <span className="text-sm font-semibold text-cyan-300">

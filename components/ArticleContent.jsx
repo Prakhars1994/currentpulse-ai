@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { highlightMarkdownFacts } from "@/lib/study/highlightFacts";
 
 function decodeHtmlEntities(value = "") {
   return String(value)
@@ -33,7 +34,7 @@ function normalizeMarkdown(value = "") {
     ? htmlToMarkdown(value)
     : String(value);
 
-  return withoutHtml
+  return highlightMarkdownFacts(withoutHtml
     .replace(/\r\n?/g, "\n")
     // Imported coaching notes often flatten every bullet into one paragraph.
     .replace(/[ \t]*[•●▪◦][ \t]*/g, "\n\n- ")
@@ -57,7 +58,7 @@ function normalizeMarkdown(value = "") {
     // Every list item must begin on its own line.
     .replace(/\s+-[ \t]+/g, "\n- ")
     .replace(/\n{3,}/g, "\n\n")
-    .trim();
+    .trim());
 }
 
 export default function ArticleContent({ content, fallback }) {

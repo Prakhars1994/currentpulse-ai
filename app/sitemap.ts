@@ -2,22 +2,96 @@ import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import type { MetadataRoute } from "next";
 import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
+import { generateEventKey, normalizeText } from "@/lib/news/eventCluster";
+
+// The sitemap depends on live Supabase data. Keep it out of the static-build
+// prerender path so a slow database/network call cannot fail `next build`.
+export const dynamic = "force-dynamic";
+
+// Keep this comfortably below Google's 50,000 URL limit while covering the
+// complete CurrentPulse article library for the foreseeable future.
+const SITEMAP_ARTICLE_LIMIT = 10000;
+
+type SitemapArticle = {
+  slug: string;
+  title: string;
+  why_news?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  article_sources?: Array<{ source_kind?: string | null }> | null;
+};
+
+function isCoaching(article: SitemapArticle) {
+  return (article.article_sources || []).some(
+    (source) => source?.source_kind === "coaching"
+  );
+}
+
+function stableEventKey(article: SitemapArticle) {
+  // Ignore short parenthetical acronyms such as "(TMZ)" so rewritten versions
+  // of the same headline collapse to one sitemap entry.
+  const title = String(article.title || "").replace(/\([^)]{1,16}\)/g, " ");
+  return generateEventKey({
+    title,
+    description: article.why_news || "",
+    publishedAt: article.created_at || undefined,
+  });
+}
+
+/**
+ * Fast O(n) sitemap dedupe.
+ *
+ * The previous implementation compared every article with every article and
+ * regenerated event fingerprints for each comparison. With 1,000+ articles
+ * that became millions of operations and pushed Next.js sitemap prerendering
+ * beyond the 60-second build limit.
+ */
+function dedupeArticles(rows: SitemapArticle[]) {
+  const kept: SitemapArticle[] = [];
+  const seenTitles = new Set<string>();
+  const seenEvents = new Set<string>();
+
+  for (const article of rows) {
+    if (!article?.slug || !article?.title) continue;
+
+    const titleKey = normalizeText(article.title);
+    const eventKey = stableEventKey(article);
+
+    if (titleKey && seenTitles.has(titleKey)) continue;
+    if (eventKey && seenEvents.has(eventKey)) continue;
+
+    if (titleKey) seenTitles.add(titleKey);
+    if (eventKey) seenEvents.add(eventKey);
+    kept.push(article);
+  }
+
+  return kept;
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { data: articles } = isSupabaseConfigured
+  const { data: articles, error } = isSupabaseConfigured
     ? await supabase
         .from("articles")
-        .select("slug,created_at,updated_at,image,image_url")
+        .select(
+          "slug,title,why_news,created_at,updated_at,article_sources(source_kind)"
+        )
         .eq("status", "published")
-    : { data: [] };
+        .order("created_at", { ascending: false })
+        .limit(SITEMAP_ARTICLE_LIMIT)
+    : { data: [], error: null };
 
-  const articleRoutes =
-    articles?.map((article) => ({
-      url: `${SITE_URL}/current-affairs/${article.slug}`,
-      lastModified: article.updated_at || article.created_at || undefined,
-      changeFrequency: "monthly" as const,
-      priority: 0.8,
-    })) || [];
+  if (error) {
+    console.error("[Sitemap] Article fetch failed:", error.message);
+  }
+
+  const articleRoutes = dedupeArticles(
+    (articles || []) as SitemapArticle[]
+  ).map((article) => ({
+    url: `${SITE_URL}${isCoaching(article) ? "/current-affairs" : "/news"}/${article.slug}`,
+    lastModified: article.updated_at || article.created_at || undefined,
+    changeFrequency: "weekly" as const,
+    priority: isCoaching(article) ? 0.85 : 0.75,
+  }));
 
   const publicPages = [
     "current-affairs",
@@ -33,8 +107,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "contact",
   ].map((path) => ({
     url: `${SITE_URL}/${path}`,
-    changeFrequency: path === "current-affairs" || path === "news" || path === "quiz" ? "daily" as const : "weekly" as const,
-    priority: path === "current-affairs" ? 0.95 : path === "news" ? 0.9 : 0.7,
+    changeFrequency:
+      path === "current-affairs" || path === "news"
+        ? ("daily" as const)
+        : ("weekly" as const),
+    priority:
+      path === "current-affairs" ? 0.95 : path === "news" ? 0.9 : 0.7,
   }));
 
   const categoryPages = CATEGORY_ROUTES.map((category) => ({
@@ -44,14 +122,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   return [
-    {
-      url: SITE_URL,
-      changeFrequency: "daily",
-      priority: 1,
-    },
+    { url: SITE_URL, changeFrequency: "daily", priority: 1 },
     ...publicPages,
     ...categoryPages,
     ...articleRoutes,
   ];
 }
-
