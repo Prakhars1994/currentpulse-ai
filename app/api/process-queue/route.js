@@ -484,7 +484,7 @@ async function executeQueueProcessing() {
       }
     }
 
-    const publishedCount = results.filter((item) => ["published", "dual_stream"].includes(item.status)).length;
+    const publishedCount = results.filter((item) => ["published", "published_source_brief", "dual_stream"].includes(item.status)).length;
     const dualStreamCount = results.filter((item) => item.status === "dual_stream").length;
     const enrichedCount = results.filter((item) => item.status === "enriched").length;
     const sourceBriefCount = results.filter((item) => item.status === "published_source_brief").length;

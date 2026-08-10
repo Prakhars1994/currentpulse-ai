@@ -117,6 +117,23 @@ const WORLD_LOCATIONS = {
   taiwan: { label: "Taiwan", lat: 23.7, lon: 121.0, country: "Taiwan" },
 };
 
+// Curated, reusable regional context. Coordinates are deliberately limited to
+// stable, well-known physical features and landmarks instead of AI guesses.
+const REGIONAL_ATLAS = {
+  Delhi: { nearby: [["Red Fort", 28.6562, 77.2410], ["Qutub Minar", 28.5245, 77.1855]], physical: [["Yamuna", 28.65, 77.25, "river"], ["Aravalli Ridge", 28.55, 77.15, "mountain"]] },
+  Maharashtra: { nearby: [["Ajanta Caves", 20.5519, 75.7033], ["Ellora Caves", 20.0268, 75.1771]], physical: [["Western Ghats", 18.6, 73.7, "mountain"], ["Godavari", 19.9, 75.3, "river"]] },
+  Rajasthan: { nearby: [["Jaipur", 26.9124, 75.7873], ["Jaisalmer", 26.9157, 70.9083]], physical: [["Aravalli Range", 25.2, 74.1, "mountain"], ["Thar Desert", 27.0, 71.0, "feature"]] },
+  Gujarat: { nearby: [["Dholavira", 23.886, 70.214], ["Gir", 21.124, 70.824]], physical: [["Narmada", 21.8, 73.0, "river"], ["Great Rann", 23.8, 69.8, "feature"]] },
+  "Uttar Pradesh": { nearby: [["Agra", 27.1767, 78.0081], ["Varanasi", 25.3176, 82.9739]], physical: [["Ganga", 25.5, 82.0, "river"], ["Yamuna", 27.0, 78.0, "river"]] },
+  "West Bengal": { nearby: [["Darjeeling", 27.041, 88.266], ["Sundarbans", 21.9497, 89.1833]], physical: [["Hooghly", 22.5, 88.3, "river"], ["Himalaya", 27.3, 88.3, "mountain"]] },
+  Assam: { nearby: [["Kaziranga", 26.5775, 93.1711], ["Majuli", 27.0, 94.2]], physical: [["Brahmaputra", 26.4, 92.5, "river"], ["Barail Hills", 25.2, 93.0, "mountain"]] },
+  Odisha: { nearby: [["Konark", 19.8876, 86.0945], ["Puri", 19.8135, 85.8312]], physical: [["Mahanadi", 20.5, 85.5, "river"], ["Chilika Lake", 19.72, 85.32, "feature"]] },
+  Karnataka: { nearby: [["Hampi", 15.335, 76.46], ["Mysuru", 12.2958, 76.6394]], physical: [["Western Ghats", 13.3, 75.2, "mountain"], ["Kaveri", 12.4, 76.8, "river"]] },
+  Kerala: { nearby: [["Munnar", 10.0889, 77.0595], ["Kochi", 9.9312, 76.2673]], physical: [["Western Ghats", 10.3, 76.8, "mountain"], ["Periyar", 10.0, 76.5, "river"]] },
+  "Tamil Nadu": { nearby: [["Mahabalipuram", 12.6208, 80.1945], ["Madurai", 9.9252, 78.1198]], physical: [["Kaveri", 10.9, 78.8, "river"], ["Nilgiri Hills", 11.4, 76.7, "mountain"]] },
+  Chandigarh: { nearby: [["Rock Garden", 30.7525, 76.807], ["Sukhna Lake", 30.7421, 76.8188]], physical: [["Shivalik Hills", 30.9, 76.8, "mountain"], ["Sutlej", 31.0, 76.5, "river"]] },
+};
+
 function normaliseLocations(value) {
   if (Array.isArray(value)) return value.map(String).filter(Boolean).slice(0, 4);
   if (typeof value !== "string" || !value.trim()) return [];
@@ -180,10 +197,10 @@ function resolveLocation(location = "") {
   };
 }
 
-function Marker({ point, label }) {
+function Marker({ point, label, variant = "focus" }) {
   if (!point) return null;
   return (
-    <span className="geo-marker" style={{ left: `${point[0]}%`, top: `${point[1]}%` }}>
+    <span className={`geo-marker geo-marker--${variant}`} style={{ left: `${point[0]}%`, top: `${point[1]}%` }}>
       <i />
       <b>{label}</b>
     </span>
@@ -211,7 +228,7 @@ function LocationTrail({ meta }) {
   );
 }
 
-function MapPanel({ title, icon, asset, meta, physical = false }) {
+function MapPanel({ title, icon, asset, meta, physical = false, context = [] }) {
   const isIndia = meta.mapType === "india";
   return (
     <div className={`geo-map-panel ${isIndia ? "geo-map-panel--india" : "geo-map-panel--world"}`}>
@@ -221,6 +238,7 @@ function MapPanel({ title, icon, asset, meta, physical = false }) {
       </div>
       <div className={`geo-map-frame ${isIndia ? "geo-map-frame--india" : "geo-map-frame--world"}`}>
         <img src={asset} alt={`${physical ? "Physical" : "Political"} locator map for ${meta.label}`} />
+        {context.map((item) => <Marker key={`${item.label}-${item.variant}`} point={item.point} label={item.label} variant={item.variant} />)}
         <Marker point={meta.point} label={meta.label} />
       </div>
     </div>
@@ -239,6 +257,12 @@ export default function ArticleStudyVisuals({ mapLocations }) {
   const physicalAsset = meta.mapType === "india"
     ? "/maps/india-relief-location-map.jpg"
     : "/maps/world-physical-map.jpg";
+  const regional = meta.mapType === "india" ? REGIONAL_ATLAS[meta.state] : null;
+  const contextMarkers = (items = [], physical = false) => items.map(([label, lat, lon, type]) => ({
+    label, point: geoPoint(lat, lon, INDIA_BOUNDS), variant: physical ? (type || "feature") : "nearby",
+  }));
+  const nearby = contextMarkers(regional?.nearby);
+  const features = contextMarkers(regional?.physical, true);
 
   return (
     <section className="atlas-locator-card" aria-label="Static location maps for this article">
@@ -254,19 +278,26 @@ export default function ArticleStudyVisuals({ mapLocations }) {
 
       <div className="geo-map-grid">
         <MapPanel
-          title="Political map"
+          title="Political map · nearby places"
           icon={<MapIcon size={14} />}
           asset={politicalAsset}
           meta={meta}
+          context={nearby}
         />
         <MapPanel
-          title="Physical map"
+          title="Regional rivers & relief"
           icon={<Mountain size={14} />}
           asset={physicalAsset}
           meta={meta}
           physical
+          context={features}
         />
       </div>
+
+      {regional && <div className="atlas-context-list">
+        <span><strong>Nearby:</strong> {regional.nearby.map(([label]) => label).join(" · ")}</span>
+        <span><strong>Physical:</strong> {regional.physical.map(([label]) => label).join(" · ")}</span>
+      </div>}
 
       <div className="atlas-location-tabs" aria-label="Locations mentioned in article">
         {locations.map((location) => {

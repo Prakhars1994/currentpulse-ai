@@ -24,7 +24,7 @@ export default async function BreakingNews() {
         </div>
 
         {/* News items */}
-        <div className="flex-1 overflow-x-auto">
+        <div className="flex-1 overflow-hidden">
           <div className="flex min-w-max items-center whitespace-nowrap">
             {news.map((article, index) => (
               <div

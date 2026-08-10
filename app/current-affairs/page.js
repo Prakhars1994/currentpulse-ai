@@ -4,7 +4,7 @@ export const revalidate = 0;
 import Link from "next/link";
 import {
   currentAffairsSourceLabel,
-  loadArticleStreams,
+  loadCurrentAffairsArticles,
 } from "@/lib/articleStreams";
 import { createCategorySlug } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
@@ -33,8 +33,24 @@ function stripHtml(content = "") {
     .trim();
 }
 
-export default async function CurrentAffairsPage() {
-  const { currentAffairs: articles, error } = await loadArticleStreams(500);
+function pageHref(page, todayOnly) {
+  const params = new URLSearchParams();
+  if (page > 1) params.set("page", String(page));
+  if (todayOnly) params.set("view", "today");
+  const query = params.toString();
+  return query ? `/current-affairs?${query}` : "/current-affairs";
+}
+
+export default async function CurrentAffairsPage({ searchParams }) {
+  const params = await searchParams;
+  const requestedPage = Math.max(1, Number(params?.page) || 1);
+  const todayOnly = params?.view === "today";
+  const pageSize = 48;
+  const offset = (requestedPage - 1) * pageSize;
+  const { articles, total, hasMore, date, error } = await loadCurrentAffairsArticles({
+    limit: pageSize, offset, todayOnly,
+  });
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   if (error) {
     console.error("Current affairs error:", error);
@@ -57,7 +73,9 @@ export default async function CurrentAffairsPage() {
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link href="/categories" className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950 transition hover:bg-cyan-300">Browse by syllabus</Link>
             <Link href="/quiz" className="rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3 font-bold text-slate-100 transition hover:border-cyan-400">Attempt today&apos;s quiz</Link>
-            <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-slate-300">{articles?.length || 0} published briefs</span>
+            <Link href="/current-affairs" className={`rounded-xl px-4 py-2 text-sm font-black ${!todayOnly ? "bg-cyan-400 text-slate-950" : "border border-slate-700 text-slate-200"}`}>All briefs</Link>
+            <Link href="/current-affairs?view=today" className={`rounded-xl px-4 py-2 text-sm font-black ${todayOnly ? "bg-cyan-400 text-slate-950" : "border border-slate-700 text-slate-200"}`}>Today · {date}</Link>
+            <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-slate-300">{total} {todayOnly ? "today" : "curated briefs"} · Page {requestedPage}/{totalPages}</span>
           </div>
         </div>
 
@@ -149,6 +167,14 @@ export default async function CurrentAffairsPage() {
               Published articles will appear here.
             </p>
           </div>
+        )}
+
+        {(requestedPage > 1 || hasMore) && (
+          <nav className="mt-10 flex flex-wrap items-center justify-center gap-3" aria-label="Current affairs pagination">
+            {requestedPage > 1 && <Link href={pageHref(requestedPage - 1, todayOnly)} className="rounded-xl border border-slate-700 px-5 py-3 font-black text-slate-200">← Newer briefs</Link>}
+            <span className="text-sm font-bold text-slate-400">Page {requestedPage} of {totalPages}</span>
+            {hasMore && <Link href={pageHref(requestedPage + 1, todayOnly)} className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950">Older briefs →</Link>}
+          </nav>
         )}
       </div>
     </main>

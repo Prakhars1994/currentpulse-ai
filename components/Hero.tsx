@@ -177,7 +177,7 @@ export default async function Hero() {
                 </p>
 
                 <p className="mt-2 text-sm text-gray-400 sm:text-base">
-                  Articles
+                  Published records
                 </p>
               </div>
 

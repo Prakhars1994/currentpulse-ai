@@ -1794,6 +1794,14 @@ main.min-h-screen:not(.news-article-page) .atlas-map-note {
   white-space: nowrap;
 }
 
+.geo-marker--nearby > i { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245,158,11,.24); }
+.geo-marker--river > i { background: #38bdf8; box-shadow: 0 0 0 4px rgba(56,189,248,.24); }
+.geo-marker--mountain > i { background: #a3e635; box-shadow: 0 0 0 4px rgba(163,230,53,.22); }
+.geo-marker--feature > i { background: #c084fc; box-shadow: 0 0 0 4px rgba(192,132,252,.22); }
+.geo-marker--nearby > b, .geo-marker--river > b, .geo-marker--mountain > b, .geo-marker--feature > b { font-size: 9px; opacity: .9; }
+.atlas-context-list { display: grid; gap: .35rem; margin-top: .85rem; color: #cbd5e1; font-size: .78rem; }
+.atlas-context-list strong { color: #67e8f9; }
+
 /* Slightly stronger in-sentence emphasis on study cards. */
 .compact-fact-list strong,
 .evidence-highlight-copy strong,
