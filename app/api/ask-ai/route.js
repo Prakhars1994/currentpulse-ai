@@ -3,6 +3,7 @@ import { generateWithRouter } from "@/lib/ai/router";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { SITE_URL } from "@/lib/siteUrl";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
+import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
 
 const MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"];
 const STOP = new Set(["what","when","where","which","why","how","about","with","from","this","that","the","and","for","are","was","were","has","have","explain","upsc","current","affairs"]);
@@ -54,7 +55,9 @@ async function retrieveArticles(question) {
 
   return [...found.values()].filter((article) => {
     const stream = isCoaching(article) ? "coverage" : "news";
-    return isPublishedArticleSafe(article, { stream });
+    return stream === "news"
+      ? isDisplayWorthyNews(article)
+      : isPublishedArticleSafe(article, { stream });
   }).map((article) => {
     const haystack = `${article.title} ${article.why_news || ""}`.toLowerCase();
     const score = terms.reduce((sum, term) => sum + (haystack.includes(term) ? 2 : 0) + (String(article.title).toLowerCase().includes(term) ? 2 : 0), 0);

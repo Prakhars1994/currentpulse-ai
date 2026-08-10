@@ -7,9 +7,8 @@ import EvidenceHighlights from "@/components/EvidenceHighlights";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
-import { isObviousLowValueNews } from "@/lib/news/newsQuality";
+import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
 import { parseNewsPresentation } from "@/lib/news/newsPresentation";
-import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 function stripHtml(value = "") {
   return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -52,8 +51,10 @@ function cleanNewsSection(value = "", labels = []) {
 }
 
 async function getArticle(slug) {
-  const { data } = await supabase.from("articles").select("*").eq("slug", slug).eq("status", "published").maybeSingle();
-  return data && isPublishedArticleSafe(data, { stream: "news" }) ? data : null;
+  const { data } = await supabase.from("articles")
+    .select("*,article_sources(source_kind,source_name,source_url,source_published_at)")
+    .eq("slug", slug).eq("status", "published").maybeSingle();
+  return data && isDisplayWorthyNews(data) ? data : null;
 }
 
 async function getSources(articleId) {
@@ -81,9 +82,7 @@ export async function generateMetadata({ params }) {
       ...(image ? { images: [{ url: absoluteSiteUrl(image), width: 1200, height: 630 }] } : {}),
     },
     twitter: { card: image ? "summary_large_image" : "summary", title: newsPresentation?.title || article.title, description, ...(image ? { images: [absoluteSiteUrl(image)] } : {}) },
-    robots: isObviousLowValueNews(article)
-      ? { index: false, follow: true }
-      : { index: true, follow: true },
+    robots: { index: true, follow: true },
   };
 }
 

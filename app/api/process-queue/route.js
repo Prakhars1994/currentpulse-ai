@@ -20,6 +20,8 @@ import {
   assessCoverageEventness,
   assessNewsCandidate,
 } from "@/lib/editorial/publicationSafety";
+import { isSameEvent } from "@/lib/news/eventCluster";
+import { cleanTrustedCoverageText } from "@/lib/coverage/contentCleaner";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,13 +40,18 @@ function isCoverageQueueItem(item = {}) {
 
 function coverageTopicFromQueue(item = {}) {
   const references = Array.isArray(item.coverage_sources)
-    ? item.coverage_sources
+    ? item.coverage_sources.map((reference) => ({
+        ...reference,
+        summary: cleanTrustedCoverageText(
+          reference?.summary || reference?.description || reference?.content || ""
+        ),
+      }))
     : [];
 
   return topicWithCoverageSources(
     {
       title: item.title,
-      summary: item.description,
+      summary: cleanTrustedCoverageText(item.description || ""),
       url: item.url,
       source: item.source,
       publishedAt: item.published_at,
@@ -263,23 +270,6 @@ async function updateQueueItem(supabase, queueItemId, values, errorPrefix) {
   if (error) throw new Error(`${errorPrefix}: ${error.message}`);
 }
 
-async function markQueueDuplicate(supabase, queueItemId, articleId) {
-  const now = new Date().toISOString();
-  await updateQueueItem(
-    supabase,
-    queueItemId,
-    {
-      status: "duplicate",
-      article_id: articleId,
-      processing_started_at: null,
-      processed_at: now,
-      updated_at: now,
-      error: "The same event is already represented by a published article.",
-    },
-    "Queue duplicate update failed"
-  );
-}
-
 async function markQueuePublished(supabase, queueItemId, articleId) {
   const now = new Date().toISOString();
   await updateQueueItem(
@@ -310,6 +300,21 @@ async function markQueueRejected(supabase, queueItemId, reason) {
       error: reason,
     },
     "Queue rejection update failed"
+  );
+}
+
+async function deferConcurrentDuplicate(supabase, claimedItem, originalQueueItem) {
+  await updateQueueItem(
+    supabase,
+    claimedItem.id,
+    {
+      status: "pending",
+      attempts: Number(originalQueueItem.attempts || 0),
+      processing_started_at: null,
+      updated_at: new Date().toISOString(),
+      error: "Deferred because the same event is already being processed in this run.",
+    },
+    "Concurrent duplicate deferral failed"
   );
 }
 
@@ -357,6 +362,7 @@ async function executeQueueProcessing() {
   const results = [];
   const attemptedIds = new Set();
   const itemDurations = [];
+  const activeEventItems = new Map();
   let stopRequested = false;
   let stoppedForRuntimeBudget = false;
   let temporaryAiFailures = 0;
@@ -392,6 +398,33 @@ async function executeQueueProcessing() {
         attemptedIds.add(queueItem.id);
         const claimedItem = await claimQueueItem(supabase, queueItem);
         if (!claimedItem) continue;
+
+        const concurrentDuplicate = [...activeEventItems.values()].find((activeItem) =>
+          isSameEvent(
+            {
+              title: claimedItem.title,
+              description: claimedItem.description,
+              publishedAt: claimedItem.published_at,
+            },
+            {
+              title: activeItem.title,
+              description: activeItem.description,
+              publishedAt: activeItem.published_at,
+            }
+          )
+        );
+        if (concurrentDuplicate) {
+          await deferConcurrentDuplicate(supabase, claimedItem, queueItem);
+          results.push({
+            status: "deferred_duplicate",
+            worker: workerNumber,
+            queueId: claimedItem.id,
+            title: claimedItem.title,
+            activeQueueId: concurrentDuplicate.id,
+          });
+          continue;
+        }
+        activeEventItems.set(claimedItem.id, claimedItem);
 
         const itemStartedAt = Date.now();
 
@@ -505,6 +538,7 @@ async function executeQueueProcessing() {
             }
           }
         } finally {
+          activeEventItems.delete(claimedItem.id);
           itemDurations.push(Date.now() - itemStartedAt);
         }
       }

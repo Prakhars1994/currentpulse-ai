@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
+import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
 
 type SearchPageProps = {
   searchParams: Promise<{
@@ -70,7 +71,9 @@ export default async function SearchPage({
           const stream = (article.article_sources || []).some(
             (source) => source?.source_kind === "coaching"
           ) ? "coverage" : "news";
-          return isPublishedArticleSafe(article, { stream });
+          return stream === "news"
+            ? isDisplayWorthyNews(article)
+            : isPublishedArticleSafe(article, { stream });
         });
       }
     }

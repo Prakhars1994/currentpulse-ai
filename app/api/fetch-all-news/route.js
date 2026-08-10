@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { GENERAL_NEWS_QUERY_TERMS, NEWS_SOURCES } from "@/lib/news/sourceCatalog";
 import { fetchSourceRss } from "@/lib/news/rss";
 import { deduplicateArticles } from "@/lib/news/filter";
+import { assessNewsCandidate } from "@/lib/editorial/publicationSafety";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -49,7 +50,8 @@ export async function GET(request) {
     })
   );
 
-  const collected = sourceResults.flatMap((result) => result.articles);
+  const rawCollected = sourceResults.flatMap((result) => result.articles);
+  const collected = rawCollected.filter((article) => assessNewsCandidate(article).allowed);
   const deduplicated = deduplicateArticles(collected);
   return NextResponse.json({
     success: true,
@@ -62,6 +64,7 @@ export async function GET(request) {
       successfulSources: sourceResults.filter((result) => result.articles.length > 0).length,
       failedSources: sourceResults.filter((result) => result.failed).length,
       collected: collected.length,
+      rejectedAsNonNews: rawCollected.length - collected.length,
       deduplicated: deduplicated.length,
       evaluated: 0,
       relevant: deduplicated.length,

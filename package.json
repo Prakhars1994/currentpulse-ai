@@ -6,7 +6,8 @@
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:editorial": "node --test tests/editorial-safety.test.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.13.0",

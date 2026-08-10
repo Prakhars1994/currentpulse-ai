@@ -23,13 +23,13 @@ if not defined CP_SECRET (
 for %%S in ("%CP_SECRET%") do set "CP_SECRET=%%~S"
 
 if "%CP_APPLY%"=="1" (
-  echo Applying strict editorial cleanup to the latest 120 days...
+  echo Applying full editorial cleanup to the published archive...
 ) else (
-  echo Previewing strict editorial cleanup. No database rows will change.
+  echo Previewing full editorial cleanup. No database rows will change.
   echo Run this file with: run-editorial-cleanup.cmd apply
 )
 
-curl.exe --silent --show-error --fail-with-body --max-time 310 -H "Authorization: Bearer %CP_SECRET%" "%CP_SITE%/api/editorial-cleanup?days=120&limit=3000&apply=%CP_APPLY%"
+curl.exe --silent --show-error --fail-with-body --max-time 310 -H "Authorization: Bearer %CP_SECRET%" "%CP_SITE%/api/editorial-cleanup?days=3650&limit=5000&apply=%CP_APPLY%"
 echo.
 
 endlocal

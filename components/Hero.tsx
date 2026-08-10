@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { hasCoachingSource } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
+import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
 
 function stripHtml(value: string | null) {
   if (!value) return "";
@@ -76,7 +77,9 @@ export default async function Hero() {
 
   const featured = (featuredRows || []).find((article) => {
     const stream = hasCoachingSource(article) ? "coverage" : "news";
-    return isPublishedArticleSafe(article, { stream });
+    return stream === "news"
+      ? isDisplayWorthyNews(article)
+      : isPublishedArticleSafe(article, { stream });
   }) || null;
 
   const categoryCount = new Set(
