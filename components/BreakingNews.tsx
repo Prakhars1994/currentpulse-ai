@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { loadArticleStreams } from "@/lib/articleStreams";
 
-export default async function BreakingNews() {
-  const { news: newsStream, error } = await loadArticleStreams(120);
+type BreakingArticle = { slug: string; title?: string | null };
+type StreamError = { message?: string } | null;
+
+export default function BreakingNews({ newsStream = [], error = null }: { newsStream?: BreakingArticle[]; error?: StreamError }) {
   const news = newsStream.slice(0, 5);
 
   if (error) {

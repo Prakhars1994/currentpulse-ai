@@ -27,6 +27,7 @@ const MINIMUM_NEXT_ITEM_BUDGET_MS = 45000;
 const STALE_PROCESSING_MINUTES = 20;
 const PROCESSING_CONCURRENCY = 3;
 const MAX_TEMPORARY_AI_FAILURES_PER_RUN = 6;
+const RETRYABLE_FAILED_LOOKBACK_HOURS = 72;
 
 function isCoverageQueueItem(item = {}) {
   return ["coaching", "coaching_enrichment"].includes(item.pipeline_kind);
@@ -174,6 +175,37 @@ async function recoverStaleQueueItems(supabase) {
     return 0;
   }
 
+  return data?.length || 0;
+}
+
+async function recoverRecentFailedItems(supabase) {
+  const cutoff = new Date(Date.now() - RETRYABLE_FAILED_LOOKBACK_HOURS * 60 * 60 * 1000).toISOString();
+  const now = new Date().toISOString();
+  const { data: failedRows, error: lookupError } = await supabase
+    .from("article_queue")
+    .select("id,error")
+    .eq("status", "failed")
+    .in("pipeline_kind", ["coaching", "news"])
+    .gte("updated_at", cutoff)
+    .limit(250);
+  if (lookupError) {
+    console.error("[Queue processor] Recent failed-item lookup skipped:", lookupError.message);
+    return 0;
+  }
+  const retryIds = (failedRows || [])
+    .filter((row) => /quality validation|invalid json|incomplete|gemini|openrouter|quota|rate limit|ai provider/i.test(String(row.error || "")))
+    .map((row) => row.id);
+  if (!retryIds.length) return 0;
+  const { data, error } = await supabase
+    .from("article_queue")
+    .update({ status: "pending", attempts: 0, processing_started_at: null, processed_at: null,
+      updated_at: now, error: "Requeued after source-grounded fallback upgrade." })
+    .in("id", retryIds)
+    .select("id");
+  if (error) {
+    console.error("[Queue processor] Recent failed-item recovery skipped:", error.message);
+    return 0;
+  }
   return data?.length || 0;
 }
 
@@ -326,7 +358,10 @@ async function executeQueueProcessing() {
   let temporaryAiFailures = 0;
 
   try {
-    const recovered = await recoverStaleQueueItems(supabase);
+    const [recoveredStale, recoveredFailed] = await Promise.all([
+      recoverStaleQueueItems(supabase), recoverRecentFailedItems(supabase),
+    ]);
+    const recovered = recoveredStale + recoveredFailed;
 
     async function worker(workerNumber) {
       while (!stopRequested) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Globe2, MapPin, Mountain, Map as MapIcon } from "lucide-react";
+import { MapPin, Mountain, Map as MapIcon } from "lucide-react";
 
 const INDIA_BOUNDS = { north: 37.5, south: 5.0, west: 67.0, east: 99.0 };
 const WORLD_BOUNDS = { north: 90, south: -90, west: -180, east: 180 };
@@ -228,7 +228,7 @@ function LocationTrail({ meta }) {
   );
 }
 
-function MapPanel({ title, icon, asset, meta, physical = false, context = [] }) {
+function MapPanel({ title, icon, asset, meta, physical = false, context = [], regional = false }) {
   const isIndia = meta.mapType === "india";
   return (
     <div className={`geo-map-panel ${isIndia ? "geo-map-panel--india" : "geo-map-panel--world"}`}>
@@ -237,9 +237,14 @@ function MapPanel({ title, icon, asset, meta, physical = false, context = [] }) 
         {meta.point && <small>{meta.lat.toFixed(2)}°, {meta.lon.toFixed(2)}°</small>}
       </div>
       <div className={`geo-map-frame ${isIndia ? "geo-map-frame--india" : "geo-map-frame--world"}`}>
-        <img src={asset} alt={`${physical ? "Physical" : "Political"} locator map for ${meta.label}`} />
-        {context.map((item) => <Marker key={`${item.label}-${item.variant}`} point={item.point} label={item.label} variant={item.variant} />)}
-        <Marker point={meta.point} label={meta.label} />
+        <div
+          className={`geo-map-canvas ${regional ? "geo-map-canvas--regional" : ""}`}
+          style={regional && meta.point ? { "--map-origin-x": `${meta.point[0]}%`, "--map-origin-y": `${meta.point[1]}%` } : undefined}
+        >
+          <img src={asset} alt={`${physical ? "Physical" : "Political"} locator map for ${meta.label}`} />
+          {context.map((item) => <Marker key={`${item.label}-${item.variant}`} point={item.point} label={item.label} variant={item.variant} />)}
+          <Marker point={meta.point} label={meta.label} />
+        </div>
       </div>
     </div>
   );
@@ -261,7 +266,14 @@ export default function ArticleStudyVisuals({ mapLocations }) {
   const contextMarkers = (items = [], physical = false) => items.map(([label, lat, lon, type]) => ({
     label, point: geoPoint(lat, lon, INDIA_BOUNDS), variant: physical ? (type || "feature") : "nearby",
   }));
-  const nearby = contextMarkers(regional?.nearby);
+  const automaticNearby = meta.state
+    ? Object.values(INDIA_LOCATIONS)
+        .filter((item) => item.state === meta.state && item.city && item.label !== meta.label)
+        .filter((item, index, all) => all.findIndex((candidate) => candidate.label === item.label) === index)
+        .slice(0, 3)
+        .map((item) => [item.label, item.lat, item.lon])
+    : [];
+  const nearby = contextMarkers(regional?.nearby?.length ? regional.nearby : automaticNearby);
   const features = contextMarkers(regional?.physical, true);
 
   return (
@@ -283,6 +295,7 @@ export default function ArticleStudyVisuals({ mapLocations }) {
           asset={politicalAsset}
           meta={meta}
           context={nearby}
+          regional={Boolean(meta.state)}
         />
         <MapPanel
           title="Regional rivers & relief"
@@ -291,12 +304,13 @@ export default function ArticleStudyVisuals({ mapLocations }) {
           meta={meta}
           physical
           context={features}
+          regional={Boolean(meta.state)}
         />
       </div>
 
-      {regional && <div className="atlas-context-list">
-        <span><strong>Nearby:</strong> {regional.nearby.map(([label]) => label).join(" · ")}</span>
-        <span><strong>Physical:</strong> {regional.physical.map(([label]) => label).join(" · ")}</span>
+      {(nearby.length > 0 || features.length > 0) && <div className="atlas-context-list">
+        {nearby.length > 0 && <span><strong>Nearby:</strong> {nearby.map((item) => item.label).join(" · ")}</span>}
+        {features.length > 0 && <span><strong>Physical:</strong> {features.map((item) => item.label).join(" · ")}</span>}
       </div>}
 
       <div className="atlas-location-tabs" aria-label="Locations mentioned in article">

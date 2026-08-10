@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Download, ExternalLink, FileCheck2, Archive } from "lucide-react";
 import { UPSC_PAPER_ARCHIVE, UPSC_PAPER_SOURCE } from "@/lib/upsc/questionPapers";
 
@@ -8,7 +8,10 @@ export default function OfficialPapers({ papers }) {
   const [stage, setStage] = useState("Prelims");
   const [year, setYear] = useState("All");
   const years = [...new Set(papers.map((paper) => String(paper.year)))].sort((a,b) => Number(b)-Number(a));
-  const filtered = useMemo(() => papers.filter((paper) => (stage === "All" || paper.stage === stage) && (year === "All" || String(paper.year) === year)), [papers, stage, year]);
+  const filtered = papers.filter((paper) =>
+    (stage === "All" || paper.stage === stage) &&
+    (year === "All" || String(paper.year) === year)
+  );
 
   return (
     <div>

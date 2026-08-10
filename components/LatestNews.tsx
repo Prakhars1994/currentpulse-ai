@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   coachingSourceLabel,
-  loadArticleStreams,
 } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
@@ -203,8 +202,8 @@ function StreamSection({
   );
 }
 
-export default async function LatestNews() {
-  const { currentAffairs, news, error } = await loadArticleStreams(320);
+export default function LatestNews({ streams }: { streams: { currentAffairs: StreamArticle[]; news: StreamArticle[]; error: { message?: string } | null } }) {
+  const { currentAffairs, news, error } = streams;
 
   if (error) {
     return (

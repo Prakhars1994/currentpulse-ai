@@ -1754,7 +1754,17 @@ main.min-h-screen:not(.news-article-page) .atlas-map-note {
   width: 100%;
   aspect-ratio: 2 / 1;
 }
-.geo-map-frame > img {
+.geo-map-canvas {
+  position: absolute;
+  inset: 0;
+  transform-origin: center;
+  transition: transform .35s ease;
+}
+.geo-map-canvas--regional {
+  transform: scale(1.65);
+  transform-origin: var(--map-origin-x, 50%) var(--map-origin-y, 50%);
+}
+.geo-map-canvas > img {
   position: absolute;
   inset: 0;
   display: block;
