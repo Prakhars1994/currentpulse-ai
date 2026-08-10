@@ -1701,3 +1701,132 @@ main.min-h-screen:not(.news-article-page) .atlas-map-note {
   font-weight: 950;
 }
 .news-upsc-bridge a:hover { color: #0e7490; }
+
+/* ===== 10 Aug 2026: coordinate locator + political/physical map pair ===== */
+.geo-map-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .75rem;
+  margin-top: .8rem;
+}
+.geo-map-panel {
+  min-width: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: .9rem;
+  padding: .65rem;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgb(15 23 42 / .05);
+}
+.geo-map-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .65rem;
+  margin-bottom: .55rem;
+}
+.geo-map-panel-head > span {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  color: #0f172a;
+  font-size: .72rem;
+  font-weight: 950;
+}
+.geo-map-panel-head > small {
+  color: #64748b;
+  font-size: .6rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.geo-map-frame {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #dbe3ec;
+  border-radius: .7rem;
+  background: #eef6fb;
+}
+.geo-map-frame--india {
+  width: min(100%, 360px);
+  aspect-ratio: 1500 / 1615;
+  margin-inline: auto;
+}
+.geo-map-frame--world {
+  width: 100%;
+  aspect-ratio: 2 / 1;
+}
+.geo-map-frame > img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+.geo-marker {
+  position: absolute;
+  z-index: 5;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.geo-marker > i {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border: 3px solid #fff;
+  border-radius: 999px;
+  background: #dc2626;
+  box-shadow: 0 0 0 5px rgb(220 38 38 / .22), 0 4px 10px rgb(15 23 42 / .24);
+}
+.geo-marker > b {
+  position: absolute;
+  left: 16px;
+  top: -6px;
+  max-width: 130px;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / .6);
+  border-radius: .42rem;
+  padding: .28rem .42rem;
+  color: #fff;
+  background: rgb(15 23 42 / .9);
+  font-size: .62rem;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Slightly stronger in-sentence emphasis on study cards. */
+.compact-fact-list strong,
+.evidence-highlight-copy strong,
+.mains-accordion-body .article-rich-content strong {
+  color: #fde68a;
+  font-weight: 950;
+  background: rgb(245 158 11 / .14);
+  border-radius: .28rem;
+  padding: .03rem .16rem;
+}
+.news-article-page .article-rich-content strong,
+.news-article-page .evidence-highlight-copy strong {
+  color: #9a3412 !important;
+  background: #ffedd5 !important;
+  font-weight: 900;
+}
+
+main.min-h-screen:not(.news-article-page) .geo-map-panel {
+  border-color: #334155;
+  background: #f8fafc;
+}
+main.min-h-screen:not(.news-article-page) .geo-map-panel-head > span {
+  color: #0f172a;
+}
+
+@media (max-width: 760px) {
+  .geo-map-grid {
+    grid-template-columns: 1fr;
+  }
+  .geo-map-frame--india {
+    width: min(100%, 320px);
+  }
+  .geo-map-panel-head {
+    align-items: flex-start;
+  }
+}

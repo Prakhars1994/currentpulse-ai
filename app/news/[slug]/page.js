@@ -19,6 +19,37 @@ function formatDate(value) {
   return new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
 }
 
+function escapeRegExp(value = "") {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function cleanNewsSection(value = "", labels = []) {
+  let text = String(value || "").trim();
+  if (!text) return "";
+
+  for (let pass = 0; pass < 3; pass += 1) {
+    let changed = false;
+    for (const label of labels) {
+      const safe = escapeRegExp(label);
+      const patterns = [
+        new RegExp(`^#{1,6}\\s+${safe}\\s*:?[\\t ]*(?:\\r?\\n)+`, "i"),
+        new RegExp(`^\\*\\*${safe}\\*\\*\\s*:?[\\t ]*(?:\\r?\\n)+`, "i"),
+        new RegExp(`^${safe}\\s*:?[\\t ]*(?:\\r?\\n)+`, "i"),
+      ];
+      for (const pattern of patterns) {
+        const next = text.replace(pattern, "").trim();
+        if (next !== text) {
+          text = next;
+          changed = true;
+        }
+      }
+    }
+    if (!changed) break;
+  }
+
+  return text;
+}
+
 async function getArticle(slug) {
   const { data } = await supabase.from("articles").select("*").eq("slug", slug).eq("status", "published").maybeSingle();
   return data || null;
@@ -65,10 +96,18 @@ export default async function NewsArticlePage({ params }) {
   if (!newsSources.length && hasCoachingSource) permanentRedirect(`/current-affairs/${slug}`);
 
   const newsPresentation = parseNewsPresentation(article.content);
-  const newsLead = newsPresentation?.lead || article.why_news;
-  const newsFacts = newsPresentation?.keyFacts || article.data_examples;
-  const newsContext = newsPresentation?.context || article.static_foundation;
-  const newsWhyItMatters = newsPresentation?.whyItMatters || article.india_relevance;
+  const newsLead = cleanNewsSection(newsPresentation?.lead || article.why_news, [
+    "What happened", "Why in News", "The development"
+  ]);
+  const newsFacts = cleanNewsSection(newsPresentation?.keyFacts || article.data_examples, [
+    "Key facts", "At a glance", "Data, Reports, Cases & Examples"
+  ]);
+  const newsContext = cleanNewsSection(newsPresentation?.context || article.static_foundation, [
+    "Context", "Background", "Static Foundation"
+  ]);
+  const newsWhyItMatters = cleanNewsSection(newsPresentation?.whyItMatters || article.india_relevance, [
+    "Why it matters", "Significance", "India relevance"
+  ]);
   const hasCurrentAffairsView =
     String(article.syllabus_linkage || "").trim().length >= 20 &&
     String(article.prelims || "").trim().length >= 60 &&
@@ -107,30 +146,30 @@ export default async function NewsArticlePage({ params }) {
           <section className="news-article-lead">
             <div className="news-section-kicker">The development</div>
             <h2>What happened</h2>
-            <ArticleContent content={article.why_news} />
+            <ArticleContent content={newsLead} />
           </section>
 
-          {article.data_examples && (
+          {newsFacts && (
             <section className="news-article-section news-article-facts">
               <div className="news-section-kicker">At a glance</div>
               <h2>Key facts</h2>
-              <EvidenceHighlights content={article.data_examples} limit={5} />
+              <EvidenceHighlights content={newsFacts} limit={5} />
             </section>
           )}
 
-          {article.static_foundation && (
+          {newsContext && (
             <section className="news-article-section">
               <div className="news-section-kicker">Background</div>
               <h2>Context</h2>
-              <ArticleContent content={article.static_foundation} />
+              <ArticleContent content={newsContext} />
             </section>
           )}
 
-          {article.india_relevance && (
+          {newsWhyItMatters && (
             <section className="news-article-section news-article-why">
               <div className="news-section-kicker">Significance</div>
               <h2>Why it matters</h2>
-              <ArticleContent content={article.india_relevance} />
+              <ArticleContent content={newsWhyItMatters} />
             </section>
           )}
 

@@ -25,7 +25,8 @@ export const maxDuration = 300;
 const HARD_STOP_MS = 280000;
 const MINIMUM_NEXT_ITEM_BUDGET_MS = 45000;
 const STALE_PROCESSING_MINUTES = 20;
-const PROCESSING_CONCURRENCY = 2;
+const PROCESSING_CONCURRENCY = 3;
+const MAX_TEMPORARY_AI_FAILURES_PER_RUN = 6;
 
 function isCoverageQueueItem(item = {}) {
   return ["coaching", "coaching_enrichment"].includes(item.pipeline_kind);
@@ -322,6 +323,7 @@ async function executeQueueProcessing() {
   const itemDurations = [];
   let stopRequested = false;
   let stoppedForRuntimeBudget = false;
+  let temporaryAiFailures = 0;
 
   try {
     const recovered = await recoverStaleQueueItems(supabase);
@@ -442,7 +444,16 @@ async function executeQueueProcessing() {
             error: errorMessage,
           });
 
-          if (failure.temporaryFailure) stopRequested = true;
+          if (failure.temporaryFailure) {
+            temporaryAiFailures += 1;
+            // One rate-limited/model-specific item must not block the whole
+            // day's coaching queue. Continue with other candidates, but stop
+            // after several temporary failures so a full provider outage does
+            // not hammer the AI routers for the entire 300-second window.
+            if (temporaryAiFailures >= MAX_TEMPORARY_AI_FAILURES_PER_RUN) {
+              stopRequested = true;
+            }
+          }
         } finally {
           itemDurations.push(Date.now() - itemStartedAt);
         }
@@ -499,6 +510,7 @@ async function executeQueueProcessing() {
         duplicate: duplicateCount,
         failed: failedCount,
         retryPending,
+        temporaryAiFailures,
         concurrency: PROCESSING_CONCURRENCY,
         stoppedForRuntimeBudget,
         qualityUpgrades: qualityUpgrades.filter((item) => item.status !== "failed").length,

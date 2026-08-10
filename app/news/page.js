@@ -46,11 +46,13 @@ export default async function NewsPage({ searchParams }) {
   const requestedPage = Math.max(1, Number(params?.page) || 1);
   const pageSize = 48;
   const offset = (requestedPage - 1) * pageSize;
-  const { articles, total, error } = await loadNewsArticles({ limit: pageSize, offset });
+  const { articles, total, hasMore, error } = await loadNewsArticles({ limit: pageSize, offset });
   if (error) console.error("News stream error:", error);
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const currentPage = Math.min(requestedPage, totalPages);
+  const totalPages = Number.isFinite(total)
+    ? Math.max(1, Math.ceil(total / pageSize))
+    : null;
+  const currentPage = requestedPage;
 
   return (
     <main className="newsroom-page min-h-screen py-10 sm:py-14">
@@ -68,11 +70,11 @@ export default async function NewsPage({ searchParams }) {
         </header>
 
         <div className="newsroom-meta-row">
-          <strong>{total}</strong> news stories in archive
+          <strong>{total ?? "Full"}</strong> news archive
           <span>•</span>
-          <span>Page {currentPage} of {totalPages}</span>
+          <span>Page {currentPage}{totalPages ? ` of ${totalPages}` : ""}</span>
           <span>•</span>
-          <span>Duplicate events are collapsed automatically</span>
+          <span>Older stories stay available after quality filtering and deduplication</span>
         </div>
 
         {articles.length ? (
@@ -109,13 +111,15 @@ export default async function NewsPage({ searchParams }) {
           <div className="newsroom-empty"><h2>No stories on this page</h2><p>Try the previous archive page.</p></div>
         )}
 
-        {totalPages > 1 && (
+        {(currentPage > 1 || hasMore) && (
           <nav className="mt-10 flex flex-wrap items-center justify-center gap-3" aria-label="News archive pagination">
             {currentPage > 1 ? (
               <Link href={pageHref(currentPage - 1)} className="newsroom-secondary-action">← Newer stories</Link>
             ) : <span />}
-            <span className="text-sm font-bold text-stone-600">Page {currentPage} / {totalPages}</span>
-            {currentPage < totalPages ? (
+            <span className="text-sm font-bold text-stone-600">
+              Page {currentPage}{totalPages ? ` / ${totalPages}` : ""}
+            </span>
+            {hasMore ? (
               <Link href={pageHref(currentPage + 1)} className="newsroom-primary-action">Older stories →</Link>
             ) : <span />}
           </nav>
