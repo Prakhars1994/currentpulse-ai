@@ -9,7 +9,6 @@ import {
   loadRecentArticles,
 } from "@/lib/news/duplicateRepository";
 import { classifyCategory, resolvePaper } from "@/lib/contentTaxonomy";
-import { isObviousLowValueNews } from "@/lib/news/newsQuality";
 import { isSameEvent } from "@/lib/news/eventCluster";
 import { queueCoverageImport } from "@/lib/coverage/queueCoverageImport";
 import {
@@ -21,9 +20,6 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const PER_SOURCE_LIMIT = 10;
-const PRIORITY_ITEMS_PER_SOURCE = 5;
-const MINIMUM_IMPORTANCE = 5;
 const QUEUE_WRITE_CONCURRENCY = 4;
 
 function cleanText(value) {
@@ -71,37 +67,15 @@ async function mapWithConcurrency(items, concurrency, handler) {
   return results;
 }
 
-function selectSourceArticles(articles, sourceId) {
-  if (articles.length <= PER_SOURCE_LIMIT) return articles;
-
-  const priority = articles.slice(0, PRIORITY_ITEMS_PER_SOURCE);
-  const rotatingPool = articles.slice(PRIORITY_ITEMS_PER_SOURCE);
-  const rotatingCount = PER_SOURCE_LIMIT - priority.length;
-  const halfHourSlot = Math.floor(Date.now() / (30 * 60 * 1000));
-  const sourceOffset = [...String(sourceId)].reduce(
-    (total, character) => total + character.charCodeAt(0),
-    0
-  );
-  const start =
-    ((halfHourSlot + sourceOffset) * rotatingCount) % rotatingPool.length;
-  const rotating = [];
-
-  for (let index = 0; index < rotatingCount; index += 1) {
-    rotating.push(rotatingPool[(start + index) % rotatingPool.length]);
-  }
-
-  return [...priority, ...rotating];
-}
-
 async function collectNews() {
+  const activeSources = NEWS_SOURCES.filter(
+    (source) => source.newsAgenda === true || source.group === "official"
+  );
   const sourceResults = await Promise.all(
-    NEWS_SOURCES.map(async (source) => {
+    activeSources.map(async (source) => {
       try {
         const result = await fetchSourceRss(source, GENERAL_NEWS_QUERY_TERMS);
-        const uniqueForSource = selectSourceArticles(
-          deduplicateArticles(result.articles),
-          source.id
-        );
+        const uniqueForSource = deduplicateArticles(result.articles);
 
         return {
           id: source.id,
@@ -166,21 +140,16 @@ async function collectNews() {
 function localEvaluation(article) {
   const text = `${article.title || ""} ${article.description || ""}`;
   const category = classifyCategory(text);
-  const preliminaryScore = Number(article.preliminaryScore || 0);
   const independentCoverage = new Set(article.coverage || [article.source]).size;
-  const lowValue = isObviousLowValueNews(article);
-  const importance = Math.min(10, 5 + Math.min(3, preliminaryScore) + Math.min(2, independentCoverage - 1));
-  const relevant = !lowValue;
+  const importance = Math.min(10, 6 + Math.min(3, independentCoverage - 1));
 
   return {
-    relevant,
-    scope: relevant ? (article.region === "IN" ? "India" : "Global Systemic") : "Reject",
-    importance: relevant ? importance : 1,
+    relevant: true,
+    scope: article.region === "IN" ? "India" : "Global Systemic",
+    importance,
     category,
     paper: resolvePaper(category),
-    reason: relevant
-      ? `Selected by the general-news agenda ranker from ${independentCoverage} publisher${independentCoverage === 1 ? "" : "s"}.`
-      : "Rejected as a tender, recruitment notice, routine commercial item or other low-value listing.",
+    reason: `Collected from the complete fresh feed of ${independentCoverage} publisher${independentCoverage === 1 ? "" : "s"}; no importance selection applied.`,
     keywords: [],
   };
 }
@@ -233,19 +202,11 @@ async function evaluateCandidates(supabase, articles) {
     const evaluation = evaluations[index] || localEvaluation(article);
     const candidate = { article, evaluation };
 
-    if (
-      evaluation.relevant &&
-      evaluation.scope !== "Reject" &&
-      evaluation.importance >= MINIMUM_IMPORTANCE
-    ) {
-      accepted.push(candidate);
-    } else {
-      rejected.push(candidate);
-    }
+    accepted.push(candidate);
   });
 
   accepted.sort((first, second) =>
-    second.evaluation.importance - first.evaluation.importance
+    new Date(second.article.publishedAt || 0) - new Date(first.article.publishedAt || 0)
   );
 
   return { accepted, rejected, skipped, evaluationProvider };
@@ -316,8 +277,8 @@ async function executeAutoPublish() {
       success: true,
       message:
         queued > 0
-          ? `${queued} important unique articles added to the publishing queue.`
-          : "No new important unique articles were queued.",
+          ? `${queued} fresh unique newspaper articles added to the publishing queue.`
+          : "No new newspaper articles were queued.",
       stats: {
         collected: collection.articles.length,
         evaluated: evaluated.accepted.length + evaluated.rejected.length,
