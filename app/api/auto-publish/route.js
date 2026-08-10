@@ -320,36 +320,67 @@ async function executeAutoPublish() {
   }
 }
 
-async function executeUnifiedCollection() {
-  const [newsResult, coverageResult] = await Promise.allSettled([
-    executeAutoPublish().then(async (response) => ({
+async function collectNewsSafely() {
+  try {
+    const response = await executeAutoPublish();
+    return {
       httpStatus: response.status,
       ...(await response.json()),
-    })),
-    queueCoverageImport({
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error?.message || "News collection failed.",
+    };
+  }
+}
+
+async function collectCoverageSafely() {
+  try {
+    return await queueCoverageImport({
       requestedSource: "all",
       maxCandidates: 200,
-    }),
-  ]);
+    });
+  } catch (error) {
+    return {
+      success: false,
+      message: error?.message || "Coaching coverage collection failed.",
+    };
+  }
+}
 
-  const news = newsResult.status === "fulfilled"
-    ? newsResult.value
-    : {
-        success: false,
-        message: newsResult.reason?.message || "News collection failed.",
-      };
-  const coverage = coverageResult.status === "fulfilled"
-    ? coverageResult.value
-    : {
-        success: false,
-        message:
-          coverageResult.reason?.message || "Coaching coverage collection failed.",
-      };
+async function executeUnifiedCollection(scope = "all") {
+  const runNews = scope === "all" || scope === "news";
+  const runCoverage = scope === "all" || scope === "coverage";
+
+  let news = { success: true, skipped: true };
+  let coverage = { success: true, skipped: true };
+
+  if (runNews && runCoverage) {
+    [news, coverage] = await Promise.all([
+      collectNewsSafely(),
+      collectCoverageSafely(),
+    ]);
+  } else if (runNews) {
+    news = await collectNewsSafely();
+  } else {
+    coverage = await collectCoverageSafely();
+  }
+
+  const requestedResults = [
+    ...(runNews ? [news] : []),
+    ...(runCoverage ? [coverage] : []),
+  ];
 
   return NextResponse.json({
-    success: Boolean(news.success || coverage.success),
+    success: requestedResults.some((result) => result.success),
+    scope,
     message:
-      "AI news and trusted coaching coverage collection completed independently.",
+      scope === "news"
+        ? "News collection completed."
+        : scope === "coverage"
+          ? "Trusted coaching Current Affairs collection completed."
+          : "News and trusted coaching Current Affairs collection completed independently.",
     news,
     coverage,
   });
@@ -363,16 +394,27 @@ export async function GET(request) {
     );
   }
 
-  const waitForCompletion =
-    new URL(request.url).searchParams.get("wait") === "1";
+  const searchParams = new URL(request.url).searchParams;
+  const waitForCompletion = searchParams.get("wait") === "1";
+  const scope = searchParams.get("scope")?.trim().toLowerCase() || "all";
 
-  if (waitForCompletion) return executeUnifiedCollection();
+  if (!new Set(["all", "news", "coverage"]).has(scope)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid collection scope. Use all, news, or coverage.",
+      },
+      { status: 400 }
+    );
+  }
+
+  if (waitForCompletion) return executeUnifiedCollection(scope);
 
   after(async () => {
     const runId = await startAutomationRun("auto_publish");
 
     try {
-      const response = await executeUnifiedCollection();
+      const response = await executeUnifiedCollection(scope);
       const payload = await response.json();
       const coverage = payload.coverage || {};
       const news = payload.news || {};
@@ -382,12 +424,14 @@ export async function GET(request) {
         summary: {
           news: {
             success: Boolean(news.success),
+            skipped: Boolean(news.skipped),
             collected: news.stats?.collected || 0,
             queued: news.stats?.queued || 0,
             failed: news.stats?.failed || 0,
           },
           coverage: {
             success: Boolean(coverage.success),
+            skipped: Boolean(coverage.skipped),
             sources: coverage.sources || {},
             sourceErrors: coverage.sourceErrors || {},
             fetched: coverage.fetched || 0,
@@ -404,7 +448,7 @@ export async function GET(request) {
       });
 
       console.log(
-        `[Auto publish] Unified background collection completed with HTTP ${response.status}.`
+        `[Auto publish] ${scope} background collection completed with HTTP ${response.status}.`
       );
     } catch (error) {
       await finishAutomationRun(runId, {
@@ -419,8 +463,13 @@ export async function GET(request) {
     {
       success: true,
       accepted: true,
+      scope,
       message:
-        "Automatic news collection and hybrid coaching coverage were accepted for background processing.",
+        scope === "news"
+          ? "Automatic news collection was accepted for background processing."
+          : scope === "coverage"
+            ? "Trusted coaching Current Affairs collection was accepted for background processing."
+            : "Automatic news and trusted coaching Current Affairs collection were accepted for background processing.",
     },
     { status: 202 }
   );

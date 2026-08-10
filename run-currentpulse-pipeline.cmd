@@ -20,17 +20,25 @@ if not defined CP_SECRET (
 
 for %%S in ("%CP_SECRET%") do set "CP_SECRET=%%~S"
 
-echo [1/4] Quarantining strict non-article and prompt-leak records...
+if /I "%~1"=="resume" goto collect_news
+
+echo [1/5] Quarantining strict non-article and prompt-leak records...
 curl.exe --silent --show-error --fail-with-body --max-time 310 -H "Authorization: Bearer %CP_SECRET%" "%CP_SITE%/api/editorial-cleanup?days=120&limit=3000&apply=1"
 if errorlevel 1 exit /b 1
 echo.
 
-echo [2/4] Collecting all configured News and Current Affairs sources...
-curl.exe --silent --show-error --fail-with-body --max-time 310 -H "Authorization: Bearer %CP_SECRET%" "%CP_SITE%/api/auto-publish?wait=1"
+:collect_news
+echo [2/5] Collecting all configured News sources...
+curl.exe --silent --show-error --fail-with-body --max-time 310 -H "Authorization: Bearer %CP_SECRET%" "%CP_SITE%/api/auto-publish?wait=1&scope=news"
 if errorlevel 1 exit /b 1
 echo.
 
-echo [3/4] Processing the publishing queue in four safe sequential runs...
+echo [3/5] Collecting all configured UPSC Current Affairs sources...
+curl.exe --silent --show-error --fail-with-body --max-time 310 -H "Authorization: Bearer %CP_SECRET%" "%CP_SITE%/api/auto-publish?wait=1&scope=coverage"
+if errorlevel 1 exit /b 1
+echo.
+
+echo [4/5] Processing the publishing queue in four safe sequential runs...
 for /L %%N in (1,1,4) do (
   echo Queue run %%N of 4
   curl.exe --silent --show-error --fail-with-body --max-time 310 -H "Authorization: Bearer %CP_SECRET%" "%CP_SITE%/api/process-queue?wait=1"
@@ -38,7 +46,7 @@ for /L %%N in (1,1,4) do (
   echo.
 )
 
-echo [4/4] Current automation status...
+echo [5/5] Current automation status...
 curl.exe --silent --show-error --fail-with-body --max-time 60 "%CP_SITE%/api/automation-status"
 echo.
 echo Finished.
