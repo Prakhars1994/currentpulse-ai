@@ -1,5 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "currentpulse-ai-kl7x.vercel.app"
+        }
+      ],
+      "destination": "https://currentpulse-ai.vercel.app/$1",
+      "permanent": true
+    }
+  ],
   "crons": [
     { "path": "/api/auto-publish", "schedule": "15 0 * * *" },
     { "path": "/api/process-queue", "schedule": "15 2 * * *" },
