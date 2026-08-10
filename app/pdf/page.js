@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CalendarDays, FileDown, Layers3 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { indiaDate } from "@/lib/study/digestDates";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 export const metadata = {
   title: "Current Affairs PDF Digests",
@@ -15,7 +16,7 @@ export const metadata = {
 export default async function PdfPage() {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,created_at,article_sources!inner(source_kind)")
+    .select("id,title,why_news,created_at,article_sources!inner(source_kind)")
     .eq("status", "published")
     .eq("article_sources.source_kind", "coaching")
     .order("created_at", { ascending: false })
@@ -24,7 +25,9 @@ export default async function PdfPage() {
   if (error) console.error("PDF library fetch failed:", error.message);
 
   const counts = new Map();
-  for (const article of data || []) {
+  for (const article of (data || []).filter((item) =>
+    isPublishedArticleSafe(item, { stream: "coverage" })
+  )) {
     if (!article.created_at) continue;
     const date = indiaDate(new Date(article.created_at));
     counts.set(date, (counts.get(date) || 0) + 1);

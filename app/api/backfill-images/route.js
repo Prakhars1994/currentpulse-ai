@@ -3,6 +3,7 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import { persistRemoteArticleImage } from "@/lib/news/imageStorage";
 import { findRelevantCommonsImage } from "@/lib/news/relevantImage";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,7 +39,7 @@ async function executeBackfill(limit) {
   const supabase = createServerSupabase();
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,category,image,image_url,image_source_url,image_search_query,created_at")
+    .select("id,title,slug,category,why_news,image,image_url,image_source_url,image_search_query,created_at,article_sources(source_kind,source_url)")
     .eq("status", "published")
     .order("created_at", { ascending: false })
     .limit(1000);
@@ -46,7 +47,11 @@ async function executeBackfill(limit) {
   if (error) throw new Error(`Image backfill fetch failed: ${error.message}`);
 
   const needsReplacement = (article) => {
-    return !isVerifiedReusableArticleImage(article);
+    const stream = (article.article_sources || []).some(
+      (source) => source?.source_kind === "coaching"
+    ) ? "coverage" : "news";
+    return isPublishedArticleSafe(article, { stream }) &&
+      !isVerifiedReusableArticleImage(article);
   };
   const missing = (data || [])
     .filter(needsReplacement)

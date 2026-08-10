@@ -9,6 +9,7 @@ import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 import { isObviousLowValueNews } from "@/lib/news/newsQuality";
 import { parseNewsPresentation } from "@/lib/news/newsPresentation";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 function stripHtml(value = "") {
   return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -52,7 +53,7 @@ function cleanNewsSection(value = "", labels = []) {
 
 async function getArticle(slug) {
   const { data } = await supabase.from("articles").select("*").eq("slug", slug).eq("status", "published").maybeSingle();
-  return data || null;
+  return data && isPublishedArticleSafe(data, { stream: "news" }) ? data : null;
 }
 
 async function getSources(articleId) {

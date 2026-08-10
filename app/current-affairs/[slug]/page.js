@@ -10,6 +10,7 @@ import EvidenceHighlights from "@/components/EvidenceHighlights";
 import MainsAccordion from "@/components/MainsAccordion";
 import RelatedYouTubeVideo from "@/components/RelatedYouTubeVideo";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 // Remove HTML tags for SEO descriptions and reading-time calculation
 function stripHtml(html = "") {
@@ -80,7 +81,7 @@ export async function generateMetadata({ params }) {
     .eq("status", "published")
     .maybeSingle();
 
-  if (!article) {
+  if (!article || !isPublishedArticleSafe(article, { stream: "coverage" })) {
     return {
       title: "Article Not Found | CurrentPulse AI",
       description:
@@ -160,7 +161,7 @@ export default async function ArticlePage({ params }) {
     console.error("Article fetch error:", articleError);
   }
 
-  if (!article) {
+  if (!article || !isPublishedArticleSafe(article, { stream: "coverage" })) {
     notFound();
   }
 
@@ -176,6 +177,8 @@ export default async function ArticlePage({ params }) {
     console.error("Article sources fetch error:", sourcesError);
   }
 
+  article.article_sources = articleSources || [];
+  if (!isPublishedArticleSafe(article, { stream: "coverage" })) notFound();
   const isCoachingArticle = (articleSources || []).some((source) => source.source_kind === "coaching");
   const hasNewsVersion = (articleSources || []).some((source) => source.source_kind === "news");
   if (!isCoachingArticle) {
@@ -227,6 +230,18 @@ export default async function ArticlePage({ params }) {
   if (nextError) {
     console.error("Next article fetch error:", nextError);
   }
+
+  const safeRelatedArticles = (relatedArticles || []).filter((item) =>
+    isPublishedArticleSafe(item, { stream: "coverage" })
+  );
+  const safePreviousArticle = previousArticle &&
+    isPublishedArticleSafe(previousArticle, { stream: "coverage" })
+      ? previousArticle
+      : null;
+  const safeNextArticle = nextArticle &&
+    isPublishedArticleSafe(nextArticle, { stream: "coverage" })
+      ? nextArticle
+      : null;
 
   const articleImage = resolveDisplayImage(article);
 
@@ -537,12 +552,12 @@ export default async function ArticlePage({ params }) {
           </Link>
         </section>
 
-        {(previousArticle || nextArticle) && (
+        {(safePreviousArticle || safeNextArticle) && (
           <section className="mt-20 grid gap-6 md:grid-cols-2">
 
-            {previousArticle ? (
+            {safePreviousArticle ? (
               <Link
-                href={articleRoute(previousArticle)}
+                href={articleRoute(safePreviousArticle)}
                 className="rounded-xl border border-slate-700 bg-slate-900/70 p-6 transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
               >
                 <p className="mb-2 text-sm text-slate-400">
@@ -550,16 +565,16 @@ export default async function ArticlePage({ params }) {
                 </p>
 
                 <h3 className="font-bold text-slate-100">
-                  {previousArticle.title}
+                  {safePreviousArticle.title}
                 </h3>
               </Link>
             ) : (
               <div />
             )}
 
-            {nextArticle ? (
+            {safeNextArticle ? (
               <Link
-                href={articleRoute(nextArticle)}
+                href={articleRoute(safeNextArticle)}
                 className="rounded-xl border border-slate-700 bg-slate-900/70 p-6 text-right transition hover:border-cyan-400 hover:bg-slate-900 hover:shadow-lg"
               >
                 <p className="mb-2 text-sm text-slate-400">
@@ -567,7 +582,7 @@ export default async function ArticlePage({ params }) {
                 </p>
 
                 <h3 className="font-bold text-slate-100">
-                  {nextArticle.title}
+                  {safeNextArticle.title}
                 </h3>
               </Link>
             ) : (
@@ -577,7 +592,7 @@ export default async function ArticlePage({ params }) {
           </section>
         )}
 
-        {relatedArticles?.length > 0 && (
+        {safeRelatedArticles.length > 0 && (
           <section className="mt-20">
 
             <h2 className="mb-8 text-3xl font-bold">
@@ -586,7 +601,7 @@ export default async function ArticlePage({ params }) {
 
             <div className="grid gap-6 md:grid-cols-3">
 
-              {relatedArticles.map((item) => (
+              {safeRelatedArticles.map((item) => (
                 <Link
                   key={item.id}
                   href={articleRoute(item)}

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
+import { assessPublishedArticle } from "@/lib/editorial/publicationSafety";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +49,21 @@ function invalidIdResponse() {
       message: "A valid article ID is required.",
     },
     { status: 400 }
+  );
+}
+
+function unsafePublicationResponse(payload, body) {
+  if (payload.status !== "published") return null;
+  const stream = body?.stream === "news" ? "news" : "coverage";
+  const assessment = assessPublishedArticle(payload, { stream });
+  if (assessment.allowed) return null;
+  return NextResponse.json(
+    {
+      success: false,
+      message: `Publication blocked: ${assessment.reason}`,
+      code: assessment.code,
+    },
+    { status: 422 }
   );
 }
 
@@ -116,6 +132,8 @@ export async function POST(request) {
 
     const body = await request.json();
     const payload = articlePayload(body);
+    const safetyResponse = unsafePublicationResponse(payload, body);
+    if (safetyResponse) return safetyResponse;
 
     if (payload.title.length < 5) {
       return NextResponse.json(
@@ -189,6 +207,8 @@ export async function PUT(request) {
     if (!Number.isInteger(id) || id <= 0) return invalidIdResponse();
 
     const payload = articlePayload(body);
+    const safetyResponse = unsafePublicationResponse(payload, body);
+    if (safetyResponse) return safetyResponse;
 
     if (payload.title.length < 5 || payload.slug.length < 5) {
       return NextResponse.json(

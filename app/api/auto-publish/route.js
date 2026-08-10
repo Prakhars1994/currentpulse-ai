@@ -15,6 +15,7 @@ import {
   finishAutomationRun,
   startAutomationRun,
 } from "@/lib/automation/runLog";
+import { assessNewsCandidate } from "@/lib/editorial/publicationSafety";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -75,7 +76,10 @@ async function collectNews() {
     activeSources.map(async (source) => {
       try {
         const result = await fetchSourceRss(source, GENERAL_NEWS_QUERY_TERMS);
-        const uniqueForSource = deduplicateArticles(result.articles);
+        const articleLikeItems = result.articles.filter(
+          (article) => assessNewsCandidate(article).allowed
+        );
+        const uniqueForSource = deduplicateArticles(articleLikeItems);
 
         return {
           id: source.id,
@@ -83,6 +87,7 @@ async function collectNews() {
           group: source.group,
           fetched: result.articles.length,
           selected: uniqueForSource.length,
+          nonArticlesRejected: result.articles.length - articleLikeItems.length,
           errors: result.errors,
           articles: uniqueForSource,
         };
@@ -98,6 +103,7 @@ async function collectNews() {
           group: source.group,
           fetched: 0,
           selected: 0,
+          nonArticlesRejected: 0,
           errors: [error?.message || "Source collection failed"],
           articles: [],
         };
@@ -132,6 +138,7 @@ async function collectNews() {
       name: result.name,
       fetched: result.fetched,
       selected: result.selected,
+      nonArticlesRejected: result.nonArticlesRejected,
       errors: result.errors,
     })),
   };
@@ -164,6 +171,12 @@ async function evaluateCandidates(supabase, articles) {
   const skipped = [];
 
   for (const article of articles) {
+    const safety = assessNewsCandidate(article);
+    if (!safety.allowed) {
+      skipped.push({ title: article.title, reason: safety.code });
+      continue;
+    }
+
     const slug = createSlug(article.title);
 
     if (!slug || slug.length < 5) {

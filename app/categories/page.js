@@ -4,6 +4,7 @@ export const revalidate = 0;
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { CATEGORY_ROUTES, articleMatchesCategory } from "@/lib/categoryRouting";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 export const metadata = {
   title: "UPSC Current Affairs by Subject",
@@ -15,13 +16,16 @@ export const metadata = {
 export default async function CategoriesPage() {
   const { data, error } = await supabase
     .from("articles")
-    .select("category,title,why_news,prelims,mains")
+    .select("category,title,why_news,prelims,mains,article_sources!inner(source_kind)")
     .eq("status", "published")
+    .eq("article_sources.source_kind", "coaching")
     .order("created_at", { ascending: false })
     .limit(1000);
 
   if (error) console.error("Category count fetch failed:", error.message);
-  const articles = data || [];
+  const articles = (data || []).filter((article) =>
+    isPublishedArticleSafe(article, { stream: "coverage" })
+  );
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-14 text-white">

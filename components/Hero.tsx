@@ -2,6 +2,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { hasCoachingSource } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 function stripHtml(value: string | null) {
   if (!value) return "";
@@ -27,7 +28,7 @@ function formatDate(value: string | null) {
 
 export default async function Hero() {
   const [
-    { data: featured, error: featuredError },
+    { data: featuredRows, error: featuredError },
     { count: articleCount, error: articleCountError },
     { data: categoryRows, error: categoryError },
     { data: viewRows, error: viewsError },
@@ -35,12 +36,11 @@ export default async function Hero() {
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, why_news, image, image_url, image_source_url, created_at, status, article_sources(source_kind)"
+        "id, title, slug, category, paper, why_news, content, image, image_url, image_source_url, created_at, status, article_sources(source_kind,source_url)"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
+      .limit(100),
 
     supabase
       .from("articles")
@@ -73,6 +73,11 @@ export default async function Hero() {
   if (viewsError) {
     console.error("Views fetch error:", viewsError);
   }
+
+  const featured = (featuredRows || []).find((article) => {
+    const stream = hasCoachingSource(article) ? "coverage" : "news";
+    return isPublishedArticleSafe(article, { stream });
+  }) || null;
 
   const categoryCount = new Set(
     (categoryRows || [])

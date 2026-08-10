@@ -7,6 +7,7 @@ import ArticleContent from "@/components/ArticleContent";
 import PrintActions from "@/components/PrintActions";
 import { supabase } from "@/lib/supabase";
 import { resolveDigestRange } from "@/lib/study/digestDates";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 const VALID_PERIODS = new Set(["daily", "weekly", "monthly"]);
 
@@ -26,7 +27,9 @@ export default async function DigestPage({ params, searchParams }) {
     .order("created_at", { ascending: true });
 
   if (error) console.error("Digest article fetch failed:", error.message);
-  const articles = data || [];
+  const articles = (data || []).filter((article) =>
+    isPublishedArticleSafe(article, { stream: "coverage" })
+  );
 
   return (
     <main className="print-document min-h-screen bg-slate-100 px-4 py-10 text-slate-900 print:bg-white print:p-0">

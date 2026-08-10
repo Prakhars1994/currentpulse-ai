@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ExternalLink, PlayCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 export const metadata = {
   title: "Current Affairs Video Discovery",
@@ -22,7 +23,9 @@ export default async function VideosPage() {
     .limit(24);
 
   if (error) console.error("Video discovery fetch failed:", error.message);
-  const articles = data || [];
+  const articles = (data || []).filter((article) =>
+    isPublishedArticleSafe(article, { stream: "coverage" })
+  );
 
   return (
     <main className="video-library-page min-h-screen px-6 py-14 text-white">

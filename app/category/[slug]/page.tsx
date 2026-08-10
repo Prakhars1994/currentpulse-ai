@@ -11,6 +11,7 @@ import {
 } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL } from "@/lib/siteUrl";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -78,7 +79,8 @@ export default async function CategoryPage({ params }: Props) {
 
   const articles = ((data || []) as Article[]).filter((article) =>
     articleMatchesCategory(article, route) &&
-    (article.article_sources || []).some((source) => source?.source_kind === "coaching")
+    (article.article_sources || []).some((source) => source?.source_kind === "coaching") &&
+    isPublishedArticleSafe(article, { stream: "coverage" })
   );
 
   const related = CATEGORY_ROUTES.filter((item) => item.slug !== route.slug).slice(

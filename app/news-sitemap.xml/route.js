@@ -2,7 +2,6 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import { SITE_URL } from "@/lib/siteUrl";
 import { isSameEvent } from "@/lib/news/eventCluster";
 import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
-import { hasNewsPresentation } from "@/lib/news/newsPresentation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,7 +17,7 @@ function hasNewsSource(article = {}) {
 function dedupe(rows = []) {
   const kept = [];
   for (const article of rows) {
-    if (!hasNewsSource(article) || (!hasNewsPresentation(article) && !isDisplayWorthyNews(article))) continue;
+    if (!hasNewsSource(article) || !isDisplayWorthyNews(article)) continue;
     const duplicate = kept.some((existing) => isSameEvent(
       { title: article.title, description: article.why_news || "", publishedAt: article.created_at },
       { title: existing.title, description: existing.why_news || "", publishedAt: existing.created_at }

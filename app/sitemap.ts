@@ -4,7 +4,7 @@ import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
 import { generateEventKey, normalizeText } from "@/lib/news/eventCluster";
 import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
-import { hasNewsPresentation } from "@/lib/news/newsPresentation";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 // The sitemap depends on live Supabase data. Keep it out of the static-build
 // prerender path so a slow database/network call cannot fail `next build`.
@@ -100,8 +100,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     (articles || []) as SitemapArticle[]
   ).flatMap((article) => {
     const routes: MetadataRoute.Sitemap = [];
-    const currentAffairsReady = isCoaching(article);
-    const newsReady = hasNewsSource(article) && (hasNewsPresentation(article) || isDisplayWorthyNews(article));
+    const currentAffairsReady = isCoaching(article) && isPublishedArticleSafe(article, { stream: "coverage" });
+    const newsReady = hasNewsSource(article) && isDisplayWorthyNews(article);
 
     if (currentAffairsReady) {
       routes.push({

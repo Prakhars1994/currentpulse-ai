@@ -5,6 +5,7 @@ import { isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import { persistRemoteArticleImage } from "@/lib/news/imageStorage";
 import { findRelevantCommonsImage } from "@/lib/news/relevantImage";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,8 +21,9 @@ async function execute(limit) {
   const supabase = createServerSupabase();
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,category,why_news,india_relevance,static_foundation,data_examples,prelims,mains,image,image_url,image_source_url,image_search_query,visual_summary,memory_trick,map_locations,created_at")
+    .select("id,title,slug,category,why_news,india_relevance,static_foundation,data_examples,prelims,mains,image,image_url,image_source_url,image_search_query,visual_summary,memory_trick,map_locations,created_at,article_sources!inner(source_kind,source_url)")
     .eq("status", "published")
+    .eq("article_sources.source_kind", "coaching")
     .order("created_at", { ascending: false })
     .limit(1000);
   if (error) throw new Error(`Study-aid source fetch failed: ${error.message}`);
@@ -29,11 +31,14 @@ async function execute(limit) {
   const selected = (data || [])
     .filter(
       (article) =>
-        !article.image_search_query ||
-        !article.visual_summary ||
-        !article.memory_trick ||
-        !Array.isArray(article.map_locations) ||
-        !isVerifiedReusableArticleImage(article)
+        isPublishedArticleSafe(article, { stream: "coverage" }) &&
+        (
+          !article.image_search_query ||
+          !article.visual_summary ||
+          !article.memory_trick ||
+          !Array.isArray(article.map_locations) ||
+          !isVerifiedReusableArticleImage(article)
+        )
     )
     .slice(0, limit);
   if (!selected.length) {
@@ -111,9 +116,12 @@ async function execute(limit) {
         0,
         (data || []).filter(
           (article) =>
+            isPublishedArticleSafe(article, { stream: "coverage" }) &&
+            (
             !article.memory_trick ||
             !article.visual_summary ||
             !isVerifiedReusableArticleImage(article)
+            )
         ).length - results.filter((item) => item.status === "updated").length
       ),
       durationMs: Date.now() - startedAt,

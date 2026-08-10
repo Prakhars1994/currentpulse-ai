@@ -16,6 +16,10 @@ import {
   startAutomationRun,
 } from "@/lib/automation/runLog";
 import { isCoverageNoiseTitle } from "@/lib/coverage/noiseFilter";
+import {
+  assessCoverageEventness,
+  assessNewsCandidate,
+} from "@/lib/editorial/publicationSafety";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -392,8 +396,19 @@ async function executeQueueProcessing() {
         const itemStartedAt = Date.now();
 
         try {
-          if (isCoverageQueueItem(claimedItem) && isCoverageNoiseTitle(claimedItem.title)) {
-            const reason = "Rejected publisher navigation, generic digest wrapper or non-article page.";
+          const coverageSafety = isCoverageQueueItem(claimedItem)
+            ? assessCoverageEventness(claimedItem)
+            : null;
+          const newsSafety = !isCoverageQueueItem(claimedItem)
+            ? assessNewsCandidate(claimedItem)
+            : null;
+          if (
+            (isCoverageQueueItem(claimedItem) &&
+              (isCoverageNoiseTitle(claimedItem.title) || !coverageSafety.allowed)) ||
+            (!isCoverageQueueItem(claimedItem) && !newsSafety.allowed)
+          ) {
+            const assessment = coverageSafety || newsSafety;
+            const reason = `Publication safety rejected this queue item: ${assessment?.reason || "non-article page"}`;
             await markQueueRejected(supabase, claimedItem.id, reason);
             results.push({
               status: "rejected",
@@ -458,6 +473,17 @@ async function executeQueueProcessing() {
             `[Queue processor] Worker ${workerNumber} failed for "${claimedItem.title}":`,
             errorMessage
           );
+          if (errorMessage.startsWith("PUBLICATION_BLOCKED:")) {
+            await markQueueRejected(supabase, claimedItem.id, errorMessage);
+            results.push({
+              status: "rejected",
+              worker: workerNumber,
+              queueId: claimedItem.id,
+              title: claimedItem.title,
+              reason: errorMessage,
+            });
+            continue;
+          }
           const failure = await markQueueFailed(supabase, queueItem, errorMessage);
 
           results.push({
