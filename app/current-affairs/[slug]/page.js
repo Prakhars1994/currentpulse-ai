@@ -382,6 +382,12 @@ export default async function ArticlePage({ params }) {
 
         <article className="mt-10 space-y-8">
 
+          <ArticleStudyVisuals
+            mapLocations={article.map_locations}
+            title={article.title}
+            articleText={article.why_news}
+          />
+
           <section id="why-in-news" className="article-section article-section--context scroll-mt-28">
             <h2 className="article-section-title text-purple-200">📌 Why in News?</h2>
             <ArticleContent
@@ -421,8 +427,6 @@ export default async function ArticlePage({ params }) {
               <EvidenceHighlights content={article.data_examples} limit={6} />
             </section>
           )}
-
-          <ArticleStudyVisuals mapLocations={article.map_locations} />
 
           <section id="prelims" className="compact-study-section compact-study-section--prelims scroll-mt-28">
             <div className="compact-section-heading"><span>🎯</span><div><small>Rapid revision</small><h2>Prelims Quick Facts</h2></div></div>

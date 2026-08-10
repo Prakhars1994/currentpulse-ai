@@ -77,6 +77,25 @@ const INDIA_LOCATIONS = {
   "bay of bengal": { label: "Bay of Bengal", lat: 15.0, lon: 88.0 },
   "arabian sea": { label: "Arabian Sea", lat: 15.0, lon: 69.0 },
   "indian ocean": { label: "Indian Ocean", lat: 7.5, lon: 78.0 },
+  "arunachal pradesh": { label: "Arunachal Pradesh", lat: 28.2180, lon: 94.7278, state: "Arunachal Pradesh" },
+  itanagar: { label: "Itanagar", lat: 27.0844, lon: 93.6053, state: "Arunachal Pradesh", city: "Itanagar" },
+  imphal: { label: "Imphal", lat: 24.8170, lon: 93.9368, state: "Manipur", city: "Imphal" },
+  manipur: { label: "Manipur", lat: 24.6637, lon: 93.9063, state: "Manipur" },
+  shillong: { label: "Shillong", lat: 25.5788, lon: 91.8933, state: "Meghalaya", city: "Shillong" },
+  meghalaya: { label: "Meghalaya", lat: 25.4670, lon: 91.3662, state: "Meghalaya" },
+  aizawl: { label: "Aizawl", lat: 23.7271, lon: 92.7176, state: "Mizoram", city: "Aizawl" },
+  mizoram: { label: "Mizoram", lat: 23.1645, lon: 92.9376, state: "Mizoram" },
+  kohima: { label: "Kohima", lat: 25.6751, lon: 94.1086, state: "Nagaland", city: "Kohima" },
+  nagaland: { label: "Nagaland", lat: 26.1584, lon: 94.5624, state: "Nagaland" },
+  agartala: { label: "Agartala", lat: 23.8315, lon: 91.2868, state: "Tripura", city: "Agartala" },
+  tripura: { label: "Tripura", lat: 23.9408, lon: 91.9882, state: "Tripura" },
+  "port blair": { label: "Port Blair", lat: 11.6234, lon: 92.7265, state: "Andaman & Nicobar Islands", city: "Port Blair" },
+  "andaman and nicobar islands": { label: "Andaman & Nicobar Islands", lat: 11.7401, lon: 92.6586, state: "Andaman & Nicobar Islands" },
+  puducherry: { label: "Puducherry", lat: 11.9416, lon: 79.8083, state: "Puducherry", city: "Puducherry" },
+  lakshadweep: { label: "Lakshadweep", lat: 10.5667, lon: 72.6417, state: "Lakshadweep" },
+  puri: { label: "Puri", lat: 19.8135, lon: 85.8312, state: "Odisha", city: "Puri" },
+  "nathu la": { label: "Nathu La", lat: 27.3866, lon: 88.8317, state: "Sikkim" },
+  "lohagad fort": { label: "Lohagad Fort", lat: 18.7100, lon: 73.4769, state: "Maharashtra" },
 };
 
 const WORLD_LOCATIONS = {
@@ -115,6 +134,40 @@ const WORLD_LOCATIONS = {
   "red sea": { label: "Red Sea", lat: 20.3, lon: 38.5, country: "World" },
   "strait of hormuz": { label: "Strait of Hormuz", lat: 26.6, lon: 56.3, country: "World" },
   taiwan: { label: "Taiwan", lat: 23.7, lon: 121.0, country: "Taiwan" },
+  nauru: { label: "Nauru", lat: -0.5228, lon: 166.9315, country: "Nauru" },
+  kiribati: { label: "Kiribati", lat: 1.8709, lon: -157.3626, country: "Kiribati" },
+  tuvalu: { label: "Tuvalu", lat: -7.1095, lon: 177.6493, country: "Tuvalu" },
+  "marshall islands": { label: "Marshall Islands", lat: 7.1315, lon: 171.1845, country: "Marshall Islands" },
+  micronesia: { label: "Micronesia", lat: 7.4256, lon: 150.5508, country: "Micronesia" },
+  "solomon islands": { label: "Solomon Islands", lat: -9.6457, lon: 160.1562, country: "Solomon Islands" },
+  "papua new guinea": { label: "Papua New Guinea", lat: -6.3150, lon: 143.9555, country: "Papua New Guinea" },
+  fiji: { label: "Fiji", lat: -17.7134, lon: 178.0650, country: "Fiji" },
+  vanuatu: { label: "Vanuatu", lat: -15.3767, lon: 166.9592, country: "Vanuatu" },
+  samoa: { label: "Samoa", lat: -13.7590, lon: -172.1046, country: "Samoa" },
+  tonga: { label: "Tonga", lat: -21.1790, lon: -175.1982, country: "Tonga" },
+  "new zealand": { label: "New Zealand", lat: -40.9006, lon: 174.8860, country: "New Zealand" },
+  kazakhstan: { label: "Kazakhstan", lat: 48.0196, lon: 66.9237, country: "Kazakhstan" },
+  uzbekistan: { label: "Uzbekistan", lat: 41.3775, lon: 64.5853, country: "Uzbekistan" },
+  "saudi arabia": { label: "Saudi Arabia", lat: 23.8859, lon: 45.0792, country: "Saudi Arabia" },
+  turkey: { label: "Türkiye", lat: 38.9637, lon: 35.2433, country: "Türkiye" },
+  turkiye: { label: "Türkiye", lat: 38.9637, lon: 35.2433, country: "Türkiye" },
+  "türkiye": { label: "Türkiye", lat: 38.9637, lon: 35.2433, country: "Türkiye" },
+  ghana: { label: "Ghana", lat: 7.9465, lon: -1.0232, country: "Ghana" },
+  "madura island": { label: "Madura Island", lat: -7.0731, lon: 113.3916, country: "Indonesia" },
+  "danube river": { label: "Danube River", lat: 45.20, lon: 22.30, country: "Europe" },
+  "pacific ocean": { label: "Pacific Ocean", lat: 0, lon: 165, country: "World" },
+};
+
+const LOCATION_ALIASES = {
+  naoero: "nauru",
+  "republic of naoero": "nauru",
+  "republic of nauru": "nauru",
+  "u.s.": "united states",
+  "u.s.a.": "united states",
+  america: "united states",
+  "great britain": "united kingdom",
+  "andaman & nicobar islands": "andaman and nicobar islands",
+  "jammu & kashmir": "jammu and kashmir",
 };
 
 // Curated, reusable regional context. Coordinates are deliberately limited to
@@ -132,6 +185,16 @@ const REGIONAL_ATLAS = {
   Kerala: { nearby: [["Munnar", 10.0889, 77.0595], ["Kochi", 9.9312, 76.2673]], physical: [["Western Ghats", 10.3, 76.8, "mountain"], ["Periyar", 10.0, 76.5, "river"]] },
   "Tamil Nadu": { nearby: [["Mahabalipuram", 12.6208, 80.1945], ["Madurai", 9.9252, 78.1198]], physical: [["Kaveri", 10.9, 78.8, "river"], ["Nilgiri Hills", 11.4, 76.7, "mountain"]] },
   Chandigarh: { nearby: [["Rock Garden", 30.7525, 76.807], ["Sukhna Lake", 30.7421, 76.8188]], physical: [["Shivalik Hills", 30.9, 76.8, "mountain"], ["Sutlej", 31.0, 76.5, "river"]] },
+  "Arunachal Pradesh": { nearby: [["Itanagar", 27.0844, 93.6053], ["Tawang", 27.5861, 91.8594]], physical: [["Eastern Himalaya", 28.0, 94.0, "mountain"], ["Siang", 28.15, 94.95, "river"]] },
+  Sikkim: { nearby: [["Gangtok", 27.3389, 88.6065], ["Nathu La", 27.3866, 88.8317]], physical: [["Kangchenjunga", 27.7025, 88.1475, "mountain"], ["Teesta", 27.25, 88.55, "river"]] },
+  "Andaman & Nicobar Islands": { nearby: [["Port Blair", 11.6234, 92.7265], ["Barren Island", 12.2787, 93.8587]], physical: [["Andaman Sea", 11.5, 94.0, "feature"], ["Ten Degree Channel", 10.0, 92.5, "feature"]] },
+};
+
+const WORLD_ATLAS = {
+  Nauru: {
+    nearby: [["Marshall Islands", 7.1315, 171.1845], ["Tuvalu", -7.1095, 177.6493], ["Solomon Islands", -9.6457, 160.1562]],
+    physical: [["Pacific Ocean", 0, 165, "feature"], ["Equator", 0, 166.9, "feature"]],
+  },
 };
 
 function normaliseLocations(value) {
@@ -149,6 +212,73 @@ function keyFor(value = "") {
   return String(value).toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ").trim();
 }
 
+function escapeRegExp(value = "") {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function containsLocation(text, location) {
+  if (!text || !location) return false;
+  return new RegExp(`(^|[^a-z0-9])${escapeRegExp(location)}(?=$|[^a-z0-9])`, "i").test(text);
+}
+
+function knownLocationKey(value = "") {
+  const key = keyFor(value);
+  const aliased = LOCATION_ALIASES[key] || key;
+  if (INDIA_LOCATIONS[aliased] || WORLD_LOCATIONS[aliased]) return aliased;
+
+  const aliasMatch = Object.keys(LOCATION_ALIASES)
+    .sort((left, right) => right.length - left.length)
+    .find((alias) => containsLocation(key, alias));
+  if (aliasMatch) return LOCATION_ALIASES[aliasMatch];
+
+  return [...Object.keys(INDIA_LOCATIONS), ...Object.keys(WORLD_LOCATIONS)]
+    .sort((left, right) => right.length - left.length)
+    .find((candidate) => containsLocation(key, candidate)) || key;
+}
+
+function inferLocations(title = "", articleText = "") {
+  const selected = [];
+  const seen = new Set();
+  const candidates = [
+    ...Object.entries(LOCATION_ALIASES).map(([term, canonical]) => ({ term, canonical })),
+    ...Object.keys(INDIA_LOCATIONS).map((term) => ({ term, canonical: term })),
+    ...Object.keys(WORLD_LOCATIONS).map((term) => ({ term, canonical: term })),
+  ].sort((left, right) => right.term.length - left.term.length);
+
+  const collect = (value, allowGenericIndia) => {
+    const text = keyFor(value);
+    for (const candidate of candidates) {
+      if (selected.length >= 4) break;
+      if (!allowGenericIndia && candidate.canonical === "india") continue;
+      if (!containsLocation(text, candidate.term)) continue;
+      const resolved = resolveLocation(candidate.canonical);
+      const identity = `${resolved.mapType}:${resolved.label}`;
+      if (!resolved.point || seen.has(identity)) continue;
+      seen.add(identity);
+      selected.push(resolved.label);
+    }
+  };
+
+  collect(title, true);
+  collect(articleText, false);
+  return selected;
+}
+
+function articleLocations(mapLocations, title, articleText) {
+  const stored = normaliseLocations(mapLocations);
+  const resolvedStored = stored.filter((location) => resolveLocation(location).point);
+  const inferred = inferLocations(title, articleText);
+  const combined = [...resolvedStored, ...inferred];
+  const seen = new Set();
+  return combined.filter((location) => {
+    const meta = resolveLocation(location);
+    const identity = `${meta.mapType}:${meta.label}`;
+    if (!meta.point || seen.has(identity)) return false;
+    seen.add(identity);
+    return true;
+  }).slice(0, 4);
+}
+
 function geoPoint(lat, lon, bounds) {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
   const x = ((lon - bounds.west) / (bounds.east - bounds.west)) * 100;
@@ -158,7 +288,7 @@ function geoPoint(lat, lon, bounds) {
 }
 
 function resolveLocation(location = "") {
-  const key = keyFor(location);
+  const key = knownLocationKey(location);
   if (INDIA_LOCATIONS[key]) {
     const item = INDIA_LOCATIONS[key];
     return {
@@ -250,8 +380,11 @@ function MapPanel({ title, icon, asset, meta, physical = false, context = [], re
   );
 }
 
-export default function ArticleStudyVisuals({ mapLocations }) {
-  const locations = useMemo(() => normaliseLocations(mapLocations), [mapLocations]);
+export default function ArticleStudyVisuals({ mapLocations, title = "", articleText = "" }) {
+  const locations = useMemo(
+    () => articleLocations(mapLocations, title, articleText),
+    [articleText, mapLocations, title]
+  );
   const [selectedLocation, setSelectedLocation] = useState(locations[0] || "");
   if (!locations.length) return null;
 
@@ -262,22 +395,36 @@ export default function ArticleStudyVisuals({ mapLocations }) {
   const physicalAsset = meta.mapType === "india"
     ? "/maps/india-relief-location-map.jpg"
     : "/maps/world-physical-map.jpg";
-  const regional = meta.mapType === "india" ? REGIONAL_ATLAS[meta.state] : null;
+  const regional = meta.mapType === "india" ? REGIONAL_ATLAS[meta.state] : WORLD_ATLAS[meta.country];
+  const mapBounds = meta.mapType === "india" ? INDIA_BOUNDS : WORLD_BOUNDS;
   const contextMarkers = (items = [], physical = false) => items.map(([label, lat, lon, type]) => ({
-    label, point: geoPoint(lat, lon, INDIA_BOUNDS), variant: physical ? (type || "feature") : "nearby",
+    label, point: geoPoint(lat, lon, mapBounds), variant: physical ? (type || "feature") : "nearby",
   }));
+  const locationPool = meta.mapType === "india" ? Object.values(INDIA_LOCATIONS) : Object.values(WORLD_LOCATIONS);
+  const longitudeDistance = (left, right) => Math.min(Math.abs(left - right), 360 - Math.abs(left - right));
   const automaticNearby = meta.state
-    ? Object.values(INDIA_LOCATIONS)
+    ? locationPool
         .filter((item) => item.state === meta.state && item.city && item.label !== meta.label)
         .filter((item, index, all) => all.findIndex((candidate) => candidate.label === item.label) === index)
         .slice(0, 3)
         .map((item) => [item.label, item.lat, item.lon])
-    : [];
+    : meta.mapType === "world" && meta.point
+      ? locationPool
+          .filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lon) && item.label !== meta.label && item.country !== "World")
+          .filter((item, index, all) => all.findIndex((candidate) => candidate.label === item.label) === index)
+          .sort((left, right) => {
+            const leftDistance = Math.hypot(left.lat - meta.lat, longitudeDistance(left.lon, meta.lon));
+            const rightDistance = Math.hypot(right.lat - meta.lat, longitudeDistance(right.lon, meta.lon));
+            return leftDistance - rightDistance;
+          })
+          .slice(0, 3)
+          .map((item) => [item.label, item.lat, item.lon])
+      : [];
   const nearby = contextMarkers(regional?.nearby?.length ? regional.nearby : automaticNearby);
   const features = contextMarkers(regional?.physical, true);
 
   return (
-    <section className="atlas-locator-card" aria-label="Static location maps for this article">
+    <section id="article-map" className="atlas-locator-card scroll-mt-28" aria-label="Static location maps for this article">
       <div className="atlas-locator-head">
         <div>
           <span><MapPin size={15} /> Map focus</span>
@@ -295,7 +442,7 @@ export default function ArticleStudyVisuals({ mapLocations }) {
           asset={politicalAsset}
           meta={meta}
           context={nearby}
-          regional={Boolean(meta.state)}
+          regional={Boolean(meta.state || meta.mapType === "world")}
         />
         <MapPanel
           title="Regional rivers & relief"
@@ -304,7 +451,7 @@ export default function ArticleStudyVisuals({ mapLocations }) {
           meta={meta}
           physical
           context={features}
-          regional={Boolean(meta.state)}
+          regional={Boolean(meta.state || meta.mapType === "world")}
         />
       </div>
 

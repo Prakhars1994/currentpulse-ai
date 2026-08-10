@@ -1811,6 +1811,16 @@ main.min-h-screen:not(.news-article-page) .atlas-map-note {
 .geo-marker--nearby > b, .geo-marker--river > b, .geo-marker--mountain > b, .geo-marker--feature > b { font-size: 9px; opacity: .9; }
 .atlas-context-list { display: grid; gap: .35rem; margin-top: .85rem; color: #cbd5e1; font-size: .78rem; }
 .atlas-context-list strong { color: #67e8f9; }
+.paper-empty-state {
+  margin: 1rem 0 0;
+  border: 1px dashed #cbd5e1;
+  border-radius: .9rem;
+  padding: 1rem;
+  color: #475569;
+  background: rgb(255 255 255 / .55);
+  text-align: center;
+  font-weight: 700;
+}
 
 /* Slightly stronger in-sentence emphasis on study cards. */
 .compact-fact-list strong,

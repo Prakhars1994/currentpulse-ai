@@ -146,6 +146,12 @@ export default async function NewsArticlePage({ params }) {
             <ArticleContent content={newsLead} />
           </section>
 
+          <ArticleStudyVisuals
+            mapLocations={article.map_locations}
+            title={newsPresentation?.title || article.title}
+            articleText={newsLead}
+          />
+
           {newsFacts && (
             <section className="news-article-section news-article-facts">
               <div className="news-section-kicker">At a glance</div>
@@ -169,8 +175,6 @@ export default async function NewsArticlePage({ params }) {
               <ArticleContent content={newsWhyItMatters} />
             </section>
           )}
-
-          <ArticleStudyVisuals mapLocations={article.map_locations} />
 
           {sources.length > 0 && <section className="news-source-box"><h2>Sources</h2><ul>{sources.map((source) => <li key={source.id}><a href={source.source_url} target="_blank" rel="noopener noreferrer"><strong>{source.source_name}</strong>{source.source_title ? ` — ${source.source_title}` : ""}</a></li>)}</ul></section>}
 
