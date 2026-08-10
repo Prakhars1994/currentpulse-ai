@@ -39,14 +39,6 @@ function hasNewsSource(article: SitemapArticle) {
   );
 }
 
-function isStudyReady(article: SitemapArticle) {
-  return (
-    String(article.syllabus_linkage || "").trim().length >= 20 &&
-    String(article.prelims || "").trim().length >= 60 &&
-    String(article.mains || "").trim().length >= 100
-  );
-}
-
 function stableEventKey(article: SitemapArticle) {
   // Ignore short parenthetical acronyms such as "(TMZ)" so rewritten versions
   // of the same headline collapse to one sitemap entry.
@@ -108,7 +100,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     (articles || []) as SitemapArticle[]
   ).flatMap((article) => {
     const routes: MetadataRoute.Sitemap = [];
-    const currentAffairsReady = isCoaching(article) || isStudyReady(article);
+    const currentAffairsReady = isCoaching(article);
     const newsReady = hasNewsSource(article) && (hasNewsPresentation(article) || isDisplayWorthyNews(article));
 
     if (currentAffairsReady) {

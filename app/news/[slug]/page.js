@@ -108,10 +108,7 @@ export default async function NewsArticlePage({ params }) {
   const newsWhyItMatters = cleanNewsSection(newsPresentation?.whyItMatters || article.india_relevance, [
     "Why it matters", "Significance", "India relevance"
   ]);
-  const hasCurrentAffairsView =
-    String(article.syllabus_linkage || "").trim().length >= 20 &&
-    String(article.prelims || "").trim().length >= 60 &&
-    String(article.mains || "").trim().length >= 100;
+  const hasCurrentAffairsView = hasCoachingSource;
   const image = resolveDisplayImage(article);
   const canonical = `${SITE_URL}/news/${slug}`;
   const structuredData = {

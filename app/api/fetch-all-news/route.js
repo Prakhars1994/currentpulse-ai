@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { NEWS_SOURCES, UPSC_QUERY_TERMS } from "@/lib/news/sourceCatalog";
+import { GENERAL_NEWS_QUERY_TERMS, NEWS_SOURCES } from "@/lib/news/sourceCatalog";
 import { fetchSourceRss } from "@/lib/news/rss";
 import { deduplicateArticles } from "@/lib/news/filter";
 import { evaluateNews } from "@/lib/ai/evaluateNews";
@@ -85,7 +85,7 @@ export async function GET(request) {
   const sourceResults = await Promise.all(
     sources.map(async (source) => {
       try {
-        const result = await fetchSourceRss(source, UPSC_QUERY_TERMS);
+        const result = await fetchSourceRss(source, GENERAL_NEWS_QUERY_TERMS);
         return {
           source,
           articles: result.articles.slice(0, perSource),

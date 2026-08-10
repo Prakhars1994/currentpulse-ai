@@ -21,14 +21,6 @@ function stripHtml(html = "") {
     .trim();
 }
 
-function hasStudyReadyContent(article = {}) {
-  return (
-    String(article?.syllabus_linkage || "").trim().length >= 20 &&
-    String(article?.prelims || "").trim().length >= 60 &&
-    String(article?.mains || "").trim().length >= 100
-  );
-}
-
 function calculateReadingTime(article) {
   const text = [
     article?.why_news,
@@ -105,8 +97,7 @@ export async function generateMetadata({ params }) {
     .select("source_kind")
     .eq("article_id", article.id);
   const isCoaching = (sourceKinds || []).some((source) => source.source_kind === "coaching");
-  const isStudyReady = hasStudyReadyContent(article);
-  const canonicalPath = (isCoaching || isStudyReady) ? `/current-affairs/${slug}` : `/news/${slug}`;
+  const canonicalPath = isCoaching ? `/current-affairs/${slug}` : `/news/${slug}`;
   const resolvedImage = resolveDisplayImage(article);
   const image = resolvedImage ? absoluteImageUrl(resolvedImage) : "";
 
@@ -187,8 +178,7 @@ export default async function ArticlePage({ params }) {
 
   const isCoachingArticle = (articleSources || []).some((source) => source.source_kind === "coaching");
   const hasNewsVersion = (articleSources || []).some((source) => source.source_kind === "news");
-  const isStudyReadyArticle = hasStudyReadyContent(article);
-  if (!isCoachingArticle && !isStudyReadyArticle) {
+  if (!isCoachingArticle) {
     permanentRedirect(`/news/${slug}`);
   }
 

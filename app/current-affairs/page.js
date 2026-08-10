@@ -50,7 +50,7 @@ export default async function CurrentAffairsPage({ searchParams }) {
   const { articles, total, hasMore, date, error } = await loadCurrentAffairsArticles({
     limit: pageSize, offset, todayOnly,
   });
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = Number.isFinite(total) ? Math.max(1, Math.ceil(total / pageSize)) : null;
 
   if (error) {
     console.error("Current affairs error:", error);
@@ -75,7 +75,7 @@ export default async function CurrentAffairsPage({ searchParams }) {
             <Link href="/quiz" className="rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3 font-bold text-slate-100 transition hover:border-cyan-400">Attempt today&apos;s quiz</Link>
             <Link href="/current-affairs" className={`rounded-xl px-4 py-2 text-sm font-black ${!todayOnly ? "bg-cyan-400 text-slate-950" : "border border-slate-700 text-slate-200"}`}>All briefs</Link>
             <Link href="/current-affairs?view=today" className={`rounded-xl px-4 py-2 text-sm font-black ${todayOnly ? "bg-cyan-400 text-slate-950" : "border border-slate-700 text-slate-200"}`}>Today · {date}</Link>
-            <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-slate-300">{total} {todayOnly ? "today" : "curated briefs"} · Page {requestedPage}/{totalPages}</span>
+            <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-slate-300">{Number.isFinite(total) ? `${total} ${todayOnly ? "today" : "curated briefs"}` : "Curated CA archive"} · Page {requestedPage}{totalPages ? `/${totalPages}` : ""}</span>
           </div>
         </div>
 
@@ -172,7 +172,7 @@ export default async function CurrentAffairsPage({ searchParams }) {
         {(requestedPage > 1 || hasMore) && (
           <nav className="mt-10 flex flex-wrap items-center justify-center gap-3" aria-label="Current affairs pagination">
             {requestedPage > 1 && <Link href={pageHref(requestedPage - 1, todayOnly)} className="rounded-xl border border-slate-700 px-5 py-3 font-black text-slate-200">← Newer briefs</Link>}
-            <span className="text-sm font-bold text-slate-400">Page {requestedPage} of {totalPages}</span>
+            <span className="text-sm font-bold text-slate-400">Page {requestedPage}{totalPages ? ` of ${totalPages}` : ""}</span>
             {hasMore && <Link href={pageHref(requestedPage + 1, todayOnly)} className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950">Older briefs →</Link>}
           </nav>
         )}

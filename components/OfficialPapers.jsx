@@ -22,7 +22,7 @@ export default function OfficialPapers({ papers }) {
         <label>Year<select value={year} onChange={(event) => setYear(event.target.value)}><option>All</option>{years.map((value) => <option key={value}>{value}</option>)}</select></label>
       </div>
 
-      <p className="paper-coverage-note"><strong>12-year coverage:</strong> 2015–2026. Recent verified direct PDFs open immediately; older years open the official UPSC archive so CurrentPulse never guesses a legacy PDF URL.</p>
+      <p className="paper-coverage-note"><strong>Verified coverage:</strong> Prelims 2015–2026 and 15 Mains examination years, 2011–2025. Recent verified direct PDFs open immediately; older entries open the official UPSC archive so CurrentPulse never invents a legacy PDF URL.</p>
 
       <div className="paper-card-grid">
         {filtered.map((paper, index) => (

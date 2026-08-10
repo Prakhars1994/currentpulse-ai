@@ -1,8 +1,7 @@
 import { after, NextResponse } from "next/server";
-import { NEWS_SOURCES, UPSC_QUERY_TERMS } from "@/lib/news/sourceCatalog";
+import { GENERAL_NEWS_QUERY_TERMS, NEWS_SOURCES } from "@/lib/news/sourceCatalog";
 import { fetchSourceRss } from "@/lib/news/rss";
 import { deduplicateArticles } from "@/lib/news/filter";
-import { evaluateNewsBatch } from "@/lib/ai/evaluateNews";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { queueCandidate } from "@/lib/queue/queueCandidate";
 import {
@@ -10,7 +9,8 @@ import {
   loadRecentArticles,
 } from "@/lib/news/duplicateRepository";
 import { classifyCategory, resolvePaper } from "@/lib/contentTaxonomy";
-import { assessUpscRelevance } from "@/lib/news/upscRelevanceGate";
+import { isObviousLowValueNews } from "@/lib/news/newsQuality";
+import { isSameEvent } from "@/lib/news/eventCluster";
 import { queueCoverageImport } from "@/lib/coverage/queueCoverageImport";
 import {
   finishAutomationRun,
@@ -97,7 +97,7 @@ async function collectNews() {
   const sourceResults = await Promise.all(
     NEWS_SOURCES.map(async (source) => {
       try {
-        const result = await fetchSourceRss(source, UPSC_QUERY_TERMS);
+        const result = await fetchSourceRss(source, GENERAL_NEWS_QUERY_TERMS);
         const uniqueForSource = selectSourceArticles(
           deduplicateArticles(result.articles),
           source.id
@@ -106,6 +106,7 @@ async function collectNews() {
         return {
           id: source.id,
           name: source.name,
+          group: source.group,
           fetched: result.articles.length,
           selected: uniqueForSource.length,
           errors: result.errors,
@@ -120,6 +121,7 @@ async function collectNews() {
         return {
           id: source.id,
           name: source.name,
+          group: source.group,
           fetched: 0,
           selected: 0,
           errors: [error?.message || "Source collection failed"],
@@ -129,8 +131,28 @@ async function collectNews() {
     })
   );
 
+  const newspaperAgenda = deduplicateArticles(
+    sourceResults
+      .filter((result) => result.group !== "official")
+      .flatMap((result) => result.articles)
+  );
+  const officialItems = sourceResults
+    .filter((result) => result.group === "official")
+    .flatMap((result) => result.articles);
+
+  // Official feeds verify and enrich events already identified by general
+  // newspapers; routine departmental output cannot independently set News.
+  for (const official of officialItems) {
+    const match = newspaperAgenda.find((article) => isSameEvent(article, official));
+    if (!match) continue;
+    match.coverage = [...new Set([...(match.coverage || []), official.source])];
+    if (official.description && !String(match.description || "").includes(official.description)) {
+      match.description = `${match.description || ""}\n\nOFFICIAL VERIFICATION (${official.source}): ${official.description}`.trim().slice(0, 6500);
+    }
+  }
+
   return {
-    articles: deduplicateArticles(sourceResults.flatMap((result) => result.articles)),
+    articles: newspaperAgenda,
     sources: sourceResults.map((result) => ({
       id: result.id,
       name: result.name,
@@ -145,18 +167,20 @@ function localEvaluation(article) {
   const text = `${article.title || ""} ${article.description || ""}`;
   const category = classifyCategory(text);
   const preliminaryScore = Number(article.preliminaryScore || 0);
-  const scope = assessUpscRelevance(article);
-  const relevant = !scope.hardReject && scope.eligible && preliminaryScore >= 2;
+  const independentCoverage = new Set(article.coverage || [article.source]).size;
+  const lowValue = isObviousLowValueNews(article);
+  const importance = Math.min(10, 5 + Math.min(3, preliminaryScore) + Math.min(2, independentCoverage - 1));
+  const relevant = !lowValue;
 
   return {
     relevant,
-    scope: relevant ? scope.scope : "Reject",
-    importance: relevant ? Math.min(10, Math.max(5, preliminaryScore + 4)) : 2,
+    scope: relevant ? (article.region === "IN" ? "India" : "Global Systemic") : "Reject",
+    importance: relevant ? importance : 1,
     category,
     paper: resolvePaper(category),
     reason: relevant
-      ? `Selected by local UPSC scoring because AI evaluation was unavailable. ${scope.reason}`
-      : `Rejected by the local fallback evaluator. ${scope.reason}`,
+      ? `Selected by the general-news agenda ranker from ${independentCoverage} publisher${independentCoverage === 1 ? "" : "s"}.`
+      : "Rejected as a tender, recruitment notice, routine commercial item or other low-value listing.",
     keywords: [],
   };
 }
@@ -197,29 +221,10 @@ async function evaluateCandidates(supabase, articles) {
 
   console.log(`[Auto publish] Evaluating ${eligible.length} unique candidates.`);
 
-  let evaluations;
-  let evaluationProvider = "ai";
-
-  try {
-    evaluations = await evaluateNewsBatch(
-      eligible.map((article) => ({
-        title: article.title,
-        description: article.description || article.summary || article.title,
-        source: article.source,
-        sourceGroup: article.sourceGroup,
-        region: article.region,
-        relevanceScope: article.relevanceScope,
-        relevanceReason: article.relevanceReason,
-      }))
-    );
-  } catch (error) {
-    evaluationProvider = "local_fallback";
-    console.error(
-      "[Auto publish] AI evaluation unavailable; using local fallback:",
-      error?.message || error
-    );
-    evaluations = eligible.map(localEvaluation);
-  }
+  // News is a general-public product. A deterministic newsroom agenda ranker
+  // avoids UPSC filtering and remains available during AI quota outages.
+  const evaluations = eligible.map(localEvaluation);
+  const evaluationProvider = "general_news_agenda_v1";
 
   const accepted = [];
   const rejected = [];

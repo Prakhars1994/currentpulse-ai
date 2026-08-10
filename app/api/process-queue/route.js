@@ -3,7 +3,6 @@ import { createServerSupabase } from "@/lib/supabase-server";
 import {
   attachNewsPresentationToExistingArticle,
   enrichPublishedArticle,
-  promotePublishedNewsToCurrentAffairs,
   publishArticle,
 } from "@/lib/publisher/publishArticle";
 import { generateDailyQuiz } from "@/lib/quiz/generateDailyQuiz";
@@ -216,11 +215,12 @@ async function getPendingQueueItem(supabase, attemptedIds) {
     .eq("status", "pending")
     .lt("attempts", 3)
     .order("importance", { ascending: false })
-    .order("created_at", { ascending: true })
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
     .limit(50);
 
   if (error) throw new Error(`Queue fetch failed: ${error.message}`);
-  const priority = { coaching: 0, news: 1, coaching_enrichment: 2 };
+  const priority = { news: 0, coaching: 0, coaching_enrichment: 1 };
   return (data || [])
     .filter((item) => !attemptedIds.has(item.id))
     .sort(
@@ -412,10 +412,6 @@ async function executeQueueProcessing() {
             : await publishArticle(supabase, claimedItem);
 
           if (!coverageItem) {
-            // Every item that reaches the news publishing queue has already
-            // passed the UPSC relevance gate. Keep one database article, but
-            // preserve a newsroom presentation and also build a UPSC study
-            // presentation for the Current Affairs stream.
             if (published.status === "duplicate") {
               await attachNewsPresentationToExistingArticle(
                 supabase,
@@ -424,25 +420,18 @@ async function executeQueueProcessing() {
               );
             }
 
-            const promoted = await promotePublishedNewsToCurrentAffairs(
-              supabase,
-              published.articleId,
-              claimedItem
-            );
-
             await markQueuePublished(supabase, claimedItem.id, published.articleId);
             results.push({
-              status: "dual_stream",
-              pipeline: "news+current_affairs",
+              status: published.status === "published_source_brief" ? "published_source_brief" : "published",
+              pipeline: "news",
               worker: workerNumber,
               queueId: claimedItem.id,
               articleId: published.articleId,
               title: published.title,
               slug: published.slug,
-              category: promoted.category || published.category,
-              paper: promoted.paper || published.paper,
+              category: published.category,
+              paper: published.paper,
               newsStatus: published.status,
-              currentAffairsStatus: promoted.status,
             });
           } else {
             await markQueuePublished(supabase, claimedItem.id, published.articleId);
