@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import Link from "next/link";
-import { loadArticleStreams } from "@/lib/articleStreams";
+import { loadNewsArticles } from "@/lib/articleStreams";
 import { createCategorySlug } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL } from "@/lib/siteUrl";
@@ -20,7 +20,16 @@ export const metadata = {
 };
 
 function stripHtml(content = "") {
-  return String(content || "").replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+  return String(content || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/__([^_]+)__/g, "$1")
+    .replace(/`([^`]+)`/g, "$1")
+    .replace(/(^|\s)[#>*_~-]+(?=\S)/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function formatDate(value) {
@@ -28,9 +37,20 @@ function formatDate(value) {
   return new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export default async function NewsPage() {
-  const { news: articles, error } = await loadArticleStreams(500);
+function pageHref(page) {
+  return page <= 1 ? "/news" : `/news?page=${page}`;
+}
+
+export default async function NewsPage({ searchParams }) {
+  const params = await searchParams;
+  const requestedPage = Math.max(1, Number(params?.page) || 1);
+  const pageSize = 48;
+  const offset = (requestedPage - 1) * pageSize;
+  const { articles, total, error } = await loadNewsArticles({ limit: pageSize, offset });
   if (error) console.error("News stream error:", error);
+
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(requestedPage, totalPages);
 
   return (
     <main className="newsroom-page min-h-screen py-10 sm:py-14">
@@ -48,7 +68,9 @@ export default async function NewsPage() {
         </header>
 
         <div className="newsroom-meta-row">
-          <strong>{articles.length}</strong> recent unique stories
+          <strong>{total}</strong> news stories in archive
+          <span>•</span>
+          <span>Page {currentPage} of {totalPages}</span>
           <span>•</span>
           <span>Duplicate events are collapsed automatically</span>
         </div>
@@ -84,7 +106,19 @@ export default async function NewsPage() {
             })}
           </section>
         ) : (
-          <div className="newsroom-empty"><h2>No news available yet</h2><p>The newsroom will update after the next successful collection run.</p></div>
+          <div className="newsroom-empty"><h2>No stories on this page</h2><p>Try the previous archive page.</p></div>
+        )}
+
+        {totalPages > 1 && (
+          <nav className="mt-10 flex flex-wrap items-center justify-center gap-3" aria-label="News archive pagination">
+            {currentPage > 1 ? (
+              <Link href={pageHref(currentPage - 1)} className="newsroom-secondary-action">← Newer stories</Link>
+            ) : <span />}
+            <span className="text-sm font-bold text-stone-600">Page {currentPage} / {totalPages}</span>
+            {currentPage < totalPages ? (
+              <Link href={pageHref(currentPage + 1)} className="newsroom-primary-action">Older stories →</Link>
+            ) : <span />}
+          </nav>
         )}
       </div>
     </main>
