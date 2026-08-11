@@ -28,11 +28,12 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-const HARD_STOP_MS = 280000;
-const MINIMUM_NEXT_ITEM_BUDGET_MS = 45000;
+const HARD_STOP_MS = 190000;
+const MINIMUM_NEXT_ITEM_BUDGET_MS = 35000;
 const STALE_PROCESSING_MINUTES = 20;
 const PROCESSING_CONCURRENCY = 3;
-const MAX_TEMPORARY_AI_FAILURES_PER_RUN = 6;
+const MAX_QUEUE_ITEMS_PER_RUN = 6;
+const MAX_TEMPORARY_AI_FAILURES_PER_RUN = 3;
 const RETRYABLE_FAILED_LOOKBACK_HOURS = 72;
 
 function isCoverageQueueItem(item = {}) {
@@ -367,6 +368,7 @@ async function executeQueueProcessing() {
   let stopRequested = false;
   let stoppedForRuntimeBudget = false;
   let temporaryAiFailures = 0;
+  let claimedCount = 0;
 
   try {
     const [recoveredStale, recoveredFailed] = await Promise.all([
@@ -376,6 +378,7 @@ async function executeQueueProcessing() {
 
     async function worker(workerNumber) {
       while (!stopRequested) {
+        if (claimedCount >= MAX_QUEUE_ITEMS_PER_RUN) break;
         const averageItemDurationMs = itemDurations.length
           ? Math.round(
               itemDurations.reduce((total, duration) => total + duration, 0) /
@@ -395,7 +398,9 @@ async function executeQueueProcessing() {
 
         const queueItem = await getPendingQueueItem(supabase, attemptedIds);
         if (!queueItem) break;
+        if (claimedCount >= MAX_QUEUE_ITEMS_PER_RUN) break;
 
+        claimedCount += 1;
         attemptedIds.add(queueItem.id);
         const claimedItem = await claimQueueItem(supabase, queueItem);
         if (!claimedItem) continue;
@@ -612,6 +617,8 @@ async function executeQueueProcessing() {
         retryPending,
         temporaryAiFailures,
         concurrency: PROCESSING_CONCURRENCY,
+        claimed: claimedCount,
+        maxItemsPerRun: MAX_QUEUE_ITEMS_PER_RUN,
         stoppedForRuntimeBudget,
         qualityUpgrades: qualityUpgrades.filter((item) => item.status !== "failed").length,
         quizReady: Boolean(quiz && (quiz.generated || quiz.reason === "already_ready")),

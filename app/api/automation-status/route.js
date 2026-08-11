@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { getConfiguredAiProviders } from "@/lib/ai/router";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -129,6 +130,7 @@ export async function GET() {
           sourceNames,
           queue,
         },
+        aiProviders: getConfiguredAiProviders(),
         latestQueue,
         latestRuns: (latestRunsResult.data || []).map((run) => ({
           ...run,

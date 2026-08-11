@@ -1,4 +1,5 @@
 import { inspectCoverageCandidate } from "../lib/coverage/sourceSanitizer.js";
+import { assessCoverageEventness } from "../lib/editorial/publicationSafety.js";
 import { assessArticleQuality } from "../lib/ai/articleQuality.js";
 import { classifyCategoryWithConfidence, correctTaxonomy } from "../lib/contentTaxonomy.js";
 import { isSameEvent } from "../lib/news/eventCluster.js";
@@ -37,6 +38,28 @@ const valid = inspectCoverageCandidate({
   summary: "The Union Cabinet approved a national bioenergy measure with implementation details and verified facts. ".repeat(4),
 });
 assert(valid.accepted, "A normal current-affairs article was rejected.");
+
+const trustedRecentEditorial = assessCoverageEventness(
+  {
+    title: "UPI and the cost of policy reversal",
+    summary: "A substantive current-affairs editorial from the configured daily coaching feed examining a recent policy debate, institutional implications and consequences for users. ".repeat(2),
+    source: "Insights IAS",
+    publishedAt: "2026-08-11T06:00:00+05:30",
+  },
+  { referenceDate: "2026-08-11T12:00:00+05:30" }
+);
+assert(trustedRecentEditorial.allowed, "Recent trusted coaching editorial was incorrectly rejected for lacking a headline verb.");
+
+const staleTrustedStatic = assessCoverageEventness(
+  {
+    title: "Lalit Kala Akademi",
+    summary: "Static institutional notes about the academy, its history, organisation and mandate. ".repeat(3),
+    source: "Insights IAS",
+    publishedAt: "2025-01-10T06:00:00+05:30",
+  },
+  { referenceDate: "2026-08-11T12:00:00+05:30" }
+);
+assert(!staleTrustedStatic.allowed, "Old static trusted-source page incorrectly passed the current-affairs gate.");
 
 const nauruGeo = classifyCategoryWithConfidence(
   "The Republic of Naoero, formerly Nauru, is an island nation in the Pacific Ocean. Its location and capital are relevant for Prelims.",
