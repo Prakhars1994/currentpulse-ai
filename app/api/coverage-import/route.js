@@ -10,8 +10,7 @@ export const maxDuration = 300;
 
 // Coverage collection does not generate AI articles. Allow a full rolling
 // multi-source scan so valid CA is not silently cut off before dedup/merge.
-const DEFAULT_MAX_CANDIDATES = 600;
-const MAX_MANUAL_CANDIDATES = 800;
+const MAX_MANUAL_CANDIDATES = 2000;
 
 function isAuthorised(request) {
   const configuredSecret = process.env.CRON_SECRET?.trim() || "";
@@ -34,10 +33,11 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url);
   const requestedSource = (searchParams.get("source") || "all").toLowerCase();
-  const parsedLimit = Number.parseInt(searchParams.get("limit") || "", 10);
-  const maxCandidates = Number.isFinite(parsedLimit)
+  const rawLimit = searchParams.get("limit");
+  const parsedLimit = Number.parseInt(rawLimit || "", 10);
+  const maxCandidates = rawLimit && Number.isFinite(parsedLimit)
     ? Math.min(Math.max(parsedLimit, 1), MAX_MANUAL_CANDIDATES)
-    : DEFAULT_MAX_CANDIDATES;
+    : null;
 
   if (requestedSource !== "all" && !COVERAGE_SOURCE_IDS.includes(requestedSource)) {
     return NextResponse.json(

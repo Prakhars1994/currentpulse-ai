@@ -55,7 +55,7 @@ test("ForumIAS accepts only dated 9 PM digest sections", () => {
   );
 });
 
-test("requires a time-bound trigger instead of accepting length and crawl date", () => {
+test("trusted CA sources bypass eventness selection while untrusted coverage still requires a trigger", () => {
   assert.equal(
     assessCoverageEventness({
       title: "Constitutional Remedies",
@@ -72,6 +72,16 @@ test("requires a time-bound trigger instead of accepting length and crawl date",
       publishedAt: "2026-08-10",
       url: "https://www.drishtiias.com/daily-updates/daily-news-analysis/epigenetic-inheritance",
       source: "Drishti IAS",
+    }).allowed,
+    true
+  );
+  assert.equal(
+    assessCoverageEventness({
+      title: "Lake Mead",
+      summary: "Place-in-news notes selected by the Current Affairs publisher for competitive-exam preparation.",
+      publishedAt: "2026-08-10",
+      url: "https://www.gktoday.in/lake-mead/",
+      source: "GKToday",
     }).allowed,
     true
   );

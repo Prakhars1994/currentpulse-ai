@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import {
-  assessCoverageEventness,
   assessPublishedArticle,
   publicArticleText,
   sanitizeEditorialText,
@@ -72,22 +71,6 @@ function newestSourceDate(article = {}, sourceKind = "") {
     .filter(Boolean)
     .sort()
     .reverse()[0] || null;
-}
-
-function coverageEventAssessment(article = {}) {
-  const coachingSources = (article.article_sources || []).filter(
-    (source) => source?.source_kind === "coaching"
-  );
-  return assessCoverageEventness(
-    {
-      ...article,
-      summary: article.why_news || article.content || "",
-      source: coachingSources[0]?.source_name || "",
-      url: coachingSources[0]?.source_url || "",
-      publishedAt: newestSourceDate(article, "coaching") || article.created_at,
-    },
-    { referenceDate: article.created_at }
-  );
 }
 
 function hasMisleadingOldHeadlineYear(article = {}) {
@@ -221,20 +204,6 @@ export async function GET(request) {
     }
 
     const labels = streamLabels(article);
-    if (labels.has("coverage")) {
-      const eventness = coverageEventAssessment(article);
-      if (!eventness.allowed) {
-        quarantine.push({
-          id: article.id,
-          slug: article.slug,
-          title: article.title,
-          stream: "coverage",
-          code: eventness.code,
-          reason: eventness.reason,
-        });
-        continue;
-      }
-    }
 
     if (
       labels.has("news") &&

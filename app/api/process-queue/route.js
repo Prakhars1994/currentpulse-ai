@@ -17,7 +17,6 @@ import {
 } from "@/lib/automation/runLog";
 import { isCoverageNoiseTitle } from "@/lib/coverage/noiseFilter";
 import {
-  assessCoverageEventness,
   assessNewsCandidate,
 } from "@/lib/editorial/publicationSafety";
 import { isSameEvent } from "@/lib/news/eventCluster";
@@ -435,9 +434,6 @@ async function executeQueueProcessing() {
         const itemStartedAt = Date.now();
 
         try {
-          const coverageSafety = isCoverageQueueItem(claimedItem)
-            ? assessCoverageEventness(claimedItem)
-            : null;
           const coverageSourceSafety = isCoverageQueueItem(claimedItem)
             ? inspectCoverageCandidate({
                 title: claimedItem.title,
@@ -452,12 +448,11 @@ async function executeQueueProcessing() {
             (isCoverageQueueItem(claimedItem) &&
               (
                 isCoverageNoiseTitle(claimedItem.title) ||
-                !coverageSafety.allowed ||
                 !coverageSourceSafety?.accepted
               )) ||
             (!isCoverageQueueItem(claimedItem) && !newsSafety.allowed)
           ) {
-            const assessment = coverageSafety || newsSafety;
+            const assessment = newsSafety;
             const reason = `Publication safety rejected this queue item: ${
               coverageSourceSafety && !coverageSourceSafety.accepted
                 ? coverageSourceSafety.reason

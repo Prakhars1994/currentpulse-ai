@@ -1,5 +1,5 @@
 import { inspectCoverageCandidate } from "../lib/coverage/sourceSanitizer.js";
-import { assessCoverageEventness } from "../lib/editorial/publicationSafety.js";
+import { assessCoverageEventness, assessPublishedArticle } from "../lib/editorial/publicationSafety.js";
 import { assessArticleQuality } from "../lib/ai/articleQuality.js";
 import { classifyCategoryWithConfidence, correctTaxonomy } from "../lib/contentTaxonomy.js";
 import { isSameEvent } from "../lib/news/eventCluster.js";
@@ -59,7 +59,23 @@ const staleTrustedStatic = assessCoverageEventness(
   },
   { referenceDate: "2026-08-11T12:00:00+05:30" }
 );
-assert(!staleTrustedStatic.allowed, "Old static trusted-source page incorrectly passed the current-affairs gate.");
+assert(staleTrustedStatic.allowed, "Trusted Current Affairs source was incorrectly filtered by eventness.");
+
+
+const gkTodayStaticStyle = assessCoverageEventness({
+  title: "Lake Mead",
+  summary: "A concise place-in-news Current Affairs brief with location, geography and exam facts. ".repeat(3),
+  source: "GKToday",
+  url: "https://www.gktoday.in/lake-mead/",
+  publishedAt: "2026-08-11T06:00:00+05:30",
+});
+assert(gkTodayStaticStyle.allowed, "GKToday trusted CA was incorrectly filtered by eventness.");
+const generatedCoverageOutput = assessPublishedArticle({
+  title: "Lake Mead",
+  why_news: "A source-grounded place-in-news brief selected by a trusted Current Affairs publisher.",
+  prelims: "- Location and physical geography facts.",
+}, { stream: "coverage" });
+assert(generatedCoverageOutput.allowed, "Published trusted CA was incorrectly re-filtered for eventness.");
 
 const nauruGeo = classifyCategoryWithConfidence(
   "The Republic of Naoero, formerly Nauru, is an island nation in the Pacific Ocean. Its location and capital are relevant for Prelims.",

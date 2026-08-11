@@ -339,10 +339,7 @@ async function collectNewsSafely() {
 
 async function collectCoverageSafely() {
   try {
-    return await queueCoverageImport({
-      requestedSource: "all",
-      maxCandidates: 200,
-    });
+    return await queueCoverageImport({ requestedSource: "all" });
   } catch (error) {
     return {
       success: false,

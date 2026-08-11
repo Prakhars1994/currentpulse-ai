@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchVisionTopics } from "@/lib/coverage/adapters/vision";
 import { fetchDrishtiTopics } from "@/lib/coverage/adapters/drishti";
+import { fetchGkTodayTopics } from "@/lib/coverage/adapters/gktoday";
 import { normalizeTopic } from "@/lib/coverage/topicNormalizer";
 import { deduplicateCoverageTopics } from "@/lib/coverage/duplicateDetector";
 
@@ -15,6 +16,10 @@ const ADAPTERS = {
   drishti: {
     name: "Drishti IAS",
     fetchTopics: fetchDrishtiTopics,
+  },
+  gktoday: {
+    name: "GKToday",
+    fetchTopics: fetchGkTodayTopics,
   },
 };
 
