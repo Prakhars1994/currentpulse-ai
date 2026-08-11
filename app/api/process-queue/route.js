@@ -22,6 +22,7 @@ import {
 import { isSameEvent } from "@/lib/news/eventCluster";
 import { cleanTrustedCoverageText } from "@/lib/coverage/contentCleaner";
 import { inspectCoverageCandidate } from "@/lib/coverage/sourceSanitizer";
+import { getConfiguredAiProviders } from "@/lib/ai/router";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -611,6 +612,8 @@ async function executeQueueProcessing() {
         failed: failedCount,
         retryPending,
         temporaryAiFailures,
+        aiProvidersConfigured: getConfiguredAiProviders(),
+        providerOutage: temporaryAiFailures >= MAX_TEMPORARY_AI_FAILURES_PER_RUN,
         concurrency: PROCESSING_CONCURRENCY,
         claimed: claimedCount,
         maxItemsPerRun: MAX_QUEUE_ITEMS_PER_RUN,

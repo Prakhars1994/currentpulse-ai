@@ -35,6 +35,51 @@ test("rejects the audited non-event Current Affairs pages", () => {
   }
 });
 
+test("rejects structural coaching promotions without filtering genuine trusted CA", () => {
+  const rejected = [
+    "Skills Required to Excel in UPSC CSE",
+    "Achieving Success with VisionIAS",
+    "Become a part of the VisionIAS Community.",
+    "© 2026 Ajayvision Education Pvt Ltd. All rights reserved.",
+    "Science & Technology / Health & Environment",
+  ];
+
+  for (const title of rejected) {
+    assert.equal(
+      assessCoverageEventness({
+        title,
+        summary: "Daily current-affairs page extract from an approved coaching source.",
+        publishedAt: "2026-08-11",
+        url: "https://www.visionias.in/current-affairs/example",
+        source: "Vision IAS",
+      }).allowed,
+      false,
+      title
+    );
+  }
+
+  const genuine = [
+    "CPI Base Year Revised to 2024",
+    "Unemployment rate up at 5.4% on rise in rural joblessness in Q1",
+    "Lake Mead",
+    "The Indian peacocks",
+    "Colombia",
+  ];
+  for (const title of genuine) {
+    assert.equal(
+      assessCoverageEventness({
+        title,
+        summary: "Selected as a genuine Current Affairs topic by the approved publisher.",
+        publishedAt: "2026-08-11",
+        url: "https://www.visionias.in/current-affairs/example-topic",
+        source: "Vision IAS",
+      }).allowed,
+      true,
+      title
+    );
+  }
+});
+
 test("ForumIAS accepts only dated 9 PM digest sections", () => {
   const common = {
     title: "Supreme Court Rules on Bail Conditions",
