@@ -6,6 +6,10 @@ const palette = {
   Environment: ["#166534", "#0f766e"],
   "Defence & Security": ["#334155", "#991b1b"],
   "History & Culture": ["#92400e", "#9f1239"],
+  "Social Issues": ["#9f1239", "#6d28d9"],
+  Geography: ["#0369a1", "#0f766e"],
+  "Government Schemes": ["#7c2d12", "#b45309"],
+  Sports: ["#166534", "#1d4ed8"],
 };
 
 function escapeXml(value = "") {

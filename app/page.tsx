@@ -1,5 +1,4 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 import BreakingNews from "@/components/BreakingNews";
 import Hero from "@/components/Hero";
@@ -15,7 +14,7 @@ export const metadata = {
 export default async function Home() {
   // One shared stream query prevents the homepage from scanning the article
   // archive separately for the ticker and both content sections.
-  const streams = await loadArticleStreams(320);
+  const streams = await loadArticleStreams(24);
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <BreakingNews newsStream={streams.news} error={streams.error} />

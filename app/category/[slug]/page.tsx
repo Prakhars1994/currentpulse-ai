@@ -1,5 +1,4 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 120;
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -69,7 +68,7 @@ export default async function CategoryPage({ params }: Props) {
   const { data, error } = await supabase
     .from("articles")
     .select(
-      "id,title,slug,category,paper,why_news,prelims,mains,image,image_url,image_source_url,created_at,article_sources(source_kind)"
+      "id,title,slug,category,paper,why_news,prelims,mains,image,image_url,image_source_url,image_caption,image_search_query,created_at,article_sources(source_kind)"
     )
     .eq("status", "published")
     .order("created_at", { ascending: false })
@@ -144,6 +143,7 @@ export default async function CategoryPage({ params }: Props) {
                     <span className="text-xs text-slate-500">
                       {article.created_at
                         ? new Date(article.created_at).toLocaleDateString("en-IN", {
+                            timeZone: "Asia/Kolkata",
                             day: "numeric",
                             month: "short",
                             year: "numeric",

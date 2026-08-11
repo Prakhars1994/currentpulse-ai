@@ -1,5 +1,4 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 import Link from "next/link";
 import {
@@ -136,6 +135,7 @@ export default async function CurrentAffairsPage({ searchParams }) {
                             ? new Date(article.created_at).toLocaleDateString(
                                 "en-IN",
                                 {
+                                  timeZone: "Asia/Kolkata",
                                   day: "numeric",
                                   month: "short",
                                   year: "numeric",

@@ -4,7 +4,7 @@ import {
 } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
-export const revalidate = 0;
+export const revalidate = 60;
 
 type ArticleSource = {
   source_kind?: string | null;
@@ -42,6 +42,7 @@ function formatDate(date?: string | null) {
   if (!date) return "";
 
   return new Date(date).toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "numeric",
     month: "short",
     year: "numeric",

@@ -1,5 +1,4 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 import Link from "next/link";
 import { loadNewsArticles } from "@/lib/articleStreams";
@@ -34,7 +33,7 @@ function stripHtml(content = "") {
 
 function formatDate(value) {
   if (!value) return "";
-  return new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(value).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" });
 }
 
 function pageHref(page) {

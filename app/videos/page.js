@@ -1,5 +1,4 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 300;
 
 import Link from "next/link";
 import { ExternalLink, PlayCircle } from "lucide-react";
@@ -16,7 +15,7 @@ export const metadata = {
 export default async function VideosPage() {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,category,paper,image,image_url,image_source_url,created_at,article_sources!inner(source_kind)")
+    .select("id,title,slug,category,paper,image,image_url,image_source_url,image_caption,image_search_query,created_at,article_sources!inner(source_kind)")
     .eq("status", "published")
     .eq("article_sources.source_kind", "coaching")
     .order("created_at", { ascending: false })

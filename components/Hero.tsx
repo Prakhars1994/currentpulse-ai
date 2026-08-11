@@ -4,6 +4,7 @@ import { hasCoachingSource } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
+import { VALID_CATEGORIES } from "@/lib/contentTaxonomy";
 
 function stripHtml(value: string | null) {
   if (!value) return "";
@@ -21,6 +22,7 @@ function stripHtml(value: string | null) {
 function formatDate(value: string | null) {
   if (!value) return "Today";
   return new Date(value).toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -28,34 +30,25 @@ function formatDate(value: string | null) {
 }
 
 export default async function Hero() {
+  // Keep the homepage hot path small: fetch recent candidates plus one exact
+  // published-row count. Categories are a fixed taxonomy and coaching source
+  // count is a product configuration, so neither requires full-table reads.
   const [
     { data: featuredRows, error: featuredError },
     { count: articleCount, error: articleCountError },
-    { data: categoryRows, error: categoryError },
-    { data: viewRows, error: viewsError },
   ] = await Promise.all([
     supabase
       .from("articles")
       .select(
-        "id, title, slug, category, paper, why_news, content, image, image_url, image_source_url, created_at, status, article_sources(source_kind,source_url)"
+        "id, title, slug, category, paper, why_news, content, image, image_url, image_source_url, image_caption, image_search_query, created_at, status, article_sources(source_kind,source_url)"
       )
       .eq("status", "published")
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(80),
 
     supabase
       .from("articles")
       .select("id", { count: "exact", head: true })
-      .eq("status", "published"),
-
-    supabase
-      .from("articles")
-      .select("category")
-      .eq("status", "published"),
-
-    supabase
-      .from("articles")
-      .select("views")
       .eq("status", "published"),
   ]);
 
@@ -67,13 +60,6 @@ export default async function Hero() {
     console.error("Article count fetch error:", articleCountError);
   }
 
-  if (categoryError) {
-    console.error("Category count fetch error:", categoryError);
-  }
-
-  if (viewsError) {
-    console.error("Views fetch error:", viewsError);
-  }
 
   const featured = (featuredRows || []).find((article) => {
     const stream = hasCoachingSource(article) ? "coverage" : "news";
@@ -82,16 +68,8 @@ export default async function Hero() {
       : isPublishedArticleSafe(article, { stream });
   }) || null;
 
-  const categoryCount = new Set(
-    (categoryRows || [])
-      .map((row) => row.category)
-      .filter(Boolean)
-  ).size;
-
-  const totalViews = (viewRows || []).reduce(
-    (sum, row) => sum + Number(row.views || 0),
-    0
-  );
+  const categoryCount = VALID_CATEGORIES.length;
+  const coachingSourceCount = 7;
 
   const featuredImage = resolveDisplayImage(featured || {});
   const featuredIsCurrentAffairs = hasCoachingSource(featured || {});
@@ -201,11 +179,11 @@ export default async function Hero() {
 
               <div className="rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:p-4">
                 <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
-                  {totalViews.toLocaleString("en-IN")}
+                  {coachingSourceCount.toLocaleString("en-IN")}
                 </p>
 
                 <p className="mt-2 text-sm text-gray-400 sm:text-base">
-                  Total Views
+                  Trusted coaching feeds
                 </p>
               </div>
             </div>

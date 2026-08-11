@@ -1,9 +1,11 @@
+export const revalidate = 120;
+
 import { supabase } from "@/lib/supabase";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import ArticleContent from "@/components/ArticleContent";
-import { resolveDisplayImage } from "@/lib/news/categoryImage";
+import { resolveDisplayImage, isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
 import CompactMarkdownSection from "@/components/CompactMarkdownSection";
 import EvidenceHighlights from "@/components/EvidenceHighlights";
@@ -52,6 +54,7 @@ function formatDate(date) {
   }
 
   return new Date(date).toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -244,6 +247,7 @@ export default async function ArticlePage({ params }) {
       : null;
 
   const articleImage = resolveDisplayImage(article);
+  const verifiedReusableImage = isVerifiedReusableArticleImage(article);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -368,7 +372,7 @@ export default async function ArticlePage({ params }) {
               alt={article.image_alt || article.title}
               className="article-hero-image"
             />
-            {article.image_caption && (
+            {verifiedReusableImage && article.image_caption && (
               <figcaption>
                 <span>{article.image_caption}</span>
                 {article.image_source_url && (
@@ -401,6 +405,7 @@ export default async function ArticlePage({ params }) {
             mapLocations={article.map_locations}
             title={article.title}
             articleText={article.why_news}
+            category={article.category}
           />
 
           <section id="why-in-news" className="article-section article-section--context scroll-mt-28">

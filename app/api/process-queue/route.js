@@ -22,6 +22,7 @@ import {
 } from "@/lib/editorial/publicationSafety";
 import { isSameEvent } from "@/lib/news/eventCluster";
 import { cleanTrustedCoverageText } from "@/lib/coverage/contentCleaner";
+import { inspectCoverageCandidate } from "@/lib/coverage/sourceSanitizer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -432,16 +433,31 @@ async function executeQueueProcessing() {
           const coverageSafety = isCoverageQueueItem(claimedItem)
             ? assessCoverageEventness(claimedItem)
             : null;
+          const coverageSourceSafety = isCoverageQueueItem(claimedItem)
+            ? inspectCoverageCandidate({
+                title: claimedItem.title,
+                summary: claimedItem.description,
+                url: claimedItem.url,
+              })
+            : null;
           const newsSafety = !isCoverageQueueItem(claimedItem)
             ? assessNewsCandidate(claimedItem)
             : null;
           if (
             (isCoverageQueueItem(claimedItem) &&
-              (isCoverageNoiseTitle(claimedItem.title) || !coverageSafety.allowed)) ||
+              (
+                isCoverageNoiseTitle(claimedItem.title) ||
+                !coverageSafety.allowed ||
+                !coverageSourceSafety?.accepted
+              )) ||
             (!isCoverageQueueItem(claimedItem) && !newsSafety.allowed)
           ) {
             const assessment = coverageSafety || newsSafety;
-            const reason = `Publication safety rejected this queue item: ${assessment?.reason || "non-article page"}`;
+            const reason = `Publication safety rejected this queue item: ${
+              coverageSourceSafety && !coverageSourceSafety.accepted
+                ? coverageSourceSafety.reason
+                : assessment?.reason || "non-article page"
+            }`;
             await markQueueRejected(supabase, claimedItem.id, reason);
             results.push({
               status: "rejected",

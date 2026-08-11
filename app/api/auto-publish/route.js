@@ -69,9 +69,11 @@ async function mapWithConcurrency(items, concurrency, handler) {
 }
 
 async function collectNews() {
-  const activeSources = NEWS_SOURCES.filter(
-    (source) => source.newsAgenda === true || source.group === "official"
-  );
+  // News is a general-news stream, not a UPSC-curated subset. Collect every
+  // configured newspaper group plus official verification feeds. Individual
+  // source safety/event filters below still reject non-article and routine noise.
+  const activeGroups = new Set(["indian-news", "state-news", "global-news", "official"]);
+  const activeSources = NEWS_SOURCES.filter((source) => activeGroups.has(source.group));
   const sourceResults = await Promise.all(
     activeSources.map(async (source) => {
       try {

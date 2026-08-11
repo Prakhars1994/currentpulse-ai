@@ -39,7 +39,7 @@ async function executeBackfill(limit) {
   const supabase = createServerSupabase();
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,category,why_news,image,image_url,image_source_url,image_search_query,created_at,article_sources(source_kind,source_url)")
+    .select("id,title,slug,category,why_news,image,image_url,image_source_url,image_caption,image_search_query,created_at,article_sources(source_kind,source_url)")
     .eq("status", "published")
     .order("created_at", { ascending: false })
     .limit(1000);

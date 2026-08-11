@@ -1,0 +1,51 @@
+name: CurrentPulse editorial pipeline
+
+on:
+  schedule:
+    # Every 30 minutes, deliberately away from the top of the hour where
+    # GitHub notes scheduled workflows can see higher queueing delays.
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: currentpulse-editorial-pipeline
+  cancel-in-progress: false
+
+jobs:
+  collect-process-refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Collect News and Current Affairs
+        env:
+          CRON_SECRET: ${{ secrets.CURRENTPULSE_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          test -n "$CRON_SECRET"
+          curl --fail-with-body --show-error --silent \
+            --retry 2 --retry-delay 8 --max-time 310 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "https://currentpulse-ai.vercel.app/api/auto-publish?wait=1&scope=all"
+
+      - name: Process publishing queue
+        env:
+          CRON_SECRET: ${{ secrets.CURRENTPULSE_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --show-error --silent \
+            --retry 1 --retry-delay 10 --max-time 310 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "https://currentpulse-ai.vercel.app/api/process-queue?wait=1"
+
+      - name: Refresh daily quiz if needed
+        env:
+          CRON_SECRET: ${{ secrets.CURRENTPULSE_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          curl --fail-with-body --show-error --silent \
+            --retry 1 --retry-delay 8 --max-time 310 \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "https://currentpulse-ai.vercel.app/api/generate-quiz?wait=1"

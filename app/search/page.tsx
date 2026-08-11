@@ -55,7 +55,7 @@ export default async function SearchPage({
       const { data, error } = await supabase
         .from("articles")
         .select(
-          "id,title,slug,category,paper,why_news,image,image_url,image_source_url,created_at,status,article_sources(source_kind)"
+          "id,title,slug,category,paper,why_news,image,image_url,image_source_url,image_caption,image_search_query,created_at,status,article_sources(source_kind)"
         )
         .eq("status", "published")
         .or(
@@ -182,6 +182,7 @@ export default async function SearchPage({
                               ? new Date(
                                   article.created_at
                                 ).toLocaleDateString("en-IN", {
+                                  timeZone: "Asia/Kolkata",
                                   day: "numeric",
                                   month: "long",
                                   year: "numeric",

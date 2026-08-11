@@ -1,3 +1,5 @@
+export const revalidate = 120;
+
 import { supabase } from "@/lib/supabase";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
@@ -5,7 +7,7 @@ import ArticleContent from "@/components/ArticleContent";
 import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
 import EvidenceHighlights from "@/components/EvidenceHighlights";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
-import { resolveDisplayImage } from "@/lib/news/categoryImage";
+import { resolveDisplayImage, isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
 import { parseNewsPresentation } from "@/lib/news/newsPresentation";
@@ -16,7 +18,7 @@ function stripHtml(value = "") {
 
 function formatDate(value) {
   if (!value) return "";
-  return new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  return new Date(value).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "long", year: "numeric" });
 }
 
 function escapeRegExp(value = "") {
@@ -110,6 +112,7 @@ export default async function NewsArticlePage({ params }) {
   ]);
   const hasCurrentAffairsView = hasCoachingSource;
   const image = resolveDisplayImage(article);
+  const verifiedReusableImage = isVerifiedReusableArticleImage(article);
   const canonical = `${SITE_URL}/news/${slug}`;
   const structuredData = {
     "@context": "https://schema.org", "@type": "NewsArticle", headline: newsPresentation?.title || article.title,
@@ -138,7 +141,7 @@ export default async function NewsArticlePage({ params }) {
             </div>
           )}
 
-          {image && <figure className="news-article-figure"><img src={image} alt={article.image_alt || newsPresentation?.title || article.title} />{article.image_caption && <figcaption>{article.image_caption}</figcaption>}</figure>}
+          {image && <figure className="news-article-figure"><img src={image} alt={article.image_alt || newsPresentation?.title || article.title} />{verifiedReusableImage && article.image_caption && <figcaption>{article.image_caption}</figcaption>}</figure>}
 
           <section className="news-article-lead">
             <div className="news-section-kicker">The development</div>
@@ -150,6 +153,7 @@ export default async function NewsArticlePage({ params }) {
             mapLocations={article.map_locations}
             title={newsPresentation?.title || article.title}
             articleText={newsLead}
+            category={article.category}
           />
 
           {newsFacts && (

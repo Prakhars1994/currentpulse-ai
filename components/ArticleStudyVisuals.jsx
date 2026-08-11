@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MapPin, Mountain, Map as MapIcon } from "lucide-react";
+import { MapPin, Mountain, Map as MapIcon, Trees, Waves, LocateFixed } from "lucide-react";
+import { filterRelevantMapLocations, isMapRelevantArticle } from "@/lib/study/mapRelevance";
 
 const INDIA_BOUNDS = { north: 37.5, south: 5.0, west: 67.0, east: 99.0 };
 const WORLD_BOUNDS = { north: 90, south: -90, west: -180, east: 180 };
@@ -188,13 +189,120 @@ const REGIONAL_ATLAS = {
   "Arunachal Pradesh": { nearby: [["Itanagar", 27.0844, 93.6053], ["Tawang", 27.5861, 91.8594]], physical: [["Eastern Himalaya", 28.0, 94.0, "mountain"], ["Siang", 28.15, 94.95, "river"]] },
   Sikkim: { nearby: [["Gangtok", 27.3389, 88.6065], ["Nathu La", 27.3866, 88.8317]], physical: [["Kangchenjunga", 27.7025, 88.1475, "mountain"], ["Teesta", 27.25, 88.55, "river"]] },
   "Andaman & Nicobar Islands": { nearby: [["Port Blair", 11.6234, 92.7265], ["Barren Island", 12.2787, 93.8587]], physical: [["Andaman Sea", 11.5, 94.0, "feature"], ["Ten Degree Channel", 10.0, 92.5, "feature"]] },
+  Bihar: { nearby: [["Patna", 25.5941, 85.1376], ["Bodh Gaya", 24.6961, 84.9869]], physical: [["Ganga", 25.45, 85.45, "river"], ["Kosi", 25.9, 86.55, "river"]] },
+  "Madhya Pradesh": { nearby: [["Bhopal", 23.2599, 77.4126], ["Khajuraho", 24.8318, 79.9199]], physical: [["Narmada", 22.75, 78.0, "river"], ["Vindhya Range", 24.2, 78.2, "mountain"]] },
+  Chhattisgarh: { nearby: [["Raipur", 21.2514, 81.6296], ["Jagdalpur", 19.0748, 82.0080]], physical: [["Mahanadi", 21.3, 82.2, "river"], ["Bastar Plateau", 19.3, 81.9, "feature"]] },
+  Jharkhand: { nearby: [["Ranchi", 23.3441, 85.3096], ["Jamshedpur", 22.8046, 86.2029]], physical: [["Damodar", 23.65, 85.8, "river"], ["Chota Nagpur Plateau", 23.3, 85.2, "feature"]] },
+  Telangana: { nearby: [["Hyderabad", 17.385, 78.4867], ["Warangal", 17.9689, 79.5941]], physical: [["Godavari", 18.75, 79.8, "river"], ["Krishna", 16.5, 79.3, "river"]] },
+  "Andhra Pradesh": { nearby: [["Visakhapatnam", 17.6868, 83.2185], ["Tirupati", 13.6288, 79.4192]], physical: [["Godavari Delta", 16.75, 82.2, "river"], ["Eastern Ghats", 16.2, 79.8, "mountain"]] },
+  Uttarakhand: { nearby: [["Dehradun", 30.3165, 78.0322], ["Joshimath", 30.555, 79.565]], physical: [["Ganga Headwaters", 30.9, 79.1, "river"], ["Greater Himalaya", 30.8, 79.6, "mountain"]] },
+  "Himachal Pradesh": { nearby: [["Shimla", 31.1048, 77.1734], ["Dharamshala", 32.219, 76.3234]], physical: [["Sutlej", 31.35, 77.65, "river"], ["Dhauladhar", 32.15, 76.65, "mountain"]] },
+  Punjab: { nearby: [["Amritsar", 31.634, 74.8723], ["Ludhiana", 30.901, 75.8573]], physical: [["Sutlej", 31.0, 75.8, "river"], ["Beas", 31.5, 75.4, "river"]] },
+  Haryana: { nearby: [["Gurugram", 28.4595, 77.0266], ["Kurukshetra", 29.9695, 76.8783]], physical: [["Yamuna", 29.4, 77.2, "river"], ["Aravalli Hills", 28.2, 76.9, "mountain"]] },
+  Goa: { nearby: [["Panaji", 15.4909, 73.8278], ["Mormugao", 15.3874, 73.8154]], physical: [["Mandovi", 15.5, 73.9, "river"], ["Western Ghats", 15.3, 74.1, "mountain"]] },
+  Meghalaya: { nearby: [["Shillong", 25.5788, 91.8933], ["Cherrapunji", 25.2702, 91.732]], physical: [["Meghalaya Plateau", 25.55, 91.5, "feature"], ["Umngot", 25.2, 92.0, "river"]] },
+  Nagaland: { nearby: [["Kohima", 25.6751, 94.1086], ["Dimapur", 25.9091, 93.7266]], physical: [["Naga Hills", 25.8, 94.3, "mountain"], ["Doyang", 26.1, 94.0, "river"]] },
+  Manipur: { nearby: [["Imphal", 24.817, 93.9368], ["Moreh", 24.2474, 94.302]], physical: [["Loktak Lake", 24.55, 93.8, "feature"], ["Manipur Hills", 24.7, 94.3, "mountain"]] },
+  Mizoram: { nearby: [["Aizawl", 23.7271, 92.7176], ["Lunglei", 22.8671, 92.7655]], physical: [["Mizo Hills", 23.3, 92.8, "mountain"], ["Tlawng", 23.6, 92.65, "river"]] },
+  Tripura: { nearby: [["Agartala", 23.8315, 91.2868], ["Udaipur", 23.5335, 91.483]], physical: [["Gumti", 23.45, 91.55, "river"], ["Jampui Hills", 24.0, 92.0, "mountain"]] },
+  "Jammu & Kashmir": { nearby: [["Srinagar", 34.0837, 74.7973], ["Pahalgam", 34.0161, 75.315]], physical: [["Jhelum", 34.05, 74.85, "river"], ["Pir Panjal", 33.6, 74.6, "mountain"]] },
+  Ladakh: { nearby: [["Leh", 34.1526, 77.5771], ["Kargil", 34.5539, 76.1349]], physical: [["Indus", 34.15, 77.35, "river"], ["Karakoram", 35.5, 77.5, "mountain"]] },
+  Lakshadweep: { nearby: [["Kavaratti", 10.5667, 72.6417], ["Minicoy", 8.292, 73.049]], physical: [["Arabian Sea", 10.0, 72.5, "feature"], ["Nine Degree Channel", 9.0, 72.8, "feature"]] },
 };
 
 const WORLD_ATLAS = {
-  Nauru: {
-    nearby: [["Marshall Islands", 7.1315, 171.1845], ["Tuvalu", -7.1095, 177.6493], ["Solomon Islands", -9.6457, 160.1562]],
-    physical: [["Pacific Ocean", 0, 165, "feature"], ["Equator", 0, 166.9, "feature"]],
-  },
+  Nauru: { nearby: [["Marshall Islands", 7.1315, 171.1845], ["Tuvalu", -7.1095, 177.6493], ["Solomon Islands", -9.6457, 160.1562]], physical: [["Pacific Ocean", 0, 165, "feature"], ["Equator", 0, 166.9, "feature"]] },
+  Iran: { nearby: [["Iraq", 33.2, 43.7], ["Afghanistan", 33.9, 67.7], ["Pakistan", 30.4, 69.3], ["Türkiye", 39.0, 35.2]], physical: [["Persian Gulf", 26.5, 52.0, "feature"], ["Strait of Hormuz", 26.6, 56.3, "feature"], ["Zagros Mountains", 32.0, 50.0, "mountain"]] },
+  "United Kingdom": { nearby: [["Ireland", 53.2, -8.2], ["France", 46.2, 2.2], ["Belgium", 50.5, 4.5]], physical: [["North Sea", 56.0, 3.0, "feature"], ["English Channel", 50.2, -1.0, "feature"]] },
+  "United States": { nearby: [["Canada", 56.1, -106.3], ["Mexico", 23.6, -102.5]], physical: [["Pacific Ocean", 35.0, -135.0, "feature"], ["Atlantic Ocean", 35.0, -65.0, "feature"], ["Rocky Mountains", 40.0, -110.0, "mountain"]] },
+  China: { nearby: [["India", 22.8, 79.0], ["Mongolia", 46.9, 103.8], ["Russia", 61.5, 105.3], ["Vietnam", 14.1, 108.3]], physical: [["Himalaya", 29.0, 88.0, "mountain"], ["Yangtze", 30.5, 112.0, "river"], ["South China Sea", 15.0, 114.0, "feature"]] },
+  Russia: { nearby: [["Ukraine", 48.4, 31.2], ["Kazakhstan", 48.0, 66.9], ["China", 35.9, 104.2]], physical: [["Caspian Sea", 41.7, 50.4, "feature"], ["Black Sea", 43.0, 34.0, "feature"], ["Ural Mountains", 60.0, 59.0, "mountain"]] },
+  Ukraine: { nearby: [["Poland", 51.9, 19.1], ["Russia", 61.5, 105.3], ["Romania", 45.9, 24.9]], physical: [["Black Sea", 43.0, 34.0, "feature"], ["Dnieper", 49.0, 32.0, "river"]] },
+  Israel: { nearby: [["Jordan", 30.6, 36.2], ["Egypt", 26.8, 30.8], ["Lebanon", 33.9, 35.9]], physical: [["Mediterranean Sea", 32.0, 34.0, "feature"], ["Dead Sea", 31.5, 35.5, "feature"]] },
+  "Saudi Arabia": { nearby: [["Yemen", 15.6, 48.5], ["Oman", 21.5, 55.9], ["United Arab Emirates", 23.4, 53.8]], physical: [["Red Sea", 21.0, 38.0, "feature"], ["Persian Gulf", 26.5, 52.0, "feature"], ["Arabian Desert", 23.0, 45.0, "feature"]] },
+  "Türkiye": { nearby: [["Greece", 39.1, 21.8], ["Syria", 34.8, 38.9], ["Georgia", 42.3, 43.4]], physical: [["Black Sea", 43.0, 34.0, "feature"], ["Bosporus", 41.1, 29.0, "feature"], ["Anatolian Plateau", 39.0, 33.0, "feature"]] },
+  Kazakhstan: { nearby: [["Russia", 61.5, 105.3], ["China", 35.9, 104.2], ["Uzbekistan", 41.4, 64.6]], physical: [["Caspian Sea", 43.5, 51.5, "feature"], ["Aral Sea", 45.0, 59.0, "feature"], ["Tian Shan", 42.0, 75.0, "mountain"]] },
+  Indonesia: { nearby: [["Malaysia", 4.2, 101.9], ["Papua New Guinea", -6.3, 144.0], ["Australia", -25.3, 133.8]], physical: [["Indian Ocean", -10.0, 100.0, "feature"], ["Pacific Ocean", 0.0, 135.0, "feature"], ["Sunda Strait", -6.0, 105.8, "feature"]] },
+  Japan: { nearby: [["South Korea", 35.9, 127.8], ["China", 35.9, 104.2], ["Russia", 61.5, 105.3]], physical: [["Pacific Ocean", 35.0, 150.0, "feature"], ["Sea of Japan", 40.0, 135.0, "feature"]] },
+  Pakistan: { nearby: [["India", 22.8, 79.0], ["Afghanistan", 33.9, 67.7], ["Iran", 32.4, 53.7]], physical: [["Indus", 29.5, 70.5, "river"], ["Arabian Sea", 22.0, 65.0, "feature"], ["Karakoram", 35.5, 76.5, "mountain"]] },
+  Bangladesh: { nearby: [["India", 22.8, 79.0], ["Myanmar", 21.9, 95.9]], physical: [["Ganga-Brahmaputra Delta", 22.4, 90.0, "river"], ["Bay of Bengal", 16.0, 88.0, "feature"]] },
+  Nepal: { nearby: [["India", 22.8, 79.0], ["China", 35.9, 104.2]], physical: [["Himalaya", 28.2, 84.0, "mountain"], ["Koshi", 27.2, 87.1, "river"]] },
+  Bhutan: { nearby: [["India", 22.8, 79.0], ["China", 35.9, 104.2]], physical: [["Eastern Himalaya", 27.5, 90.5, "mountain"], ["Manas", 26.9, 90.9, "river"]] },
+  "Sri Lanka": { nearby: [["India", 22.8, 79.0], ["Maldives", 3.2, 73.2]], physical: [["Indian Ocean", 5.0, 80.0, "feature"], ["Palk Strait", 9.5, 79.5, "feature"]] },
+  Maldives: { nearby: [["India", 22.8, 79.0], ["Sri Lanka", 7.9, 80.8]], physical: [["Indian Ocean", 3.0, 73.0, "feature"], ["Eight Degree Channel", 8.0, 73.0, "feature"]] },
+  Myanmar: { nearby: [["India", 22.8, 79.0], ["Thailand", 15.9, 100.9], ["China", 35.9, 104.2]], physical: [["Andaman Sea", 12.0, 96.0, "feature"], ["Irrawaddy", 20.0, 95.0, "river"], ["Arakan Yoma", 20.0, 94.0, "mountain"]] },
+};
+
+// Compact atlas layers used only when they improve exam-oriented geography.
+// These are stable reference locations, not model-generated coordinates.
+const STATE_NEIGHBORS = {
+  Delhi: [["Haryana", 29.0588, 76.0856], ["Uttar Pradesh", 26.8467, 80.9462]],
+  Maharashtra: [["Gujarat", 22.2587, 71.1924], ["Madhya Pradesh", 22.9734, 78.6569], ["Karnataka", 15.3173, 75.7139], ["Goa", 15.2993, 74.124]],
+  Rajasthan: [["Gujarat", 22.2587, 71.1924], ["Haryana", 29.0588, 76.0856], ["Madhya Pradesh", 22.9734, 78.6569], ["Uttar Pradesh", 26.8467, 80.9462]],
+  Gujarat: [["Rajasthan", 27.0238, 74.2179], ["Madhya Pradesh", 22.9734, 78.6569], ["Maharashtra", 19.7515, 75.7139]],
+  "Uttar Pradesh": [["Uttarakhand", 30.0668, 79.0193], ["Haryana", 29.0588, 76.0856], ["Rajasthan", 27.0238, 74.2179], ["Madhya Pradesh", 22.9734, 78.6569], ["Bihar", 25.0961, 85.3131]],
+  Bihar: [["Uttar Pradesh", 26.8467, 80.9462], ["Jharkhand", 23.6102, 85.2799], ["West Bengal", 22.9868, 87.855]],
+  "West Bengal": [["Bihar", 25.0961, 85.3131], ["Jharkhand", 23.6102, 85.2799], ["Odisha", 20.9517, 85.0985], ["Sikkim", 27.533, 88.5122], ["Assam", 26.2006, 92.9376]],
+  Assam: [["Arunachal Pradesh", 28.218, 94.7278], ["Nagaland", 26.1584, 94.5624], ["Manipur", 24.6637, 93.9063], ["Meghalaya", 25.467, 91.3662], ["West Bengal", 22.9868, 87.855]],
+  Odisha: [["West Bengal", 22.9868, 87.855], ["Jharkhand", 23.6102, 85.2799], ["Chhattisgarh", 21.2787, 81.8661], ["Andhra Pradesh", 15.9129, 79.74]],
+  "Madhya Pradesh": [["Rajasthan", 27.0238, 74.2179], ["Gujarat", 22.2587, 71.1924], ["Maharashtra", 19.7515, 75.7139], ["Chhattisgarh", 21.2787, 81.8661], ["Uttar Pradesh", 26.8467, 80.9462]],
+  Chhattisgarh: [["Madhya Pradesh", 22.9734, 78.6569], ["Maharashtra", 19.7515, 75.7139], ["Odisha", 20.9517, 85.0985], ["Jharkhand", 23.6102, 85.2799], ["Telangana", 18.1124, 79.0193]],
+  Jharkhand: [["Bihar", 25.0961, 85.3131], ["West Bengal", 22.9868, 87.855], ["Odisha", 20.9517, 85.0985], ["Chhattisgarh", 21.2787, 81.8661]],
+  Karnataka: [["Goa", 15.2993, 74.124], ["Maharashtra", 19.7515, 75.7139], ["Telangana", 18.1124, 79.0193], ["Andhra Pradesh", 15.9129, 79.74], ["Tamil Nadu", 11.1271, 78.6569], ["Kerala", 10.8505, 76.2711]],
+  Kerala: [["Karnataka", 15.3173, 75.7139], ["Tamil Nadu", 11.1271, 78.6569]],
+  "Tamil Nadu": [["Kerala", 10.8505, 76.2711], ["Karnataka", 15.3173, 75.7139], ["Andhra Pradesh", 15.9129, 79.74]],
+  Telangana: [["Maharashtra", 19.7515, 75.7139], ["Chhattisgarh", 21.2787, 81.8661], ["Karnataka", 15.3173, 75.7139], ["Andhra Pradesh", 15.9129, 79.74]],
+  "Andhra Pradesh": [["Odisha", 20.9517, 85.0985], ["Chhattisgarh", 21.2787, 81.8661], ["Telangana", 18.1124, 79.0193], ["Karnataka", 15.3173, 75.7139], ["Tamil Nadu", 11.1271, 78.6569]],
+  Sikkim: [["West Bengal", 22.9868, 87.855]],
+  Uttarakhand: [["Himachal Pradesh", 31.1048, 77.1734], ["Uttar Pradesh", 26.8467, 80.9462]],
+  "Himachal Pradesh": [["Punjab", 31.1471, 75.3412], ["Haryana", 29.0588, 76.0856], ["Uttarakhand", 30.0668, 79.0193]],
+  "Arunachal Pradesh": [["Assam", 26.2006, 92.9376], ["Nagaland", 26.1584, 94.5624]],
+  Punjab: [["Himachal Pradesh", 31.1048, 77.1734], ["Haryana", 29.0588, 76.0856], ["Rajasthan", 27.0238, 74.2179]],
+  Haryana: [["Punjab", 31.1471, 75.3412], ["Himachal Pradesh", 31.1048, 77.1734], ["Rajasthan", 27.0238, 74.2179], ["Uttar Pradesh", 26.8467, 80.9462]],
+  Goa: [["Maharashtra", 19.7515, 75.7139], ["Karnataka", 15.3173, 75.7139]],
+  Meghalaya: [["Assam", 26.2006, 92.9376]],
+  Nagaland: [["Assam", 26.2006, 92.9376], ["Arunachal Pradesh", 28.218, 94.7278], ["Manipur", 24.6637, 93.9063]],
+  Manipur: [["Nagaland", 26.1584, 94.5624], ["Assam", 26.2006, 92.9376], ["Mizoram", 23.1645, 92.9376]],
+  Mizoram: [["Assam", 26.2006, 92.9376], ["Manipur", 24.6637, 93.9063], ["Tripura", 23.9408, 91.9882]],
+  Tripura: [["Assam", 26.2006, 92.9376], ["Mizoram", 23.1645, 92.9376]],
+  "Jammu & Kashmir": [["Himachal Pradesh", 31.1048, 77.1734], ["Ladakh", 34.1526, 77.5771]],
+  Ladakh: [["Jammu & Kashmir", 33.7782, 76.5762], ["Himachal Pradesh", 31.1048, 77.1734]],
+};
+
+const PROTECTED_ATLAS = {
+  Delhi: [["Asola Bhatti WLS", 28.47, 77.24, "sanctuary"]],
+  Maharashtra: [["Tadoba-Andhari TR", 20.25, 79.35, "park"], ["Sanjay Gandhi NP", 19.23, 72.91, "park"]],
+  Rajasthan: [["Ranthambore NP", 26.02, 76.5, "park"], ["Keoladeo NP", 27.16, 77.52, "park"]],
+  Gujarat: [["Gir NP", 21.12, 70.82, "park"], ["Wild Ass Sanctuary", 23.3, 71.3, "sanctuary"]],
+  "Uttar Pradesh": [["Dudhwa NP", 28.49, 80.68, "park"], ["National Chambal Sanctuary", 26.74, 78.55, "sanctuary"]],
+  Bihar: [["Valmiki NP", 27.31, 84.22, "park"], ["Vikramshila Dolphin Sanctuary", 25.31, 87.25, "sanctuary"]],
+  "West Bengal": [["Sundarbans NP", 21.95, 88.88, "park"], ["Jaldapara NP", 26.69, 89.28, "park"]],
+  Assam: [["Kaziranga NP", 26.58, 93.17, "park"], ["Manas NP", 26.72, 91.03, "park"]],
+  Odisha: [["Similipal NP", 21.93, 86.35, "park"], ["Bhitarkanika NP", 20.72, 86.9, "park"]],
+  "Madhya Pradesh": [["Kanha NP", 22.33, 80.61, "park"], ["Kuno NP", 25.53, 77.23, "park"]],
+  Chhattisgarh: [["Indravati NP", 19.2, 81.02, "park"], ["Achanakmar WLS", 22.49, 81.75, "sanctuary"]],
+  Jharkhand: [["Betla NP", 23.89, 84.19, "park"], ["Dalma WLS", 22.89, 86.13, "sanctuary"]],
+  Karnataka: [["Bandipur NP", 11.67, 76.63, "park"], ["Nagarahole NP", 12.04, 76.12, "park"]],
+  Kerala: [["Periyar NP", 9.46, 77.24, "park"], ["Eravikulam NP", 10.2, 77.07, "park"]],
+  "Tamil Nadu": [["Gulf of Mannar Marine NP", 9.12, 79.12, "park"], ["Mudumalai TR", 11.58, 76.57, "park"]],
+  Telangana: [["Kawal TR", 19.17, 78.98, "park"], ["Eturnagaram WLS", 18.3, 80.33, "sanctuary"]],
+  "Andhra Pradesh": [["Sri Venkateswara NP", 13.68, 79.35, "park"], ["Coringa WLS", 16.8, 82.28, "sanctuary"]],
+  Sikkim: [["Khangchendzonga NP", 27.7, 88.15, "park"], ["Fambong Lho WLS", 27.32, 88.59, "sanctuary"]],
+  Uttarakhand: [["Jim Corbett NP", 29.53, 78.77, "park"], ["Nanda Devi NP", 30.42, 79.85, "park"]],
+  "Himachal Pradesh": [["Great Himalayan NP", 31.73, 77.55, "park"], ["Kibber WLS", 32.33, 78.0, "sanctuary"]],
+  "Arunachal Pradesh": [["Namdapha NP", 27.49, 96.38, "park"], ["Pakke TR", 27.04, 92.88, "park"]],
+  "Andaman & Nicobar Islands": [["Mahatma Gandhi Marine NP", 11.58, 92.62, "park"], ["Campbell Bay NP", 7.0, 93.93, "park"]],
+  Punjab: [["Harike WLS", 31.16, 75.01, "sanctuary"], ["Abohar WLS", 30.14, 74.22, "sanctuary"]],
+  Haryana: [["Sultanpur NP", 28.46, 76.89, "park"], ["Kalesar NP", 30.38, 77.49, "park"]],
+  Goa: [["Mollem NP", 15.31, 74.25, "park"], ["Bhagwan Mahavir WLS", 15.34, 74.24, "sanctuary"]],
+  Meghalaya: [["Nokrek NP", 25.47, 90.32, "park"], ["Balpakram NP", 25.22, 90.86, "park"]],
+  Nagaland: [["Ntangki NP", 25.57, 93.64, "park"], ["Fakim WLS", 25.82, 94.98, "sanctuary"]],
+  Manipur: [["Keibul Lamjao NP", 24.5, 93.82, "park"], ["Yangoupokpi-Lokchao WLS", 24.34, 94.25, "sanctuary"]],
+  Mizoram: [["Murlen NP", 23.67, 93.28, "park"], ["Phawngpui NP", 22.63, 93.03, "park"]],
+  Tripura: [["Clouded Leopard NP", 23.67, 91.32, "park"], ["Sepahijala WLS", 23.67, 91.32, "sanctuary"]],
+  "Jammu & Kashmir": [["Dachigam NP", 34.14, 75.03, "park"], ["Kazinag NP", 34.35, 74.15, "park"]],
+  Ladakh: [["Hemis NP", 33.95, 77.6, "park"], ["Changthang WLS", 33.25, 78.5, "sanctuary"]],
+  Lakshadweep: [["Pitti Bird Sanctuary", 10.78, 72.54, "sanctuary"]],
 };
 
 function normaliseLocations(value) {
@@ -264,8 +372,9 @@ function inferLocations(title = "", articleText = "") {
   return selected;
 }
 
-function articleLocations(mapLocations, title, articleText) {
-  const stored = normaliseLocations(mapLocations);
+function articleLocations(mapLocations, title, articleText, category = "") {
+  if (!isMapRelevantArticle({ title, category, text: articleText, mapLocations })) return [];
+  const stored = filterRelevantMapLocations({ title, category, text: articleText, mapLocations });
   const resolvedStored = stored.filter((location) => resolveLocation(location).point);
   const inferred = inferLocations(title, articleText);
   const combined = [...resolvedStored, ...inferred];
@@ -276,7 +385,7 @@ function articleLocations(mapLocations, title, articleText) {
     if (!meta.point || seen.has(identity)) return false;
     seen.add(identity);
     return true;
-  }).slice(0, 4);
+  }).slice(0, 6);
 }
 
 function geoPoint(lat, lon, bounds) {
@@ -358,13 +467,12 @@ function LocationTrail({ meta }) {
   );
 }
 
-function MapPanel({ title, icon, asset, meta, physical = false, context = [], regional = false }) {
+function MapPanel({ title, icon, asset, meta, physical = false, context = [], regional = false, compact = true }) {
   const isIndia = meta.mapType === "india";
   return (
-    <div className={`geo-map-panel ${isIndia ? "geo-map-panel--india" : "geo-map-panel--world"}`}>
+    <div className={`geo-map-panel ${compact ? "geo-map-panel--compact" : ""} ${isIndia ? "geo-map-panel--india" : "geo-map-panel--world"}`}>
       <div className="geo-map-panel-head">
         <span>{icon}{title}</span>
-        {meta.point && <small>{meta.lat.toFixed(2)}°, {meta.lon.toFixed(2)}°</small>}
       </div>
       <div className={`geo-map-frame ${isIndia ? "geo-map-frame--india" : "geo-map-frame--world"}`}>
         <div
@@ -380,15 +488,44 @@ function MapPanel({ title, icon, asset, meta, physical = false, context = [], re
   );
 }
 
-export default function ArticleStudyVisuals({ mapLocations, title = "", articleText = "" }) {
+function stateContextMarkers(state, bounds) {
+  return (STATE_NEIGHBORS[state] || []).slice(0, 5).map(([label, lat, lon]) => ({
+    label,
+    point: geoPoint(lat, lon, bounds),
+    variant: "state",
+  }));
+}
+
+function protectedContextMarkers(state, bounds, focusMeta = {}) {
+  const focusLat = Number(focusMeta.lat);
+  const focusLon = Number(focusMeta.lon);
+  return [...(PROTECTED_ATLAS[state] || [])]
+    .sort((left, right) => {
+      if (!Number.isFinite(focusLat) || !Number.isFinite(focusLon)) return 0;
+      const leftDistance = Math.hypot(Number(left[1]) - focusLat, Number(left[2]) - focusLon);
+      const rightDistance = Math.hypot(Number(right[1]) - focusLat, Number(right[2]) - focusLon);
+      return leftDistance - rightDistance;
+    })
+    .slice(0, 4)
+    .map(([label, lat, lon, type]) => ({
+      label,
+      point: geoPoint(lat, lon, bounds),
+      variant: type || "park",
+    }));
+}
+
+export default function ArticleStudyVisuals({ mapLocations, title = "", articleText = "", category = "" }) {
   const locations = useMemo(
-    () => articleLocations(mapLocations, title, articleText),
-    [articleText, mapLocations, title]
+    () => articleLocations(mapLocations, title, articleText, category),
+    [articleText, category, mapLocations, title]
   );
   const [selectedLocation, setSelectedLocation] = useState(locations[0] || "");
   if (!locations.length) return null;
 
-  const meta = resolveLocation(selectedLocation);
+  // When a newly inferred location replaces a previous tab after navigation,
+  // render the first valid location instead of an orphaned selection.
+  const activeLocation = locations.includes(selectedLocation) ? selectedLocation : locations[0];
+  const meta = resolveLocation(activeLocation);
   const politicalAsset = meta.mapType === "india"
     ? "/maps/india-location-map.svg"
     : "/maps/world-location-map.svg";
@@ -399,13 +536,18 @@ export default function ArticleStudyVisuals({ mapLocations, title = "", articleT
   const mapBounds = meta.mapType === "india" ? INDIA_BOUNDS : WORLD_BOUNDS;
   const contextMarkers = (items = [], physical = false) => items.map(([label, lat, lon, type]) => ({
     label, point: geoPoint(lat, lon, mapBounds), variant: physical ? (type || "feature") : "nearby",
-  }));
+  })).filter((item) => item.point);
   const locationPool = meta.mapType === "india" ? Object.values(INDIA_LOCATIONS) : Object.values(WORLD_LOCATIONS);
   const longitudeDistance = (left, right) => Math.min(Math.abs(left - right), 360 - Math.abs(left - right));
   const automaticNearby = meta.state
     ? locationPool
         .filter((item) => item.state === meta.state && item.city && item.label !== meta.label)
         .filter((item, index, all) => all.findIndex((candidate) => candidate.label === item.label) === index)
+        .sort((left, right) => {
+          const leftDistance = Math.hypot(left.lat - meta.lat, left.lon - meta.lon);
+          const rightDistance = Math.hypot(right.lat - meta.lat, right.lon - meta.lon);
+          return leftDistance - rightDistance;
+        })
         .slice(0, 3)
         .map((item) => [item.label, item.lat, item.lon])
     : meta.mapType === "world" && meta.point
@@ -417,50 +559,74 @@ export default function ArticleStudyVisuals({ mapLocations, title = "", articleT
             const rightDistance = Math.hypot(right.lat - meta.lat, longitudeDistance(right.lon, meta.lon));
             return leftDistance - rightDistance;
           })
-          .slice(0, 3)
+          .slice(0, 4)
           .map((item) => [item.label, item.lat, item.lon])
       : [];
   const nearby = contextMarkers(regional?.nearby?.length ? regional.nearby : automaticNearby);
   const features = contextMarkers(regional?.physical, true);
+  const waterFeatures = features.filter((item) => ["river", "feature"].includes(item.variant));
+  const reliefFeatures = features.filter((item) => item.variant === "mountain");
+  const mentionsIndia = /\bindia(?:n|'s|’s)?\b/i.test(`${title} ${articleText}`);
+  const indiaWorldContext = meta.mapType === "world" && mentionsIndia && meta.country !== "India"
+    ? [{ label: "India", point: geoPoint(22.8, 79.0, WORLD_BOUNDS), variant: "nearby" }]
+    : [];
+  const neighbourStates = meta.mapType === "india" && meta.state ? stateContextMarkers(meta.state, mapBounds).filter((item) => item.point) : [];
+  const protectedAreas = meta.mapType === "india" && meta.state ? protectedContextMarkers(meta.state, mapBounds, meta).filter((item) => item.point) : [];
+
+  const panels = meta.mapType === "india"
+    ? [
+        { key: "india", title: "India locator", icon: <LocateFixed size={13} />, asset: politicalAsset, context: [], regional: false },
+        ...(neighbourStates.length ? [{ key: "states", title: "Nearby states", icon: <MapIcon size={13} />, asset: politicalAsset, context: neighbourStates, regional: true }] : []),
+        ...(nearby.length ? [{ key: "places", title: "Regional places", icon: <MapPin size={13} />, asset: politicalAsset, context: nearby, regional: true }] : []),
+        ...(features.length ? [{ key: "physical", title: "Rivers & relief", icon: <Waves size={13} />, asset: physicalAsset, context: features, regional: true, physical: true }] : []),
+        ...(protectedAreas.length ? [{ key: "protected", title: "NP / WLS nearby", icon: <Trees size={13} />, asset: politicalAsset, context: protectedAreas, regional: true }] : []),
+      ].slice(0, 6)
+    : [
+        { key: "world", title: "World locator", icon: <LocateFixed size={13} />, asset: politicalAsset, context: [], regional: false },
+        ...(indiaWorldContext.length ? [{ key: "india-context", title: "India context", icon: <MapPin size={13} />, asset: politicalAsset, context: indiaWorldContext, regional: false }] : []),
+        ...(nearby.length ? [{ key: "region", title: "Regional countries", icon: <MapIcon size={13} />, asset: politicalAsset, context: nearby, regional: true }] : []),
+        ...(waterFeatures.length ? [{ key: "waters", title: "Seas & rivers", icon: <Waves size={13} />, asset: physicalAsset, context: waterFeatures, regional: true, physical: true }] : []),
+        ...(reliefFeatures.length ? [{ key: "relief", title: "Relief / ranges", icon: <Mountain size={13} />, asset: physicalAsset, context: reliefFeatures, regional: true, physical: true }] : []),
+        ...(!waterFeatures.length && !reliefFeatures.length && features.length ? [{ key: "physical", title: "Physical setting", icon: <Mountain size={13} />, asset: physicalAsset, context: features, regional: true, physical: true }] : []),
+      ].slice(0, 6);
 
   return (
-    <section id="article-map" className="atlas-locator-card scroll-mt-28" aria-label="Static location maps for this article">
-      <div className="atlas-locator-head">
+    <section id="article-map" className="atlas-locator-card atlas-locator-card--compact scroll-mt-28" aria-label="Static location maps for this article">
+      <div className="atlas-locator-head atlas-locator-head--compact">
         <div>
-          <span><MapPin size={15} /> Map focus</span>
-          <h2>Locate the place</h2>
+          <span><MapPin size={14} /> Map focus</span>
+          <h2>{meta.label}</h2>
         </div>
-        <small>{meta.point ? "Coordinate-based static locator" : "No guessed marker for unknown locations"}</small>
+        {meta.point && <small>{meta.lat.toFixed(2)}°, {meta.lon.toFixed(2)}° · maps only where geography matters</small>}
       </div>
 
       <LocationTrail meta={meta} />
 
-      <div className="geo-map-grid">
-        <MapPanel
-          title="Political map · nearby places"
-          icon={<MapIcon size={14} />}
-          asset={politicalAsset}
-          meta={meta}
-          context={nearby}
-          regional={Boolean(meta.state || meta.mapType === "world")}
-        />
-        <MapPanel
-          title="Regional rivers & relief"
-          icon={<Mountain size={14} />}
-          asset={physicalAsset}
-          meta={meta}
-          physical
-          context={features}
-          regional={Boolean(meta.state || meta.mapType === "world")}
-        />
+      <div className={`geo-map-grid geo-map-grid--atlas-${Math.min(3, panels.length)}`}>
+        {panels.map((panel) => (
+          <MapPanel
+            key={panel.key}
+            title={panel.title}
+            icon={panel.icon}
+            asset={panel.asset}
+            meta={meta}
+            context={panel.context}
+            regional={panel.regional}
+            physical={panel.physical}
+          />
+        ))}
       </div>
 
-      {(nearby.length > 0 || features.length > 0) && <div className="atlas-context-list">
-        {nearby.length > 0 && <span><strong>Nearby:</strong> {nearby.map((item) => item.label).join(" · ")}</span>}
-        {features.length > 0 && <span><strong>Physical:</strong> {features.map((item) => item.label).join(" · ")}</span>}
-      </div>}
+      {(neighbourStates.length > 0 || nearby.length > 0 || features.length > 0 || protectedAreas.length > 0) && (
+        <div className="atlas-context-list atlas-context-list--compact">
+          {neighbourStates.length > 0 && <span><strong>States:</strong> {neighbourStates.map((item) => item.label).join(" · ")}</span>}
+          {nearby.length > 0 && <span><strong>Nearby:</strong> {nearby.map((item) => item.label).join(" · ")}</span>}
+          {features.length > 0 && <span><strong>Physical:</strong> {features.map((item) => item.label).join(" · ")}</span>}
+          {protectedAreas.length > 0 && <span><strong>Protected:</strong> {protectedAreas.map((item) => item.label).join(" · ")}</span>}
+        </div>
+      )}
 
-      <div className="atlas-location-tabs" aria-label="Locations mentioned in article">
+      {locations.length > 1 && <div className="atlas-location-tabs" aria-label="Locations mentioned in article">
         {locations.map((location) => {
           const resolved = resolveLocation(location);
           return (
@@ -468,21 +634,13 @@ export default function ArticleStudyVisuals({ mapLocations, title = "", articleT
               key={location}
               type="button"
               onClick={() => setSelectedLocation(location)}
-              className={selectedLocation === location ? "is-active" : ""}
-              title={resolved.point ? `Show ${resolved.label}` : `${resolved.label}: exact marker unavailable`}
+              className={resolved.label === meta.label ? "is-active" : ""}
             >
-              <MapPin size={13} /> {resolved.label}
+              {resolved.label}
             </button>
           );
         })}
-      </div>
-
-      <p className="atlas-map-note">
-        {meta.point
-          ? "Marker uses stored geographic coordinates on equirectangular location-map bounds."
-          : "The article names this place, but CurrentPulse does not have a verified coordinate for it, so no marker is guessed."}
-        {" "}India map bases: Wikimedia Commons / Uwe Dedering (CC BY-SA 3.0). World political base: public domain; physical world base: Gundan (CC BY-SA 4.0).
-      </p>
+      </div>}
     </section>
   );
 }
