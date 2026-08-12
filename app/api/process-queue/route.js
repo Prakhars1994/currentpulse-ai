@@ -23,18 +23,23 @@ import { isSameEvent } from "@/lib/news/eventCluster";
 import { cleanTrustedCoverageText } from "@/lib/coverage/contentCleaner";
 import { inspectCoverageCandidate } from "@/lib/coverage/sourceSanitizer";
 import { getConfiguredAiProviders } from "@/lib/ai/router";
+import {
+  shouldAttemptDailyQuiz,
+  shouldRecoverFailedQueue,
+} from "@/lib/automation/schedulePolicy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const maxDuration = 150;
 
-const HARD_STOP_MS = 190000;
-const MINIMUM_NEXT_ITEM_BUDGET_MS = 35000;
+const HARD_STOP_MS = 110000;
+const MINIMUM_NEXT_ITEM_BUDGET_MS = 30000;
 const STALE_PROCESSING_MINUTES = 20;
-const PROCESSING_CONCURRENCY = 3;
-const MAX_QUEUE_ITEMS_PER_RUN = 6;
-const MAX_TEMPORARY_AI_FAILURES_PER_RUN = 3;
+const PROCESSING_CONCURRENCY = 2;
+const MAX_QUEUE_ITEMS_PER_RUN = 4;
+const MAX_TEMPORARY_AI_FAILURES_PER_RUN = 2;
 const RETRYABLE_FAILED_LOOKBACK_HOURS = 72;
+const AI_RETRY_COOLDOWN_MINUTES = 120;
 
 function isCoverageQueueItem(item = {}) {
   return ["coaching", "coaching_enrichment"].includes(item.pipeline_kind);
@@ -99,57 +104,6 @@ async function processCoverageQueueItem(supabase, item) {
 
   await recordArticleSources(supabase, result.articleId, topic);
   return result;
-}
-
-async function upgradeLegacyArticles(supabase, limit = 2) {
-  const { data: articles, error } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("status", "published")
-    .lt("quality_version", 2)
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    // This remains non-blocking until the idempotent production migration is run.
-    console.error("[Queue processor] Legacy quality lookup skipped:", error.message);
-    return [];
-  }
-  if (!articles?.length) return [];
-
-  const settled = await Promise.allSettled(
-    articles.map((article) => {
-      const sourceContent = [
-        article.why_news,
-        article.prelims,
-        article.mains,
-        article.question,
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-
-      return enrichPublishedArticle(supabase, article.id, {
-        title: article.title,
-        content: sourceContent,
-        source: "CurrentPulse quality upgrade",
-        category: article.category,
-        paper: article.paper,
-        trustedCoverage: true,
-        generationMode: "trusted_coverage",
-      });
-    })
-  );
-
-  return settled.map((result, index) =>
-    result.status === "fulfilled"
-      ? result.value
-      : {
-          status: "failed",
-          articleId: articles[index].id,
-          title: articles[index].title,
-          error: result.reason?.message || "Quality upgrade failed.",
-        }
-  );
 }
 
 function isAuthorised(request) {
@@ -234,8 +188,15 @@ async function getPendingQueueItem(supabase, attemptedIds) {
 
   if (error) throw new Error(`Queue fetch failed: ${error.message}`);
   const priority = { news: 0, coaching: 0, coaching_enrichment: 1 };
+  const retryCutoff = Date.now() - AI_RETRY_COOLDOWN_MINUTES * 60 * 1000;
   return (data || [])
     .filter((item) => !attemptedIds.has(item.id))
+    .filter((item) => {
+      const waitingForAi = /^Waiting for AI availability:/i.test(String(item.error || ""));
+      if (!waitingForAi) return true;
+      const updatedAt = new Date(item.updated_at || 0).getTime();
+      return !Number.isFinite(updatedAt) || updatedAt <= retryCutoff;
+    })
     .sort(
       (left, right) =>
         (priority[left.pipeline_kind || "news"] ?? 1) -
@@ -371,9 +332,10 @@ async function executeQueueProcessing() {
   let claimedCount = 0;
 
   try {
-    const [recoveredStale, recoveredFailed] = await Promise.all([
-      recoverStaleQueueItems(supabase), recoverRecentFailedItems(supabase),
-    ]);
+    const recoveredStale = await recoverStaleQueueItems(supabase);
+    const recoveredFailed = shouldRecoverFailedQueue()
+      ? await recoverRecentFailedItems(supabase)
+      : 0;
     const recovered = recoveredStale + recoveredFailed;
 
     async function worker(workerNumber) {
@@ -567,21 +529,14 @@ async function executeQueueProcessing() {
       )
     );
 
-    let qualityUpgrades = [];
-    if (results.length === 0 && Date.now() - startedAt < HARD_STOP_MS - 70000) {
-      try {
-        qualityUpgrades = await upgradeLegacyArticles(supabase, 2);
-      } catch (error) {
-        console.error("[Queue processor] Legacy article upgrade failed:", error?.message || error);
-      }
-    }
-
+    // Legacy quality upgrades no longer run inside the production queue cron.
+    // They are maintenance work and previously made an otherwise empty queue expensive.
     let quiz = null;
-    if (Date.now() - startedAt < HARD_STOP_MS - 60000) {
+    if (shouldAttemptDailyQuiz() && Date.now() - startedAt < HARD_STOP_MS - 45000) {
       try {
         quiz = await generateDailyQuiz(supabase);
       } catch (error) {
-        console.error("[Queue processor] Daily quiz refresh skipped:", error?.message || error);
+        console.error("[Queue processor] Scheduled daily quiz refresh skipped:", error?.message || error);
       }
     }
 
@@ -618,11 +573,13 @@ async function executeQueueProcessing() {
         claimed: claimedCount,
         maxItemsPerRun: MAX_QUEUE_ITEMS_PER_RUN,
         stoppedForRuntimeBudget,
-        qualityUpgrades: qualityUpgrades.filter((item) => item.status !== "failed").length,
+        failedRecoveryAttempted: shouldRecoverFailedQueue(),
+        aiRetryCooldownMinutes: AI_RETRY_COOLDOWN_MINUTES,
+        quizAttemptWindow: shouldAttemptDailyQuiz(),
         quizReady: Boolean(quiz && (quiz.generated || quiz.reason === "already_ready")),
         durationMs: Date.now() - startedAt,
       },
-      maintenance: { qualityUpgrades, quiz },
+      maintenance: { legacyQualityUpgrade: "disabled_in_cron", quiz },
       results,
     });
   } catch (error) {

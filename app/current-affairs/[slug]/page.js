@@ -1,6 +1,7 @@
 export const revalidate = 120;
 
 import { supabase } from "@/lib/supabase";
+import { unstable_cache } from "next/cache";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
@@ -70,6 +71,21 @@ function articleRoute(item = {}) {
   return `${coaching ? "/current-affairs" : "/news"}/${item.slug}`;
 }
 
+const getCurrentAffairsArticle = unstable_cache(
+  async (slug) => {
+    const { data, error } = await supabase
+      .from("articles")
+      .select("*,article_sources(id,source_kind,source_name,source_title,source_url,source_published_at)")
+      .eq("slug", slug)
+      .eq("status", "published")
+      .maybeSingle();
+    if (error) console.error("Article fetch error:", error.message);
+    return data || null;
+  },
+  ["currentpulse-ca-detail-v2"],
+  { revalidate: 120, tags: ["currentpulse-articles", "currentpulse-current-affairs"] }
+);
+
 // ============================
 // Dynamic SEO
 // ============================
@@ -77,12 +93,7 @@ function articleRoute(item = {}) {
 export async function generateMetadata({ params }) {
   const { slug } = await params;
 
-  const { data: article } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .maybeSingle();
+  const article = await getCurrentAffairsArticle(slug);
 
   if (!article || !isPublishedArticleSafe(article, { stream: "coverage" })) {
     return {
@@ -96,11 +107,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const { data: sourceKinds } = await supabase
-    .from("article_sources")
-    .select("source_kind")
-    .eq("article_id", article.id);
-  const isCoaching = (sourceKinds || []).some((source) => source.source_kind === "coaching");
+  const isCoaching = (article.article_sources || []).some((source) => source.source_kind === "coaching");
   const canonicalPath = isCoaching ? `/current-affairs/${slug}` : `/news/${slug}`;
   const resolvedImage = resolveDisplayImage(article);
   const image = resolvedImage ? absoluteImageUrl(resolvedImage) : "";
@@ -153,16 +160,7 @@ export async function generateMetadata({ params }) {
 export default async function ArticlePage({ params }) {
   const { slug } = await params;
 
-  const { data: article, error: articleError } = await supabase
-    .from("articles")
-    .select("*")
-    .eq("slug", slug)
-    .eq("status", "published")
-    .maybeSingle();
-
-  if (articleError) {
-    console.error("Article fetch error:", articleError);
-  }
+  const article = await getCurrentAffairsArticle(slug);
 
   if (!article || !isPublishedArticleSafe(article, { stream: "coverage" })) {
     notFound();
@@ -170,17 +168,7 @@ export default async function ArticlePage({ params }) {
 
   const readingTime = calculateReadingTime(article);
 
-  const { data: articleSources, error: sourcesError } = await supabase
-    .from("article_sources")
-    .select("id, source_kind, source_name, source_title, source_url, source_published_at")
-    .eq("article_id", article.id)
-    .order("created_at", { ascending: true });
-
-  if (sourcesError && sourcesError.code !== "42P01") {
-    console.error("Article sources fetch error:", sourcesError);
-  }
-
-  article.article_sources = articleSources || [];
+  const articleSources = article.article_sources || [];
   if (!isPublishedArticleSafe(article, { stream: "coverage" })) notFound();
   const isCoachingArticle = (articleSources || []).some((source) => source.source_kind === "coaching");
   const hasNewsVersion = (articleSources || []).some((source) => source.source_kind === "news");

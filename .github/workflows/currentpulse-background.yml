@@ -1,0 +1,184 @@
+name: CurrentPulse Background Automation
+
+on:
+  schedule:
+    # One runner every 30 minutes. The :07 run collects News/CA and processes
+    # the queue; the :37 run only processes the queue. ResultPulse runs every
+    # two hours from the :07 slot. This keeps setup overhead low by reusing one
+    # runner for related work instead of starting many independent workflows.
+    - cron: "7 * * * *"
+    - cron: "37 * * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Automation task to run"
+        required: true
+        default: "smart"
+        type: choice
+        options:
+          - smart
+          - collect
+          - queue
+          - exams
+
+permissions:
+  contents: read
+
+concurrency:
+  group: currentpulse-background-automation
+  cancel-in-progress: false
+
+env:
+  # The Next server exists only inside this ephemeral GitHub runner, so this
+  # local secret does not need to match the public site's CRON_SECRET.
+  CRON_SECRET: currentpulse-github-actions-local-runner
+  NEXT_PUBLIC_BASE_URL: https://currentpulse-ai.vercel.app
+
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+  GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+  OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+  GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+  MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
+  CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+  SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
+  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_AI_API_TOKEN: ${{ secrets.CLOUDFLARE_AI_API_TOKEN }}
+  CP_GH_MODELS_TOKEN: ${{ secrets.CP_GH_MODELS_TOKEN }}
+
+  RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+  RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+  WHATSAPP_ACCESS_TOKEN: ${{ secrets.WHATSAPP_ACCESS_TOKEN }}
+  WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+  WHATSAPP_TEMPLATE_NAME: ${{ secrets.WHATSAPP_TEMPLATE_NAME }}
+  WHATSAPP_TEMPLATE_LANGUAGE: ${{ secrets.WHATSAPP_TEMPLATE_LANGUAGE }}
+
+  # Keep source work bounded even though the public-repository runner is free.
+  NEWS_SUPPLEMENTAL_SOURCES_PER_RUN: "4"
+  COVERAGE_SOURCES_PER_RUN: "2"
+  EXAM_SOURCES_PER_RUN: "5"
+  EXAM_ITEMS_PER_SOURCE: "50"
+
+jobs:
+  automate:
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.AUTOMATION_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Use Node 24 with npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ]]; then
+            echo "Missing GitHub Actions secret: NEXT_PUBLIC_SUPABASE_URL"
+            exit 1
+          fi
+          if [[ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
+            echo "Missing GitHub Actions secret: SUPABASE_SERVICE_ROLE_KEY"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Start private local Next server
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/currentpulse-next.log 2>&1 &
+          echo $! > /tmp/currentpulse-next.pid
+
+          for attempt in {1..45}; do
+            if curl --silent --fail --max-time 3 http://127.0.0.1:3000/icon.svg >/dev/null; then
+              echo "CurrentPulse local automation server is ready."
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "Local Next server did not become ready."
+          cat /tmp/currentpulse-next.log || true
+          exit 1
+
+      - name: Run quota-bounded automation
+        shell: bash
+        env:
+          EVENT_SCHEDULE: ${{ github.event.schedule }}
+          MANUAL_MODE: ${{ inputs.mode }}
+        run: |
+          set -euo pipefail
+
+          api() {
+            local path="$1"
+            echo "Calling ${path}"
+            curl --silent --show-error --fail-with-body \
+              --retry 2 --retry-delay 3 --max-time 300 \
+              -H "Authorization: Bearer ${CRON_SECRET}" \
+              "http://127.0.0.1:3000${path}"
+            echo
+          }
+
+          mode="${MANUAL_MODE:-}"
+          if [[ -z "$mode" || "$mode" == "smart" ]]; then
+            if [[ "${EVENT_SCHEDULE:-}" == "37 * * * *" ]]; then
+              mode="queue"
+            else
+              mode="smart-hourly"
+            fi
+          fi
+
+          case "$mode" in
+            collect)
+              api "/api/auto-publish?wait=1&scope=scheduled"
+              ;;
+            queue)
+              api "/api/process-queue?wait=1"
+              ;;
+            exams)
+              api "/api/exams/run?notifications=0"
+              ;;
+            smart-hourly|smart)
+              api "/api/auto-publish?wait=1&scope=scheduled"
+              api "/api/process-queue?wait=1"
+
+              # ResultPulse source rotation itself uses two-hour slots. Run it
+              # on even UTC hours so unchanged sites are checked conditionally
+              # rather than all 11 sources being scraped every half hour.
+              utc_hour="$(date -u +%H)"
+              if (( 10#$utc_hour % 2 == 0 )); then
+                api "/api/exams/run?notifications=0"
+              fi
+              ;;
+            *)
+              echo "Unsupported automation mode: $mode"
+              exit 2
+              ;;
+          esac
+
+      - name: Print server log on failure
+        if: failure()
+        shell: bash
+        run: cat /tmp/currentpulse-next.log || true
+
+      - name: Stop local Next server
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f /tmp/currentpulse-next.pid ]]; then
+            kill "$(cat /tmp/currentpulse-next.pid)" 2>/dev/null || true
+          fi

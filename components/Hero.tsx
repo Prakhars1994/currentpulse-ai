@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
 import { hasCoachingSource } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
-import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
-import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
 import { VALID_CATEGORIES } from "@/lib/contentTaxonomy";
 
 function stripHtml(value: string | null) {
@@ -29,47 +26,9 @@ function formatDate(value: string | null) {
   });
 }
 
-export default async function Hero() {
-  // Keep the homepage hot path small: fetch recent candidates plus one exact
-  // published-row count. Categories are a fixed taxonomy and coaching source
-  // count is a product configuration, so neither requires full-table reads.
-  const [
-    { data: featuredRows, error: featuredError },
-    { count: articleCount, error: articleCountError },
-  ] = await Promise.all([
-    supabase
-      .from("articles")
-      .select(
-        "id, title, slug, category, paper, why_news, content, image, image_url, image_source_url, image_caption, image_search_query, created_at, status, article_sources(source_kind,source_url)"
-      )
-      .eq("status", "published")
-      .order("created_at", { ascending: false })
-      .limit(80),
-
-    supabase
-      .from("articles")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "published"),
-  ]);
-
-  if (featuredError) {
-    console.error("Featured article fetch error:", featuredError);
-  }
-
-  if (articleCountError) {
-    console.error("Article count fetch error:", articleCountError);
-  }
-
-
-  const featured = (featuredRows || []).find((article) => {
-    const stream = hasCoachingSource(article) ? "coverage" : "news";
-    return stream === "news"
-      ? isDisplayWorthyNews(article)
-      : isPublishedArticleSafe(article, { stream });
-  }) || null;
-
+export default function Hero({ featured = null, articleCount = 0 }: { featured?: any; articleCount?: number }) {
   const categoryCount = VALID_CATEGORIES.length;
-  const coachingSourceCount = 7;
+  const coachingSourceCount = 8;
 
   const featuredImage = resolveDisplayImage(featured || {});
   const featuredIsCurrentAffairs = hasCoachingSource(featured || {});

@@ -61,7 +61,8 @@ export default async function SearchPage({
         .or(
           `title.ilike.%${safeQuery}%,category.ilike.%${safeQuery}%,paper.ilike.%${safeQuery}%`
         )
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(80);
 
       if (error) {
         console.error("Search Error:", error);

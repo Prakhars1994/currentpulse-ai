@@ -43,7 +43,7 @@ function pageHref(page) {
 export default async function NewsPage({ searchParams }) {
   const params = await searchParams;
   const requestedPage = Math.max(1, Number(params?.page) || 1);
-  const pageSize = 48;
+  const pageSize = 24;
   const offset = (requestedPage - 1) * pageSize;
   const { articles, total, hasMore, error } = await loadNewsArticles({ limit: pageSize, offset });
   if (error) console.error("News stream error:", error);

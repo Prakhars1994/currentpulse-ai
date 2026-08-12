@@ -44,7 +44,7 @@ export default async function CurrentAffairsPage({ searchParams }) {
   const params = await searchParams;
   const requestedPage = Math.max(1, Number(params?.page) || 1);
   const todayOnly = params?.view === "today";
-  const pageSize = 48;
+  const pageSize = 24;
   const offset = (requestedPage - 1) * pageSize;
   const { articles, total, hasMore, date, error } = await loadCurrentAffairsArticles({
     limit: pageSize, offset, todayOnly,
@@ -59,15 +59,15 @@ export default async function CurrentAffairsPage({ searchParams }) {
     <main className="min-h-screen bg-slate-950 py-10 text-white sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400/15 bg-[radial-gradient(circle_at_90%_0%,rgba(6,182,212,.16),transparent_35%),linear-gradient(135deg,#0f172a,#08111f)] px-6 py-10 shadow-2xl shadow-slate-950/30 sm:px-10 sm:py-12">
-          <p className="font-black uppercase tracking-[.22em] text-cyan-400">Coaching + important news synthesis</p>
+          <p className="font-black uppercase tracking-[.22em] text-cyan-400">Trusted coaching-source synthesis</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
             UPSC Current Affairs
           </h1>
 
           <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">
-            Important UPSC-relevant developments from trusted coaching coverage and
-            the CurrentPulse news pipeline, deduplicated, merged and rebuilt as
-            selection-oriented Prelims and Mains briefs.
+            Every genuine Current Affairs topic from trusted coaching sources,
+            deduplicated and merged across publishers, then rebuilt as concise
+            Prelims and Mains briefs.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link href="/categories" className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950 transition hover:bg-cyan-300">Browse by syllabus</Link>

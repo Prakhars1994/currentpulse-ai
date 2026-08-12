@@ -81,20 +81,28 @@ function dedupeArticles(rows: SitemapArticle[]) {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { data: articles, error } = isSupabaseConfigured
-    ? await supabase
-        .from("articles")
-        .select(
-          "slug,title,why_news,syllabus_linkage,prelims,mains,content,created_at,updated_at,article_sources(source_kind,source_published_at)"
-        )
-        .eq("status", "published")
-        .order("created_at", { ascending: false })
-        .limit(SITEMAP_ARTICLE_LIMIT)
-    : { data: [], error: null };
+  const [articleResult, examResult] = isSupabaseConfigured
+    ? await Promise.all([
+        supabase
+          .from("articles")
+          .select(
+            "slug,title,why_news,syllabus_linkage,prelims,mains,content,created_at,updated_at,article_sources(source_kind,source_published_at)"
+          )
+          .eq("status", "published")
+          .order("created_at", { ascending: false })
+          .limit(SITEMAP_ARTICLE_LIMIT),
+        supabase
+          .from("exam_updates")
+          .select("slug,created_at,updated_at")
+          .eq("status", "published")
+          .order("created_at", { ascending: false })
+          .limit(10000),
+      ])
+    : [{ data: [], error: null }, { data: [], error: null }];
 
-  if (error) {
-    console.error("[Sitemap] Article fetch failed:", error.message);
-  }
+  const { data: articles, error } = articleResult;
+  if (error) console.error("[Sitemap] Article fetch failed:", error.message);
+  if (examResult.error && examResult.error.code !== "42P01") console.error("[Sitemap] Exam fetch failed:", examResult.error.message);
 
   const articleRoutes = dedupeArticles(
     (articles || []) as SitemapArticle[]
@@ -136,6 +144,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "videos",
     "ai",
     "contact",
+    "exams",
+    "exams/results",
+    "exams/admit-cards",
+    "exams/notifications",
+    "exams/answer-keys",
+    "exams/applications",
+    "exams/deadlines",
+    "exams/exam-dates",
+    "exams/cut-offs",
+    "exams/counselling",
   ].map((path) => ({
     url: `${SITE_URL}/${path}`,
     changeFrequency:
@@ -152,10 +170,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.75,
   }));
 
+  const examRoutes: MetadataRoute.Sitemap = (examResult.data || []).map((exam: any) => ({
+    url: `${SITE_URL}/exams/${exam.slug}`,
+    lastModified: exam.updated_at || exam.created_at || undefined,
+    changeFrequency: "daily" as const,
+    priority: 0.82,
+  }));
+
   return [
     { url: SITE_URL, changeFrequency: "daily", priority: 1 },
     ...publicPages,
     ...categoryPages,
+    ...examRoutes,
     ...articleRoutes,
   ];
 }

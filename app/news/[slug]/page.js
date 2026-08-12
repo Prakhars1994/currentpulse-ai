@@ -1,6 +1,7 @@
 export const revalidate = 120;
 
 import { supabase } from "@/lib/supabase";
+import { unstable_cache } from "next/cache";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import ArticleContent from "@/components/ArticleContent";
@@ -52,20 +53,16 @@ function cleanNewsSection(value = "", labels = []) {
   return text;
 }
 
-async function getArticle(slug) {
-  const { data } = await supabase.from("articles")
-    .select("*,article_sources(source_kind,source_name,source_url,source_published_at)")
-    .eq("slug", slug).eq("status", "published").maybeSingle();
-  return data && isDisplayWorthyNews(data) ? data : null;
-}
-
-async function getSources(articleId) {
-  const { data, error } = await supabase.from("article_sources")
-    .select("id,source_kind,source_name,source_title,source_url,source_published_at")
-    .eq("article_id", articleId).order("created_at", { ascending: true });
-  if (error && error.code !== "42P01") console.error("News source fetch failed:", error.message);
-  return data || [];
-}
+const getArticle = unstable_cache(
+  async (slug) => {
+    const { data } = await supabase.from("articles")
+      .select("*,article_sources(id,source_kind,source_name,source_title,source_url,source_published_at)")
+      .eq("slug", slug).eq("status", "published").maybeSingle();
+    return data && isDisplayWorthyNews(data) ? data : null;
+  },
+  ["currentpulse-news-detail-v2"],
+  { revalidate: 120, tags: ["currentpulse-articles", "currentpulse-news"] }
+);
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -92,7 +89,7 @@ export default async function NewsArticlePage({ params }) {
   const { slug } = await params;
   const article = await getArticle(slug);
   if (!article) notFound();
-  const sources = await getSources(article.id);
+  const sources = article.article_sources || [];
   const newsSources = sources.filter((source) => source.source_kind === "news");
   const hasCoachingSource = sources.some((source) => source.source_kind === "coaching");
   if (!newsSources.length && hasCoachingSource) permanentRedirect(`/current-affairs/${slug}`);

@@ -2,7 +2,7 @@ export const revalidate = 120;
 
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { loadRecentCategoryCandidates } from "@/lib/categoryArticles";
 import {
   CATEGORY_ROUTES,
   articleMatchesCategory,
@@ -23,8 +23,6 @@ type Article = {
   category: string | null;
   paper: string | null;
   why_news: string | null;
-  prelims: string | null;
-  mains: string | null;
   image: string | null;
   image_url: string | null;
   image_source_url: string | null;
@@ -65,14 +63,7 @@ export default async function CategoryPage({ params }: Props) {
   const route = resolveCategoryRoute(slug);
   if (!route) notFound();
 
-  const { data, error } = await supabase
-    .from("articles")
-    .select(
-      "id,title,slug,category,paper,why_news,prelims,mains,image,image_url,image_source_url,image_caption,image_search_query,created_at,article_sources(source_kind)"
-    )
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(600);
+  const { data, error } = await loadRecentCategoryCandidates();
 
   if (error) console.error("Category fetch failed:", error.message);
 
@@ -92,7 +83,7 @@ export default async function CategoryPage({ params }: Props) {
       <section className="border-b border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/40">
         <div className="mx-auto max-w-7xl px-6 py-14">
           <Link href="/categories" className="text-sm font-semibold text-cyan-400">
-            ← All categories
+            â† All categories
           </Link>
           <div className="mt-5 flex items-start gap-4">
             <span className="text-5xl" aria-hidden="true">
@@ -154,7 +145,7 @@ export default async function CategoryPage({ params }: Props) {
                       href={`/current-affairs/${article.slug}`}
                       className="font-bold text-cyan-400 hover:text-cyan-300"
                     >
-                      Read analysis →
+                      Read analysis â†’
                     </Link>
                   </div>
                 </div>

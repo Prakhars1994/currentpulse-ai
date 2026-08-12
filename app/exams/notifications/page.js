@@ -1,0 +1,1 @@
+export const revalidate = 60; import ExamUpdatesPage from "@/components/ExamUpdatesPage"; export const metadata={title:"Exam Notifications 2026 | ResultPulse AI"}; export default function Page(){return <ExamUpdatesPage type="notification" title="Exam Notifications" description="Official recruitment and examination notifications from verified authorities."/>}

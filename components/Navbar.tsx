@@ -15,6 +15,7 @@ import {
   Files,
   Newspaper,
   BookOpenCheck,
+  GraduationCap,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -40,6 +41,11 @@ export default function Navbar() {
       name: "News",
       href: "/news",
       icon: Newspaper,
+    },
+    {
+      name: "Exams",
+      href: "/exams",
+      icon: GraduationCap,
     },
     {
       name: "Quiz",
