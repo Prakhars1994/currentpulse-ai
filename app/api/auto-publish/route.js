@@ -31,6 +31,10 @@ export const maxDuration = 150;
 const QUEUE_WRITE_CONCURRENCY = 3;
 const QUEUE_DUPLICATE_LOOKBACK_DAYS = 10;
 const QUEUE_DUPLICATE_LIMIT = 450;
+const NEWS_MAX_QUEUE_WRITES_PER_RUN = Math.max(
+  1,
+  Number(process.env.NEWS_MAX_QUEUE_WRITES_PER_RUN || 24)
+);
 
 function cleanText(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -358,9 +362,14 @@ async function executeAutoPublish({ full = false } = {}) {
       ? await loadRecentQueueState(supabase)
       : [];
     const queueFiltered = filterQueueDuplicates(evaluated.accepted, recentQueueRows);
+    const queueBatch = queueFiltered.accepted.slice(0, NEWS_MAX_QUEUE_WRITES_PER_RUN);
+    const deferredForNextRun = Math.max(
+      0,
+      queueFiltered.accepted.length - queueBatch.length
+    );
 
     const [acceptedResults, rejectedResults] = await Promise.all([
-      writeCandidates(supabase, queueFiltered.accepted, "pending"),
+      writeCandidates(supabase, queueBatch, "pending"),
       writeCandidates(supabase, evaluated.rejected, "rejected"),
     ]);
 
@@ -386,6 +395,8 @@ async function executeAutoPublish({ full = false } = {}) {
         rejectedPreserved,
         duplicatesOrInvalidSkipped: evaluated.skipped.length,
         queueDuplicatesSkipped: queueFiltered.skipped.length,
+        queueWriteLimit: NEWS_MAX_QUEUE_WRITES_PER_RUN,
+        deferredForNextRun,
         queued,
         failed,
         evaluationProvider: evaluated.evaluationProvider,

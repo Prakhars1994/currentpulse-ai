@@ -18,6 +18,8 @@ on:
         options:
           - smart
           - collect
+          - news
+          - coverage
           - queue
           - exams
 
@@ -58,6 +60,7 @@ env:
 
   # Keep source work bounded even though the public-repository runner is free.
   NEWS_SUPPLEMENTAL_SOURCES_PER_RUN: "4"
+  NEWS_MAX_QUEUE_WRITES_PER_RUN: "24"
   COVERAGE_SOURCES_PER_RUN: "2"
   EXAM_SOURCES_PER_RUN: "5"
   EXAM_ITEMS_PER_SOURCE: "50"
@@ -127,7 +130,7 @@ jobs:
             local path="$1"
             echo "Calling ${path}"
             curl --silent --show-error --fail-with-body \
-              --retry 2 --retry-delay 3 --max-time 300 \
+              --max-time 240 \
               -H "Authorization: Bearer ${CRON_SECRET}" \
               "http://127.0.0.1:3000${path}"
             echo
@@ -144,7 +147,14 @@ jobs:
 
           case "$mode" in
             collect)
-              api "/api/auto-publish?wait=1&scope=scheduled"
+              api "/api/auto-publish?wait=1&scope=news"
+              api "/api/auto-publish?wait=1&scope=coverage"
+              ;;
+            news)
+              api "/api/auto-publish?wait=1&scope=news"
+              ;;
+            coverage)
+              api "/api/auto-publish?wait=1&scope=coverage"
               ;;
             queue)
               api "/api/process-queue?wait=1"
@@ -153,7 +163,8 @@ jobs:
               api "/api/exams/run?notifications=0"
               ;;
             smart-hourly|smart)
-              api "/api/auto-publish?wait=1&scope=scheduled"
+              api "/api/auto-publish?wait=1&scope=news"
+              api "/api/auto-publish?wait=1&scope=coverage"
               api "/api/process-queue?wait=1"
 
               # ResultPulse source rotation itself uses two-hour slots. Run it
