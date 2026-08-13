@@ -151,7 +151,7 @@ async function recoverRecentFailedItems(supabase) {
     .from("article_queue")
     .select("id,error")
     .eq("status", "failed")
-    .in("pipeline_kind", ["coaching", "news"])
+    .in("pipeline_kind", ["coaching", "coaching_enrichment", "news"])
     .gte("updated_at", cutoff)
     .limit(250);
   if (lookupError) {
@@ -184,7 +184,7 @@ async function getPendingQueueItem(supabase, attemptedIds) {
     .order("importance", { ascending: false })
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(200);
 
   if (error) throw new Error(`Queue fetch failed: ${error.message}`);
   const priority = { news: 0, coaching: 0, coaching_enrichment: 1 };
