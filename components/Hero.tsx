@@ -29,8 +29,10 @@ export default function Hero({ featured = null, stats = null }: { featured?: any
   const todayCurrentAffairs = Number(stats?.todayCurrentAffairs || 0);
   const todayNews = Number(stats?.todayNews || 0);
   const lastUpdated = stats?.lastUpdated
-    ? new Date(stats.lastUpdated).toLocaleTimeString("en-IN", {
+    ? new Date(stats.lastUpdated).toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
+        day: "numeric",
+        month: "short",
         hour: "numeric",
         minute: "2-digit",
       })

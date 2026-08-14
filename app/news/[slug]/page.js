@@ -1,6 +1,7 @@
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-import { supabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { unstable_cache } from "next/cache";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
@@ -55,6 +56,7 @@ function cleanNewsSection(value = "", labels = []) {
 
 const getArticle = unstable_cache(
   async (slug) => {
+    const supabase = createServerSupabase();
     const { data } = await supabase.from("articles")
       .select("*,article_sources(id,source_kind,source_name,source_title,source_url,source_published_at)")
       .eq("slug", slug).eq("status", "published").maybeSingle();

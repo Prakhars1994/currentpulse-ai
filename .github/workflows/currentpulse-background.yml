@@ -65,11 +65,10 @@ env:
   # evening windows. The direct inline cap is NOT the total publish cap: the
   # queue is drained repeatedly immediately after collection.
   COVERAGE_SOURCES_PER_RUN: "4"
-  COVERAGE_IMMEDIATE_MAX_PER_RUN: "10"
-  COVERAGE_IMMEDIATE_PUBLISH_BUDGET_MS: "150000"
+  COVERAGE_IMMEDIATE_PUBLISH_BUDGET_MS: "210000"
 
   AI_PROVIDER_ORDER: "mistral,cloudflare,groq,openrouter,cerebras,sambanova,githubmodels,huggingface"
-  AI_ROUTER_DEADLINE_MS: "50000"
+  AI_ROUTER_DEADLINE_MS: "25000"
   AI_PROVIDER_TIMEOUT_MS: "15000"
   GEMINI_REQUEST_TIMEOUT_MS: "15000"
 
@@ -224,8 +223,7 @@ jobs:
                 break
               fi
               if [[ "${outage}" == "true" ]]; then
-                echo "Provider outage detected; retry on the next hourly run."
-                break
+                echo "Provider outage reported for this batch; continuing so unrelated ready rows are not starved."
               fi
             done
           }
@@ -246,8 +244,7 @@ jobs:
               drain_queue
               ;;
             news)
-              api_required "/api/auto-publish?scope=news&runner=github"
-              sleep 25
+              api_required "/api/auto-publish?wait=1&scope=news&runner=github"
               mark_deploy
               drain_queue
               ;;
@@ -256,8 +253,7 @@ jobs:
               api_required "/api/coverage-import?source=all&limit=2000"
               mark_deploy
               drain_queue
-              api_optional "/api/auto-publish?scope=news&runner=github"
-              sleep 25
+              api_optional "/api/auto-publish?wait=1&scope=news&runner=github"
               mark_deploy
               drain_queue
               ;;
@@ -285,8 +281,7 @@ jobs:
 
               # Use the scheduled News slice, not the historical full=1 call
               # that timed out before CA could run.
-              api_optional "/api/auto-publish?scope=news&runner=github"
-              sleep 25
+              api_optional "/api/auto-publish?wait=1&scope=news&runner=github"
               mark_deploy
               drain_queue 600
               ;;
@@ -295,7 +290,7 @@ jobs:
               echo "INDIA_HOUR=${india_hour}"
 
               # Coaching CA is first in the two evening publication windows.
-              if [[ "${india_hour}" == "19" || "${india_hour}" == "22" ]]; then
+              if [[ "${india_hour}" == "06" || "${india_hour}" == "12" || "${india_hour}" == "19" || "${india_hour}" == "22" ]]; then
                 api_required "/api/auto-publish?wait=1&scope=coverage"
                 mark_deploy
                 drain_queue 1200
@@ -307,8 +302,7 @@ jobs:
               # General News remains independent and lightweight.
               case "${india_hour}" in
                 06|09|12|15|19|22)
-                  api_optional "/api/auto-publish?scope=news&runner=github"
-              sleep 25
+                  api_optional "/api/auto-publish?wait=1&scope=news&runner=github"
                   mark_deploy
                   drain_queue
                   ;;

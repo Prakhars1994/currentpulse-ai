@@ -1,8 +1,9 @@
-export const revalidate = false;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import Link from "next/link";
 import { CalendarDays, FileDown, Layers3 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { indiaDate } from "@/lib/study/digestDates";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
@@ -13,6 +14,7 @@ export const metadata = {
 };
 
 export default async function PdfPage() {
+  const supabase = createServerSupabase();
   const { data, error } = await supabase
     .from("articles")
     .select("id,title,why_news,created_at,article_sources!inner(source_kind)")

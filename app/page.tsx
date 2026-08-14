@@ -1,4 +1,5 @@
-export const revalidate = false;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import BreakingNews from "@/components/BreakingNews";
 import Hero from "@/components/Hero";

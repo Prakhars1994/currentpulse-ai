@@ -1,6 +1,7 @@
-export const revalidate = false;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
-import { supabase } from "@/lib/supabase";
+import { createServerSupabase } from "@/lib/supabase-server";
 import { mapStoredQuiz, UPSC_FOUNDATION_FALLBACK } from "@/lib/study/buildQuiz";
 import QuizPlayer from "@/components/QuizPlayer";
 
@@ -11,6 +12,7 @@ export const metadata = {
 };
 
 export default async function QuizPage() {
+  const supabase = createServerSupabase();
   const { data, error } = await supabase
     .from("quiz_questions")
     .select("id,quiz_date,prompt,options,correct_index,explanation,difficulty,category,paper,source_slug,source_title,generation_provider,created_at")

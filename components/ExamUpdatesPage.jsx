@@ -2,6 +2,7 @@ import Link from "next/link";
 import ExamSubscriptionForm from "@/components/ExamSubscriptionForm";
 import { loadExamUpdates } from "@/lib/exams/repository";
 import { EXAM_TYPE_META } from "@/lib/exams/constants";
+import { getExamUpdateDisplayType } from "@/lib/exams/displayType";
 
 const TYPE_ROUTE = {
   result: "results",
@@ -23,23 +24,6 @@ function dateText(value) {
     month: "short",
     year: "numeric",
   });
-}
-
-function displayType(item = {}) {
-  const title = String(item.title || "").toLowerCase();
-  if (/\b(?:advance\s+)?city\s+intimation|exam\s+city\b/.test(title)) {
-    return "City Intimation";
-  }
-  if (
-    /\b(?:internship|eligibility|qualification|experience|age)\b[\s\S]{0,100}\b(?:cut[- ]?off|cutoff|completion date|last date|deadline)\b/.test(title)
-  ) {
-    return "Eligibility Deadline";
-  }
-  if (item.update_type === "cut-off") return "Score Cut-off";
-  if (item.update_type === "deadline" && /\b(?:application|apply|registration)\b/.test(title)) {
-    return "Application Deadline";
-  }
-  return EXAM_TYPE_META[item.update_type]?.label || "Update";
 }
 
 export default async function ExamUpdatesPage({
@@ -77,7 +61,7 @@ export default async function ExamUpdatesPage({
             <article key={item.id} className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/20 transition hover:-translate-y-1 hover:border-violet-400/50">
               <div className="flex items-center justify-between gap-3">
                 <span className="rounded-full bg-violet-400/10 px-3 py-1 text-xs font-black uppercase text-violet-300">
-                  {displayType(item)}
+                  {getExamUpdateDisplayType(item)}
                 </span>
                 <time className="text-xs text-slate-500">
                   {dateText(item.source_published_at || item.created_at)}

@@ -1,164 +1,26 @@
-import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import type { MetadataRoute } from "next";
 import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
-import { generateEventKey, normalizeText } from "@/lib/news/eventCluster";
+import { createServerSupabase } from "@/lib/supabase-server";
 
-// The sitemap depends on live Supabase data. Keep it out of the static-build
-// prerender path so a slow database/network call cannot fail `next build`.
 export const dynamic = "force-dynamic";
-
-// Keep this comfortably below Google's 50,000 URL limit while covering the
-// complete CurrentPulse article library for the foreseeable future.
-const SITEMAP_ARTICLE_LIMIT = 5000;
+export const revalidate = 0;
 
 type SitemapArticle = {
   slug: string;
-  title: string;
-  why_news?: string | null;
-  syllabus_linkage?: string | null;
-  prelims?: string | null;
-  mains?: string | null;
-  content?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
-  article_sources?: Array<{ source_kind?: string | null; source_published_at?: string | null }> | null;
+  article_sources?: Array<{ source_kind?: string | null }> | null;
 };
 
-function isCoaching(article: SitemapArticle) {
-  return (article.article_sources || []).some(
-    (source) => source?.source_kind === "coaching"
-  );
-}
-
-function hasNewsSource(article: SitemapArticle) {
-  return (article.article_sources || []).some(
-    (source) => source?.source_kind === "news"
-  );
-}
-
-function stableEventKey(article: SitemapArticle) {
-  // Ignore short parenthetical acronyms such as "(TMZ)" so rewritten versions
-  // of the same headline collapse to one sitemap entry.
-  const title = String(article.title || "").replace(/\([^)]{1,16}\)/g, " ");
-  return generateEventKey({
-    title,
-    description: "",
-    publishedAt: article.created_at || undefined,
-  });
-}
-
-/**
- * Fast O(n) sitemap dedupe.
- *
- * The previous implementation compared every article with every article and
- * regenerated event fingerprints for each comparison. With 1,000+ articles
- * that became millions of operations and pushed Next.js sitemap prerendering
- * beyond the 60-second build limit.
- */
-function dedupeArticles(rows: SitemapArticle[]) {
-  const kept: SitemapArticle[] = [];
-  const seenTitles = new Set<string>();
-  const seenEvents = new Set<string>();
-
-  for (const article of rows) {
-    if (!article?.slug || !article?.title) continue;
-
-    const titleKey = normalizeText(article.title);
-    const eventKey = stableEventKey(article);
-
-    if (titleKey && seenTitles.has(titleKey)) continue;
-    if (eventKey && seenEvents.has(eventKey)) continue;
-
-    if (titleKey) seenTitles.add(titleKey);
-    if (eventKey) seenEvents.add(eventKey);
-    kept.push(article);
-  }
-
-  return kept;
-}
-
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [articleResult, examResult] = isSupabaseConfigured
-    ? await Promise.all([
-        supabase
-          .from("articles")
-          .select(
-            "slug,title,created_at,updated_at,article_sources(source_kind,source_published_at)"
-          )
-          .eq("status", "published")
-          .order("created_at", { ascending: false })
-          .limit(SITEMAP_ARTICLE_LIMIT),
-        supabase
-          .from("exam_updates")
-          .select("slug,created_at,updated_at")
-          .eq("status", "published")
-          .order("created_at", { ascending: false })
-          .limit(5000),
-      ])
-    : [{ data: [], error: null }, { data: [], error: null }];
-
-  const { data: articles, error } = articleResult;
-  if (error) console.error("[Sitemap] Article fetch failed:", error.message);
-  if (examResult.error && examResult.error.code !== "42P01") console.error("[Sitemap] Exam fetch failed:", examResult.error.message);
-
-  const articleRoutes = dedupeArticles(
-    (articles || []) as SitemapArticle[]
-  ).flatMap((article) => {
-    const routes: MetadataRoute.Sitemap = [];
-    const currentAffairsReady = isCoaching(article);
-    const newsReady = hasNewsSource(article);
-
-    if (currentAffairsReady) {
-      routes.push({
-        url: `${SITE_URL}/current-affairs/${article.slug}`,
-        lastModified: article.updated_at || article.created_at || undefined,
-        changeFrequency: "weekly" as const,
-        priority: 0.85,
-      });
-    }
-
-    if (newsReady) {
-      routes.push({
-        url: `${SITE_URL}/news/${article.slug}`,
-        lastModified: article.updated_at || article.created_at || undefined,
-        changeFrequency: "weekly" as const,
-        priority: 0.75,
-      });
-    }
-
-    return routes;
-  });
-
+function staticRoutes(): MetadataRoute.Sitemap {
   const publicPages = [
-    "current-affairs",
-    "news",
-    "categories",
-    "quiz",
-    "pdf",
-    "notes",
-    "pyq",
-    "question-papers",
-    "videos",
-    "ai",
-    "contact",
-    "about",
-    "editorial-methodology",
-    "sources-policy",
-    "ai-usage-policy",
-    "corrections-policy",
-    "privacy",
-    "terms",
-    "exams",
-    "exams/results",
-    "exams/admit-cards",
-    "exams/notifications",
-    "exams/answer-keys",
-    "exams/applications",
-    "exams/deadlines",
-    "exams/exam-dates",
-    "exams/cut-offs",
-    "exams/counselling",
+    "current-affairs","news","categories","quiz","pdf","notes","pyq",
+    "question-papers","videos","ai","contact","about","editorial-methodology",
+    "sources-policy","ai-usage-policy","corrections-policy","privacy","terms",
+    "exams","exams/results","exams/admit-cards","exams/notifications",
+    "exams/answer-keys","exams/applications","exams/deadlines","exams/exam-dates",
+    "exams/cut-offs","exams/counselling",
   ].map((path) => ({
     url: `${SITE_URL}/${path}`,
     changeFrequency:
@@ -175,18 +37,85 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.75,
   }));
 
-  const examRoutes: MetadataRoute.Sitemap = (examResult.data || []).map((exam: any) => ({
-    url: `${SITE_URL}/exams/${exam.slug}`,
-    lastModified: exam.updated_at || exam.created_at || undefined,
-    changeFrequency: "daily" as const,
-    priority: 0.82,
-  }));
-
   return [
     { url: SITE_URL, changeFrequency: "daily", priority: 1 },
     ...publicPages,
     ...categoryPages,
-    ...examRoutes,
-    ...articleRoutes,
   ];
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const base = staticRoutes();
+
+  try {
+    const supabase = createServerSupabase();
+    const [articleResult, examResult] = await Promise.all([
+      supabase
+        .from("articles")
+        .select("slug,created_at,updated_at,article_sources(source_kind)")
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(2500),
+      supabase
+        .from("exam_updates")
+        .select("slug,created_at,updated_at")
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .limit(1500),
+    ]);
+
+    const seen = new Set<string>();
+    const articleRoutes: MetadataRoute.Sitemap = [];
+
+    for (const article of (articleResult.data || []) as SitemapArticle[]) {
+      if (!article?.slug) continue;
+      const kinds = new Set((article.article_sources || []).map((s) => s?.source_kind));
+      const lastModified = article.updated_at || article.created_at || undefined;
+
+      if (kinds.has("coaching")) {
+        const key = `ca:${article.slug}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          articleRoutes.push({
+            url: `${SITE_URL}/current-affairs/${article.slug}`,
+            lastModified,
+            changeFrequency: "weekly",
+            priority: 0.85,
+          });
+        }
+      }
+
+      if (kinds.has("news")) {
+        const key = `news:${article.slug}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          articleRoutes.push({
+            url: `${SITE_URL}/news/${article.slug}`,
+            lastModified,
+            changeFrequency: "weekly",
+            priority: 0.75,
+          });
+        }
+      }
+    }
+
+    const examRoutes: MetadataRoute.Sitemap = (examResult.data || []).map((exam: any) => ({
+      url: `${SITE_URL}/exams/${exam.slug}`,
+      lastModified: exam.updated_at || exam.created_at || undefined,
+      changeFrequency: "daily",
+      priority: 0.82,
+    }));
+
+    if (articleResult.error) console.error("[Sitemap] article query:", articleResult.error.message);
+    if (examResult.error && examResult.error.code !== "42P01") {
+      console.error("[Sitemap] exam query:", examResult.error.message);
+    }
+
+    return [...base, ...examRoutes, ...articleRoutes];
+  } catch (error: any) {
+    console.error("[Sitemap] dynamic data unavailable:", error?.message || error);
+    // Never return a 503 sitemap. Static discovery remains available while
+    // transient database errors recover.
+    return base;
+  }
 }
