@@ -26,7 +26,7 @@ function redirectToLogin(request: NextRequest) {
   return response;
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const forwardedHost = request.headers.get("x-forwarded-host");
   const requestHost = (forwardedHost || request.headers.get("host") || "")

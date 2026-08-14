@@ -41,3 +41,27 @@ yarn-error.log*
 next-env.d.ts
 supabase/.temp/
 *.zip
+
+# OpenNext
+.open-next
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+
+!.env.example
+
+# Local secret / scratch safety
+supabase-api-keys.json
+*.bak
+/backup-*/
+/current.html
+/generateArticle.txt
+/evaluateNews.txt
+/cd
+/findstr
+/next
+/npx
+/my-app@0.1.0
+/console.log*
