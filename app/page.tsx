@@ -25,7 +25,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <BreakingNews newsStream={streams.news} error={streams.error} />
-      <Hero featured={featured} articleCount={stats.articleCount} />
+      <Hero featured={featured} stats={stats} />
       <Features />
       <Categories />
       <LatestNews streams={streams} />

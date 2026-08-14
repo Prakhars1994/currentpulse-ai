@@ -8,7 +8,7 @@ import {
   findDuplicateInArticles,
   loadRecentArticles,
 } from "@/lib/news/duplicateRepository";
-import { classifyCategory, resolvePaper } from "@/lib/contentTaxonomy";
+import { classifyNewsCategory, resolvePaper } from "@/lib/contentTaxonomy";
 import { isSameEvent } from "@/lib/news/eventCluster";
 import {
   COVERAGE_SOURCE_IDS,
@@ -170,7 +170,7 @@ async function collectNews({ full = false } = {}) {
 
 function localEvaluation(article) {
   const text = `${article.title || ""} ${article.description || ""}`;
-  const category = classifyCategory(text);
+  const category = classifyNewsCategory(text);
   const independentCoverage = new Set(article.coverage || [article.source]).size;
   const importance = Math.min(10, 6 + Math.min(3, independentCoverage - 1));
 
@@ -501,6 +501,17 @@ export async function GET(request) {
   const waitForCompletion = searchParams.get("wait") === "1";
   const scope = searchParams.get("scope")?.trim().toLowerCase() || "scheduled";
   const full = searchParams.get("full") === "1";
+  const runner = searchParams.get("runner")?.trim().toLowerCase() || "";
+
+  // The user still has external cron-job.org heartbeats. GitHub Actions
+  // owns expensive background processing now, so an old no-wait scheduled
+  // heartbeat stays successful without duplicating source/AI work.
+  if (!waitForCompletion && scope === "scheduled" && runner !== "github") {
+    return NextResponse.json({
+      success: true, accepted: true, skipped: true, scope,
+      message: "External automation heartbeat accepted; GitHub Actions owns scheduled processing.",
+    }, { status: 202 });
+  }
 
   if (!new Set(["scheduled", "all", "news", "coverage"]).has(scope)) {
     return NextResponse.json(

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SiteShell from "@/components/SiteShell";
+import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { SITE_URL } from "@/lib/siteUrl";
 
 const geistSans = Geist({
@@ -115,6 +116,7 @@ export default function RootLayout({
         />
         <SiteShell>{children}</SiteShell>
         <Analytics />
+        <GoogleAnalytics />
       </body>
     </html>
   );

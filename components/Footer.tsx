@@ -18,11 +18,21 @@ const categoryLinks = [
   ["Environment", "/category/environment"],
 ];
 
+const trustLinks = [
+  ["About", "/about"],
+  ["Editorial Methodology", "/editorial-methodology"],
+  ["Sources Policy", "/sources-policy"],
+  ["AI Usage Policy", "/ai-usage-policy"],
+  ["Corrections", "/corrections-policy"],
+  ["Privacy", "/privacy"],
+  ["Terms", "/terms"],
+];
+
 export default function Footer() {
   return (
     <footer className="border-t border-slate-800 bg-slate-950 text-slate-300 print:hidden">
       <div className="mx-auto max-w-7xl px-6 py-14">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <h2 className="text-2xl font-black text-cyan-400">CurrentPulse AI</h2>
             <p className="mt-4 max-w-xl leading-7 text-slate-400">
@@ -78,6 +88,19 @@ export default function Footer() {
                   Contact
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-bold text-white">Standards & privacy</h3>
+            <ul className="mt-4 space-y-3">
+              {trustLinks.map(([label, href]) => (
+                <li key={href}>
+                  <Link href={href} className="transition hover:text-cyan-400">
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

@@ -6,7 +6,9 @@ import {
   assessNewsCandidate,
   sanitizeEditorialText,
 } from "../lib/editorial/publicationSafety.js";
-import { correctTaxonomy } from "../lib/contentTaxonomy.js";
+import { classifyNewsCategory, correctTaxonomy } from "../lib/contentTaxonomy.js";
+import { assessNewsOutputQuality } from "../lib/news/newsOutputQuality.js";
+import { inspectCoverageCandidate } from "../lib/coverage/sourceSanitizer.js";
 import { isSameEvent } from "../lib/news/eventCluster.js";
 
 test("rejects the audited non-event Current Affairs pages", () => {
@@ -204,4 +206,56 @@ test("removes promotional and internal pipeline paragraphs", () => {
     "Valid source-backed fact.\n\nToppers Wrote 1000 Answers Between Prelims & Mains.\n\nSelection reason: selected by local UPSC scoring.\n\nAnother useful fact."
   );
   assert.equal(cleaned, "Valid source-backed fact.\n\nAnother useful fact.");
+});
+
+test("blocks raw or duplicated reader-facing News output", () => {
+  assert.equal(
+    assessNewsOutputQuality({
+      why_news: "SOURCE TITLE: Example ADDITIONAL COVERAGE (Reuters): another raw source block.",
+      data_examples: "A sufficiently long facts section that should never rescue raw pipeline text.",
+      static_foundation: "A sufficiently long context section that should never rescue raw pipeline text.",
+    }).allowed,
+    false
+  );
+
+  const repeated = "Police found a suitcase and later confirmed the object was a lifelike doll after an examination by investigators.";
+  assert.equal(
+    assessNewsOutputQuality({
+      why_news: repeated,
+      data_examples: repeated,
+      static_foundation: repeated,
+      india_relevance: repeated,
+    }).allowed,
+    false
+  );
+});
+
+test("general News taxonomy does not default unrelated stories to Polity", () => {
+  assert.equal(
+    classifyNewsCategory("SpaceX launches a new Moon rocket mission"),
+    "Science & Technology"
+  );
+  assert.equal(
+    classifyNewsCategory("Food recall after Salmonella outbreak hospitalises consumers"),
+    "Social Issues"
+  );
+  assert.equal(
+    classifyNewsCategory("Actor shares a breakfast photograph while on holiday"),
+    "General News"
+  );
+});
+
+test("rejects audited multi-topic Current Affairs wrappers", () => {
+  for (const title of [
+    "Defense, Energy, and Labor Technology Updates: Agni-IV, GOBARdhan, and Labor Box",
+    "Geographical Indications, Smart Materials, and the New Phase of the Khelo India Scheme",
+  ]) {
+    const result = inspectCoverageCandidate({
+      title,
+      summary: "A long source extract containing multiple unrelated sections and enough text to pass the minimum source length requirement. ".repeat(4),
+      url: "https://example.com/current-affairs/daily",
+    });
+    assert.equal(result.accepted, false, title);
+    assert.ok(result.flags.includes("multi_topic_bundle"), title);
+  }
 });

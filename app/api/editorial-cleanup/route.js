@@ -5,12 +5,14 @@ import {
   publicArticleText,
   sanitizeEditorialText,
 } from "@/lib/editorial/publicationSafety";
-import { correctTaxonomy } from "@/lib/contentTaxonomy";
+import { classifyNewsCategory, correctTaxonomy } from "@/lib/contentTaxonomy";
 import {
   hasClearlyStaleSource,
   isObviousLowValueNews,
 } from "@/lib/news/newsQuality";
 import { isSameEvent } from "@/lib/news/eventCluster";
+import { assessNewsOutputQuality } from "@/lib/news/newsOutputQuality";
+import { inspectCoverageCandidate } from "@/lib/coverage/sourceSanitizer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -205,24 +207,48 @@ export async function GET(request) {
 
     const labels = streamLabels(article);
 
-    if (
-      labels.has("news") &&
-      !labels.has("coverage") &&
-      (isObviousLowValueNews(article) ||
-        hasClearlyStaleSource(article) ||
-        hasMisleadingOldHeadlineYear(article))
-    ) {
-      quarantine.push({
-        id: article.id,
-        slug: article.slug,
+    if (labels.has("coverage")) {
+      const coverageShape = inspectCoverageCandidate({
         title: article.title,
-        stream: "news",
-        code: isObviousLowValueNews(article)
-          ? "routine_operational_news"
-          : "stale_news",
-        reason: "The published row is routine operational noise or an old development surfaced as fresh news.",
+        summary: `${article.why_news || ""} ${article.static_foundation || ""}`,
+        url: (article.article_sources || []).find(
+          (source) => source?.source_kind === "coaching"
+        )?.source_url || "",
       });
-      continue;
+      if (coverageShape.flags.includes("multi_topic_bundle")) {
+        quarantine.push({
+          id: article.id,
+          slug: article.slug,
+          title: article.title,
+          stream: "coverage",
+          code: "multi_topic_bundle",
+          reason: "A multi-topic digest wrapper must not remain a single Current Affairs article.",
+        });
+        continue;
+      }
+    }
+
+    if (labels.has("news") && !labels.has("coverage")) {
+      const outputQuality = assessNewsOutputQuality(article);
+      const lowValue = isObviousLowValueNews(article);
+      const stale = hasClearlyStaleSource(article) || hasMisleadingOldHeadlineYear(article);
+      if (!outputQuality.allowed || lowValue || stale) {
+        quarantine.push({
+          id: article.id,
+          slug: article.slug,
+          title: article.title,
+          stream: "news",
+          code: !outputQuality.allowed
+            ? outputQuality.code
+            : lowValue
+              ? "routine_operational_news"
+              : "stale_news",
+          reason: !outputQuality.allowed
+            ? outputQuality.reason
+            : "The published row is routine operational noise or an old development surfaced as fresh news.",
+        });
+        continue;
+      }
     }
 
     const sanitizedFields = sanitizedFieldUpdates(article);
@@ -236,11 +262,17 @@ export async function GET(request) {
       });
     }
 
-    const taxonomy = correctTaxonomy(
-      publicArticleText({ ...article, ...sanitizedFields }),
-      article.category,
-      article.paper
-    );
+    const taxonomyText = publicArticleText({ ...article, ...sanitizedFields });
+    const taxonomy = stream === "news"
+      ? {
+          category: classifyNewsCategory(taxonomyText, article.category),
+          paper: "Prelims",
+        }
+      : correctTaxonomy(
+          taxonomyText,
+          article.category,
+          article.paper
+        );
     if (
       (taxonomy.category !== article.category || taxonomy.paper !== article.paper)
     ) {

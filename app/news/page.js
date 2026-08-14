@@ -6,17 +6,30 @@ import { createCategorySlug } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL } from "@/lib/siteUrl";
 
-export const metadata = {
-  title: "Latest India & World News | CurrentPulse AI",
-  description: "Read concise, source-backed India and world news with key facts, context and why each development matters.",
-  alternates: { canonical: `${SITE_URL}/news` },
-  openGraph: {
-    title: "Latest News | CurrentPulse AI",
-    description: "Concise India and world news with context and key facts.",
-    url: `${SITE_URL}/news`,
-    type: "website",
-  },
-};
+export async function generateMetadata({ searchParams }) {
+  const params = await searchParams;
+  const page = Math.max(1, Number(params?.page) || 1);
+  const canonical =
+    page <= 1 ? `${SITE_URL}/news` : `${SITE_URL}/news?page=${page}`;
+  const title =
+    page <= 1
+      ? "Latest India & World News"
+      : `Latest India & World News - Page ${page}`;
+  const description =
+    "Read concise, source-backed India and world news with key facts, context and why each development matters.";
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+    },
+  };
+}
 
 function stripHtml(content = "") {
   return String(content || "")

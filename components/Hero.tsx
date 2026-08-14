@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { hasCoachingSource } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
-import { VALID_CATEGORIES } from "@/lib/contentTaxonomy";
 
 function stripHtml(value: string | null) {
   if (!value) return "";
@@ -26,9 +25,16 @@ function formatDate(value: string | null) {
   });
 }
 
-export default function Hero({ featured = null, articleCount = 0 }: { featured?: any; articleCount?: number }) {
-  const categoryCount = VALID_CATEGORIES.length;
-  const coachingSourceCount = 8;
+export default function Hero({ featured = null, stats = null }: { featured?: any; stats?: any }) {
+  const todayCurrentAffairs = Number(stats?.todayCurrentAffairs || 0);
+  const todayNews = Number(stats?.todayNews || 0);
+  const lastUpdated = stats?.lastUpdated
+    ? new Date(stats.lastUpdated).toLocaleTimeString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "--";
 
   const featuredImage = resolveDisplayImage(featured || {});
   const featuredIsCurrentAffairs = hasCoachingSource(featured || {});
@@ -118,31 +124,28 @@ export default function Hero({ featured = null, articleCount = 0 }: { featured?:
             <div className="mt-10 grid grid-cols-3 gap-2 sm:gap-3">
               <div className="rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:p-4">
                 <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
-                  {(articleCount || 0).toLocaleString("en-IN")}
+                  {todayCurrentAffairs.toLocaleString("en-IN")}
                 </p>
-
                 <p className="mt-2 text-sm text-gray-400 sm:text-base">
-                  Published records
+                  Today&apos;s CA
                 </p>
               </div>
 
               <div className="rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:p-4">
                 <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
-                  {categoryCount.toLocaleString("en-IN")}
+                  {todayNews.toLocaleString("en-IN")}
                 </p>
-
                 <p className="mt-2 text-sm text-gray-400 sm:text-base">
-                  Categories
+                  Today&apos;s News
                 </p>
               </div>
 
               <div className="rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:p-4">
-                <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
-                  {coachingSourceCount.toLocaleString("en-IN")}
+                <p className="text-2xl font-bold text-cyan-400 sm:text-3xl">
+                  {lastUpdated}
                 </p>
-
                 <p className="mt-2 text-sm text-gray-400 sm:text-base">
-                  Trusted coaching feeds
+                  Last updated IST
                 </p>
               </div>
             </div>

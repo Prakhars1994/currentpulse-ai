@@ -21,7 +21,15 @@ export async function GET(request) {
 
   const searchParams = new URL(request.url).searchParams;
   const full = searchParams.get("full") === "1";
+  const runner = searchParams.get("runner")?.trim().toLowerCase() || "";
   const notificationsEnabled = searchParams.get("notifications") !== "0";
+
+  if (!full && runner !== "github") {
+    return NextResponse.json({
+      success: true, skipped: true,
+      message: "External ResultPulse heartbeat accepted; GitHub Actions owns scheduled scans.",
+    }, { headers: { "Cache-Control": "no-store" } });
+  }
   const selectedSources = full
     ? EXAM_OFFICIAL_SOURCES
     : selectScheduledExamSources(EXAM_OFFICIAL_SOURCES);

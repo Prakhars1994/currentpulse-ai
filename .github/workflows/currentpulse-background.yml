@@ -2,11 +2,9 @@ name: CurrentPulse Background Automation
 
 on:
   schedule:
-    # Six lightweight daily runs in IST:
-    # 06:30, 09:30, 12:30, 15:30, 19:30 and 22:30.
-    # GitHub cron uses UTC: 01:00, 04:00, 07:00, 10:00, 14:00 and 17:00.
-    # News runs every slot; CA is concentrated in evening publication windows.
-    - cron: "0 1,4,7,10,14,17 * * *"
+    # Hourly runner at :30 IST. Expensive collectors still run only in their
+    # selected windows; the hourly cadence mainly drains AI fallbacks quickly.
+    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -30,8 +28,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # The Next server exists only inside this ephemeral GitHub runner, so this
-  # local secret does not need to match the public site's CRON_SECRET.
   CRON_SECRET: currentpulse-github-actions-local-runner
   NEXT_PUBLIC_BASE_URL: https://currentpulse-ai.vercel.app
 
@@ -57,17 +53,18 @@ env:
   WHATSAPP_TEMPLATE_NAME: ${{ secrets.WHATSAPP_TEMPLATE_NAME }}
   WHATSAPP_TEMPLATE_LANGUAGE: ${{ secrets.WHATSAPP_TEMPLATE_LANGUAGE }}
 
-  # Keep source work bounded even though the public-repository runner is free.
+  NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+
   NEWS_SUPPLEMENTAL_SOURCES_PER_RUN: "4"
   NEWS_MAX_QUEUE_WRITES_PER_RUN: "24"
-  COVERAGE_SOURCES_PER_RUN: "3"
 
-  # Trusted coaching CA is processed immediately. The queue is only fallback.
+  # 8 configured coaching sources are covered by two complementary 4-source
+  # evening windows. The direct inline cap is NOT the total publish cap: the
+  # queue is drained repeatedly immediately after collection.
+  COVERAGE_SOURCES_PER_RUN: "4"
   COVERAGE_IMMEDIATE_MAX_PER_RUN: "10"
   COVERAGE_IMMEDIATE_PUBLISH_BUDGET_MS: "150000"
 
-  # Fast sequential provider fallback conserves free quotas instead of racing
-  # every provider at once.
   AI_PROVIDER_ORDER: "mistral,cloudflare,groq,openrouter,cerebras,sambanova,githubmodels,huggingface"
   AI_ROUTER_DEADLINE_MS: "50000"
   AI_PROVIDER_TIMEOUT_MS: "15000"
@@ -80,7 +77,7 @@ jobs:
   automate:
     if: ${{ github.event_name == 'workflow_dispatch' || vars.AUTOMATION_ENABLED == 'true' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
 
     steps:
       - name: Checkout current main
@@ -98,14 +95,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ -z "${NEXT_PUBLIC_SUPABASE_URL:-}" ]]; then
-            echo "Missing GitHub Actions secret: NEXT_PUBLIC_SUPABASE_URL"
-            exit 1
-          fi
-          if [[ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
-            echo "Missing GitHub Actions secret: SUPABASE_SERVICE_ROLE_KEY"
-            exit 1
-          fi
+          [[ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" ]] || { echo "Missing NEXT_PUBLIC_SUPABASE_URL"; exit 1; }
+          [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] || { echo "Missing SUPABASE_SERVICE_ROLE_KEY"; exit 1; }
 
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund
@@ -119,17 +110,16 @@ jobs:
 
           for attempt in {1..45}; do
             if curl --silent --fail --max-time 3 http://127.0.0.1:3000/icon.svg >/dev/null; then
-              echo "CurrentPulse local automation server is ready."
+              echo "CurrentPulse automation server ready."
               exit 0
             fi
             sleep 2
           done
 
-          echo "Local Next server did not become ready."
           cat /tmp/currentpulse-next.log || true
           exit 1
 
-      - name: Run quota-bounded automation
+      - name: Run CurrentPulse automation
         shell: bash
         env:
           EVENT_SCHEDULE: ${{ github.event.schedule }}
@@ -137,92 +127,206 @@ jobs:
         run: |
           set -euo pipefail
 
-          api() {
+          mark_deploy() {
+            touch /tmp/currentpulse-deploy-needed
+          }
+
+          api_required() {
             local path="$1"
-            echo "Calling ${path}"
-            curl --silent --show-error --fail-with-body \
-              --max-time 240 \
+            echo
+            echo ">>> ${path}"
+            curl --silent --show-error --fail-with-body --max-time 300 \
               -H "Authorization: Bearer ${CRON_SECRET}" \
               "http://127.0.0.1:3000${path}"
             echo
           }
 
+          api_optional() {
+            local path="$1"
+            echo
+            echo ">>> OPTIONAL ${path}"
+            if ! curl --silent --show-error --fail-with-body --max-time 300 \
+              -H "Authorization: Bearer ${CRON_SECRET}" \
+              "http://127.0.0.1:3000${path}"; then
+              echo
+              echo "Optional task failed; independent pipelines will continue."
+              return 0
+            fi
+            echo
+          }
+
+          drain_queue() {
+            local started batch tmp code processed outage
+            started="$(date +%s)"
+            echo
+            echo "===== DRAIN READY QUEUE ====="
+
+            for batch in $(seq 1 30); do
+              if (( $(date +%s) - started >= 2400 )); then
+                echo "Queue drain reached 40-minute safety budget."
+                break
+              fi
+
+              tmp="$(mktemp)"
+              code="$(
+                curl --silent --show-error --max-time 180 \
+                  --output "${tmp}" \
+                  --write-out "%{http_code}" \
+                  -H "Authorization: Bearer ${CRON_SECRET}" \
+                  "http://127.0.0.1:3000/api/process-queue?wait=1&limit=6"
+              )"
+
+              cat "${tmp}"
+              echo
+
+              if [[ "${code}" -lt 200 || "${code}" -ge 300 ]]; then
+                rm -f "${tmp}"
+                echo "Queue processor HTTP ${code}; leave remaining items durable for next hourly retry."
+                break
+              fi
+
+              processed="$(
+                node -e '
+                  const fs=require("fs");
+                  const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+                  process.stdout.write(String(p?.stats?.processed || 0));
+                ' "${tmp}"
+              )"
+              outage="$(
+                node -e '
+                  const fs=require("fs");
+                  const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+                  process.stdout.write(p?.stats?.providerOutage ? "true" : "false");
+                ' "${tmp}"
+              )"
+              rm -f "${tmp}"
+
+              echo "QUEUE_BATCH=${batch} PROCESSED=${processed} PROVIDER_OUTAGE=${outage}"
+
+              if [[ "${processed}" != "0" ]]; then
+                mark_deploy
+              fi
+              if [[ "${processed}" == "0" ]]; then
+                echo "READY_QUEUE=EMPTY"
+                break
+              fi
+              if [[ "${outage}" == "true" ]]; then
+                echo "Provider outage detected; retry on a later hourly run."
+                break
+              fi
+            done
+          }
+
           mode="${MANUAL_MODE:-}"
-          if [[ -z "$mode" || "$mode" == "smart" ]]; then
+          if [[ -z "${mode}" || "${mode}" == "smart" ]]; then
             if [[ -n "${EVENT_SCHEDULE:-}" ]]; then
-              mode="smart-scheduled"
+              mode="smart-hourly"
             else
               mode="smart-full"
             fi
           fi
 
-          case "$mode" in
-            collect)
-              api "/api/auto-publish?wait=1&scope=news"
-              api "/api/coverage-import?source=all&limit=180"
+          case "${mode}" in
+            coverage)
+              api_required "/api/coverage-import?source=all&limit=2000"
+              mark_deploy
+              drain_queue
               ;;
             news)
-              api "/api/auto-publish?wait=1&scope=news"
+              api_required "/api/auto-publish?wait=1&scope=news"
+              mark_deploy
+              drain_queue
               ;;
-            coverage)
-              api "/api/coverage-import?source=all&limit=180"
+            collect)
+              # CA first: News can never prevent Current Affairs processing.
+              api_required "/api/coverage-import?source=all&limit=2000"
+              mark_deploy
+              drain_queue
+              api_optional "/api/auto-publish?wait=1&scope=news"
+              mark_deploy
+              drain_queue
               ;;
             queue)
-              api "/api/process-queue?wait=1&limit=6"
+              drain_queue
               ;;
             exams)
-              api "/api/exams/run?full=1&notifications=0"
+              api_required "/api/exams/run?full=1&notifications=0&runner=github"
+              mark_deploy
               ;;
             smart-full)
-              # Manual catch-up scans the complete News source catalogue.
-              api "/api/auto-publish?wait=1&scope=news&full=1"
+              echo "===== FULL MANUAL CATCH-UP: CA FIRST ====="
+              api_required "/api/coverage-import?source=all&limit=2000"
+              mark_deploy
+              drain_queue
 
-              # All trusted coaching sources. New CA is published immediately;
-              # only temporary AI/errors are left in the queue.
-              api "/api/coverage-import?source=all&limit=180"
+              api_optional "/api/exams/run?full=1&notifications=0&runner=github"
+              mark_deploy
 
-              # Clear fresh News and any CA fallbacks in bounded batches.
-              for batch in 1 2 3; do
-                api "/api/process-queue?wait=1&limit=6"
-              done
+              api_optional "/api/generate-quiz?wait=1&force=1"
+              mark_deploy
 
-              api "/api/exams/run?full=1&notifications=0"
-              api "/api/generate-quiz?wait=1&force=1"
+              # Use the scheduled News slice, not the historical full=1 call
+              # that timed out before CA could run.
+              api_optional "/api/auto-publish?wait=1&scope=news"
+              mark_deploy
+              drain_queue
+
+              api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
+              mark_deploy
               ;;
-            smart-scheduled)
+            smart-hourly)
               india_hour="$(TZ=Asia/Kolkata date +%H)"
+              echo "INDIA_HOUR=${india_hour}"
 
-              api "/api/auto-publish?wait=1&scope=news"
-
-              # Coaching Current Affairs is scanned in two evening batches.
-              # With three rotating sources per run this covers the six trusted
-              # coaching sources daily without repeatedly scraping them all day.
-              if [[ "$india_hour" == "19" || "$india_hour" == "22" ]]; then
-                api "/api/auto-publish?wait=1&scope=coverage"
+              # Coaching CA is first in the two evening publication windows.
+              if [[ "${india_hour}" == "19" || "${india_hour}" == "22" ]]; then
+                api_required "/api/auto-publish?wait=1&scope=coverage"
+                mark_deploy
+                drain_queue
+              else
+                # Pending CA/News AI fallbacks are checked every hour.
+                drain_queue
               fi
 
-              api "/api/process-queue?wait=1&limit=6"
-
-              # ResultPulse gets several activity windows without blanket
-              # half-hourly polling.
-              case "$india_hour" in
-                06|12|19|22)
-                  api "/api/exams/run?notifications=0"
+              # General News remains independent and lightweight.
+              case "${india_hour}" in
+                06|09|12|15|19|22)
+                  api_optional "/api/auto-publish?wait=1&scope=news"
+                  mark_deploy
+                  drain_queue
                   ;;
               esac
 
-              # One fresh UPSC quiz attempt each morning.
-              if [[ "$india_hour" == "06" ]]; then
-                api "/api/generate-quiz?wait=1"
+              # ResultPulse official-source activity windows.
+              case "${india_hour}" in
+                06|12|19|22)
+                  api_optional "/api/exams/run?notifications=0&runner=github"
+                  mark_deploy
+                  ;;
+              esac
+
+              # Morning quiz plus a forced refresh after the late CA window.
+              if [[ "${india_hour}" == "06" ]]; then
+                api_optional "/api/generate-quiz?wait=1"
+                mark_deploy
+              elif [[ "${india_hour}" == "22" ]]; then
+                api_optional "/api/generate-quiz?wait=1&force=1"
+                mark_deploy
+              fi
+
+              # One daily archive cleanup after the collection windows.
+              if [[ "${india_hour}" == "23" ]]; then
+                api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
+                mark_deploy
               fi
               ;;
             *)
-              echo "Unsupported automation mode: $mode"
+              echo "Unsupported mode: ${mode}"
               exit 2
               ;;
           esac
 
-      - name: Print server log on failure
+      - name: Print server log on automation failure
         if: failure()
         shell: bash
         run: cat /tmp/currentpulse-next.log || true
@@ -234,3 +338,22 @@ jobs:
           if [[ -f /tmp/currentpulse-next.pid ]]; then
             kill "$(cat /tmp/currentpulse-next.pid)" 2>/dev/null || true
           fi
+
+      - name: Deploy refreshed Cloudflare static snapshot
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_AI_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -u
+          if [[ ! -f /tmp/currentpulse-deploy-needed ]]; then
+            echo "No public-content change detected; deployment skipped."
+            exit 0
+          fi
+          if [[ -z "${CLOUDFLARE_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+            echo "Cloudflare deployment credentials unavailable; DB updates remain saved."
+            exit 0
+          fi
+          npm run deploy

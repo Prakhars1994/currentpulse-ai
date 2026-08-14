@@ -39,7 +39,7 @@ const PROCESSING_CONCURRENCY = 2;
 const MAX_QUEUE_ITEMS_PER_RUN = 6;
 const MAX_TEMPORARY_AI_FAILURES_PER_RUN = 2;
 const RETRYABLE_FAILED_LOOKBACK_HOURS = 72;
-const AI_RETRY_COOLDOWN_MINUTES = 120;
+const AI_RETRY_COOLDOWN_MINUTES = 55;
 
 function isCoverageQueueItem(item = {}) {
   return ["coaching", "coaching_enrichment"].includes(item.pipeline_kind);
@@ -608,6 +608,14 @@ export async function GET(request) {
   const requestUrl = new URL(request.url);
   const waitForCompletion =
     requestUrl.searchParams.get("wait") === "1";
+  const runner = requestUrl.searchParams.get("runner")?.trim().toLowerCase() || "";
+
+  if (!waitForCompletion && runner !== "github") {
+    return NextResponse.json({
+      success: true, accepted: true, skipped: true,
+      message: "External queue heartbeat accepted; GitHub Actions owns queue processing.",
+    }, { status: 202 });
+  }
 
   const limitParam = requestUrl.searchParams.get("limit");
   const requestedLimit = Number(limitParam);

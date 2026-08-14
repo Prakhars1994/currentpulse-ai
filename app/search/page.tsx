@@ -4,6 +4,14 @@ import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
 
+export const metadata = {
+  title: "Search",
+  description: "Search CurrentPulse News and UPSC Current Affairs.",
+  alternates: { canonical: "/search" },
+  robots: { index: false, follow: true },
+};
+
+
 type SearchPageProps = {
   searchParams: Promise<{
     q?: string;

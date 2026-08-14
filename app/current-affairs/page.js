@@ -9,19 +9,34 @@ import { createCategorySlug } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL } from "@/lib/siteUrl";
 
-export const metadata = {
-  title: "Daily UPSC Current Affairs — Prelims & Mains Analysis",
-  description:
-    "Read daily UPSC current affairs with exact syllabus linkage, India relevance, static foundation, Prelims facts, data, examples and Mains answer frameworks.",
-  alternates: { canonical: `${SITE_URL}/current-affairs` },
-  openGraph: {
-    title: "Daily UPSC Current Affairs | CurrentPulse AI",
-    description:
-      "Selection-oriented current affairs connected to UPSC Prelims, Mains and static subjects.",
-    url: `${SITE_URL}/current-affairs`,
-    type: "website",
-  },
-};
+export async function generateMetadata({ searchParams }) {
+  const params = await searchParams;
+  const page = Math.max(1, Number(params?.page) || 1);
+  const todayOnly = params?.view === "today";
+  const canonical =
+    page <= 1
+      ? `${SITE_URL}/current-affairs`
+      : `${SITE_URL}/current-affairs?page=${page}`;
+  const title =
+    page <= 1
+      ? "Daily UPSC Current Affairs - Prelims & Mains Analysis"
+      : `UPSC Current Affairs Archive - Page ${page}`;
+  const description =
+    "Read daily UPSC current affairs with exact syllabus linkage, India relevance, static foundation, Prelims facts, data, examples and Mains answer frameworks.";
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    robots: todayOnly ? { index: false, follow: true } : { index: true, follow: true },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+    },
+  };
+}
 
 function stripHtml(content = "") {
   return content
