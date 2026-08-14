@@ -32,11 +32,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 150;
 
-const HARD_STOP_MS = 110000;
-const MINIMUM_NEXT_ITEM_BUDGET_MS = 30000;
+const HARD_STOP_MS = 125000;
+const MINIMUM_NEXT_ITEM_BUDGET_MS = 25000;
 const STALE_PROCESSING_MINUTES = 20;
 const PROCESSING_CONCURRENCY = 2;
-const MAX_QUEUE_ITEMS_PER_RUN = 4;
+const MAX_QUEUE_ITEMS_PER_RUN = 6;
 const MAX_TEMPORARY_AI_FAILURES_PER_RUN = 2;
 const RETRYABLE_FAILED_LOOKBACK_HOURS = 72;
 const AI_RETRY_COOLDOWN_MINUTES = 120;
@@ -187,7 +187,7 @@ async function getPendingQueueItem(supabase, attemptedIds) {
     .limit(200);
 
   if (error) throw new Error(`Queue fetch failed: ${error.message}`);
-  const priority = { news: 0, coaching: 0, coaching_enrichment: 1 };
+  const priority = { coaching: -2, coaching_enrichment: -1, news: 0 };
   const retryCutoff = Date.now() - AI_RETRY_COOLDOWN_MINUTES * 60 * 1000;
   return (data || [])
     .filter((item) => !attemptedIds.has(item.id))

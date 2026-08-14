@@ -61,6 +61,18 @@ env:
   NEWS_SUPPLEMENTAL_SOURCES_PER_RUN: "4"
   NEWS_MAX_QUEUE_WRITES_PER_RUN: "24"
   COVERAGE_SOURCES_PER_RUN: "3"
+
+  # Trusted coaching CA is processed immediately. The queue is only fallback.
+  COVERAGE_IMMEDIATE_MAX_PER_RUN: "10"
+  COVERAGE_IMMEDIATE_PUBLISH_BUDGET_MS: "150000"
+
+  # Fast sequential provider fallback conserves free quotas instead of racing
+  # every provider at once.
+  AI_PROVIDER_ORDER: "mistral,cloudflare,groq,openrouter,cerebras,sambanova,githubmodels,huggingface"
+  AI_ROUTER_DEADLINE_MS: "50000"
+  AI_PROVIDER_TIMEOUT_MS: "15000"
+  GEMINI_REQUEST_TIMEOUT_MS: "8000"
+
   EXAM_SOURCES_PER_RUN: "5"
   EXAM_ITEMS_PER_SOURCE: "50"
 
@@ -156,17 +168,26 @@ jobs:
               api "/api/coverage-import?source=all&limit=180"
               ;;
             queue)
-              api "/api/process-queue?wait=1&limit=4"
+              api "/api/process-queue?wait=1&limit=6"
               ;;
             exams)
               api "/api/exams/run?full=1&notifications=0"
               ;;
             smart-full)
-              api "/api/auto-publish?wait=1&scope=news"
+              # Manual catch-up scans the complete News source catalogue.
+              api "/api/auto-publish?wait=1&scope=news&full=1"
+
+              # All trusted coaching sources. New CA is published immediately;
+              # only temporary AI/errors are left in the queue.
               api "/api/coverage-import?source=all&limit=180"
-              api "/api/process-queue?wait=1&limit=4"
+
+              # Clear fresh News and any CA fallbacks in bounded batches.
+              for batch in 1 2 3; do
+                api "/api/process-queue?wait=1&limit=6"
+              done
+
               api "/api/exams/run?full=1&notifications=0"
-              api "/api/generate-quiz?wait=1"
+              api "/api/generate-quiz?wait=1&force=1"
               ;;
             smart-scheduled)
               india_hour="$(TZ=Asia/Kolkata date +%H)"
@@ -180,7 +201,7 @@ jobs:
                 api "/api/auto-publish?wait=1&scope=coverage"
               fi
 
-              api "/api/process-queue?wait=1&limit=4"
+              api "/api/process-queue?wait=1&limit=6"
 
               # ResultPulse gets several activity windows without blanket
               # half-hourly polling.
