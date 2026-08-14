@@ -609,10 +609,14 @@ export async function GET(request) {
   const waitForCompletion =
     requestUrl.searchParams.get("wait") === "1";
 
-  const requestedLimit = Number(requestUrl.searchParams.get("limit"));
-  const runLimit = Number.isInteger(requestedLimit)
-    ? Math.max(1, Math.min(MAX_QUEUE_ITEMS_PER_RUN, requestedLimit))
-    : MAX_QUEUE_ITEMS_PER_RUN;
+  const limitParam = requestUrl.searchParams.get("limit");
+  const requestedLimit = Number(limitParam);
+  const runLimit =
+    limitParam !== null &&
+    limitParam.trim() !== "" &&
+    Number.isInteger(requestedLimit)
+      ? Math.max(1, Math.min(MAX_QUEUE_ITEMS_PER_RUN, requestedLimit))
+      : MAX_QUEUE_ITEMS_PER_RUN;
 
   if (waitForCompletion) return executeQueueProcessing(runLimit);
 

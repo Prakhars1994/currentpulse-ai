@@ -2,12 +2,11 @@ name: CurrentPulse Background Automation
 
 on:
   schedule:
-    # One runner every 30 minutes. The :07 run collects News/CA and processes
-    # the queue; the :37 run only processes the queue. ResultPulse runs every
-    # two hours from the :07 slot. This keeps setup overhead low by reusing one
-    # runner for related work instead of starting many independent workflows.
-    - cron: "7 * * * *"
-    - cron: "37 * * * *"
+    # Six lightweight daily runs in IST:
+    # 06:30, 09:30, 12:30, 15:30, 19:30 and 22:30.
+    # GitHub cron uses UTC: 01:00, 04:00, 07:00, 10:00, 14:00 and 17:00.
+    # News runs every slot; CA is concentrated in evening publication windows.
+    - cron: "0 1,4,7,10,14,17 * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -61,7 +60,7 @@ env:
   # Keep source work bounded even though the public-repository runner is free.
   NEWS_SUPPLEMENTAL_SOURCES_PER_RUN: "4"
   NEWS_MAX_QUEUE_WRITES_PER_RUN: "24"
-  COVERAGE_SOURCES_PER_RUN: "2"
+  COVERAGE_SOURCES_PER_RUN: "3"
   EXAM_SOURCES_PER_RUN: "5"
   EXAM_ITEMS_PER_SOURCE: "50"
 
@@ -138,41 +137,62 @@ jobs:
 
           mode="${MANUAL_MODE:-}"
           if [[ -z "$mode" || "$mode" == "smart" ]]; then
-            if [[ "${EVENT_SCHEDULE:-}" == "37 * * * *" ]]; then
-              mode="queue"
+            if [[ -n "${EVENT_SCHEDULE:-}" ]]; then
+              mode="smart-scheduled"
             else
-              mode="smart-hourly"
+              mode="smart-full"
             fi
           fi
 
           case "$mode" in
             collect)
               api "/api/auto-publish?wait=1&scope=news"
-              api "/api/auto-publish?wait=1&scope=coverage"
+              api "/api/coverage-import?source=all&limit=180"
               ;;
             news)
               api "/api/auto-publish?wait=1&scope=news"
               ;;
             coverage)
-              api "/api/auto-publish?wait=1&scope=coverage"
+              api "/api/coverage-import?source=all&limit=180"
               ;;
             queue)
-              api "/api/process-queue?wait=1"
+              api "/api/process-queue?wait=1&limit=4"
               ;;
             exams)
-              api "/api/exams/run?notifications=0"
+              api "/api/exams/run?full=1&notifications=0"
               ;;
-            smart-hourly|smart)
+            smart-full)
               api "/api/auto-publish?wait=1&scope=news"
-              api "/api/auto-publish?wait=1&scope=coverage"
-              api "/api/process-queue?wait=1"
+              api "/api/coverage-import?source=all&limit=180"
+              api "/api/process-queue?wait=1&limit=4"
+              api "/api/exams/run?full=1&notifications=0"
+              api "/api/generate-quiz?wait=1"
+              ;;
+            smart-scheduled)
+              india_hour="$(TZ=Asia/Kolkata date +%H)"
 
-              # ResultPulse source rotation itself uses two-hour slots. Run it
-              # on even UTC hours so unchanged sites are checked conditionally
-              # rather than all 11 sources being scraped every half hour.
-              utc_hour="$(date -u +%H)"
-              if (( 10#$utc_hour % 2 == 0 )); then
-                api "/api/exams/run?notifications=0"
+              api "/api/auto-publish?wait=1&scope=news"
+
+              # Coaching Current Affairs is scanned in two evening batches.
+              # With three rotating sources per run this covers the six trusted
+              # coaching sources daily without repeatedly scraping them all day.
+              if [[ "$india_hour" == "19" || "$india_hour" == "22" ]]; then
+                api "/api/auto-publish?wait=1&scope=coverage"
+              fi
+
+              api "/api/process-queue?wait=1&limit=4"
+
+              # ResultPulse gets several activity windows without blanket
+              # half-hourly polling.
+              case "$india_hour" in
+                06|12|19|22)
+                  api "/api/exams/run?notifications=0"
+                  ;;
+              esac
+
+              # One fresh UPSC quiz attempt each morning.
+              if [[ "$india_hour" == "06" ]]; then
+                api "/api/generate-quiz?wait=1"
               fi
               ;;
             *)
