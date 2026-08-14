@@ -1,4 +1,4 @@
-export const revalidate = 300;
+export const revalidate = false;
 
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";

@@ -1,4 +1,4 @@
-export const revalidate = 60;
+export const revalidate = false;
 
 import { supabase } from "@/lib/supabase";
 import { mapStoredQuiz, UPSC_FOUNDATION_FALLBACK } from "@/lib/study/buildQuiz";

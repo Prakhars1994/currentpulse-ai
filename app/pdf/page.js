@@ -1,4 +1,4 @@
-export const revalidate = 300;
+export const revalidate = false;
 
 import Link from "next/link";
 import { CalendarDays, FileDown, Layers3 } from "lucide-react";
