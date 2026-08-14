@@ -318,7 +318,7 @@ async function markQueueFailed(supabase, originalQueueItem, errorMessage) {
   return { temporaryFailure, shouldRetry, attempts };
 }
 
-async function executeQueueProcessing() {
+async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
   const startedAt = Date.now();
 
   const supabase = createServerSupabase();
@@ -340,7 +340,7 @@ async function executeQueueProcessing() {
 
     async function worker(workerNumber) {
       while (!stopRequested) {
-        if (claimedCount >= MAX_QUEUE_ITEMS_PER_RUN) break;
+        if (claimedCount >= maxItems) break;
         const averageItemDurationMs = itemDurations.length
           ? Math.round(
               itemDurations.reduce((total, duration) => total + duration, 0) /
@@ -360,7 +360,7 @@ async function executeQueueProcessing() {
 
         const queueItem = await getPendingQueueItem(supabase, attemptedIds);
         if (!queueItem) break;
-        if (claimedCount >= MAX_QUEUE_ITEMS_PER_RUN) break;
+        if (claimedCount >= maxItems) break;
 
         claimedCount += 1;
         attemptedIds.add(queueItem.id);
@@ -605,10 +605,16 @@ export async function GET(request) {
     );
   }
 
+  const requestUrl = new URL(request.url);
   const waitForCompletion =
-    new URL(request.url).searchParams.get("wait") === "1";
+    requestUrl.searchParams.get("wait") === "1";
 
-  if (waitForCompletion) return executeQueueProcessing();
+  const requestedLimit = Number(requestUrl.searchParams.get("limit"));
+  const runLimit = Number.isInteger(requestedLimit)
+    ? Math.max(1, Math.min(MAX_QUEUE_ITEMS_PER_RUN, requestedLimit))
+    : MAX_QUEUE_ITEMS_PER_RUN;
+
+  if (waitForCompletion) return executeQueueProcessing(runLimit);
 
   after(async () => {
     const runId = await startAutomationRun("process_queue");
