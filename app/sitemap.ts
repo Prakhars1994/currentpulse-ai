@@ -3,8 +3,6 @@ import type { MetadataRoute } from "next";
 import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
 import { generateEventKey, normalizeText } from "@/lib/news/eventCluster";
-import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
-import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 // The sitemap depends on live Supabase data. Keep it out of the static-build
 // prerender path so a slow database/network call cannot fail `next build`.
@@ -12,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 // Keep this comfortably below Google's 50,000 URL limit while covering the
 // complete CurrentPulse article library for the foreseeable future.
-const SITEMAP_ARTICLE_LIMIT = 10000;
+const SITEMAP_ARTICLE_LIMIT = 5000;
 
 type SitemapArticle = {
   slug: string;
@@ -45,7 +43,7 @@ function stableEventKey(article: SitemapArticle) {
   const title = String(article.title || "").replace(/\([^)]{1,16}\)/g, " ");
   return generateEventKey({
     title,
-    description: article.why_news || "",
+    description: "",
     publishedAt: article.created_at || undefined,
   });
 }
@@ -86,7 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         supabase
           .from("articles")
           .select(
-            "slug,title,why_news,syllabus_linkage,prelims,mains,content,created_at,updated_at,article_sources(source_kind,source_published_at)"
+            "slug,title,created_at,updated_at,article_sources(source_kind,source_published_at)"
           )
           .eq("status", "published")
           .order("created_at", { ascending: false })
@@ -96,7 +94,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
           .select("slug,created_at,updated_at")
           .eq("status", "published")
           .order("created_at", { ascending: false })
-          .limit(10000),
+          .limit(5000),
       ])
     : [{ data: [], error: null }, { data: [], error: null }];
 
@@ -108,8 +106,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     (articles || []) as SitemapArticle[]
   ).flatMap((article) => {
     const routes: MetadataRoute.Sitemap = [];
-    const currentAffairsReady = isCoaching(article) && isPublishedArticleSafe(article, { stream: "coverage" });
-    const newsReady = hasNewsSource(article) && isDisplayWorthyNews(article);
+    const currentAffairsReady = isCoaching(article);
+    const newsReady = hasNewsSource(article);
 
     if (currentAffairsReady) {
       routes.push({

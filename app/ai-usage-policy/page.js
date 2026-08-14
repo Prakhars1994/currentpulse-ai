@@ -1,6 +1,8 @@
 import TrustPage from "@/components/TrustPage";
 import { SITE_URL } from "@/lib/siteUrl";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "AI Usage Policy",
   description: "AI assists CurrentPulse with summarization, restructuring, classification and study-tool generation. It is not treated as an independent source for fresh f",

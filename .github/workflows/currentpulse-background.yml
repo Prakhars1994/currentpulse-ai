@@ -55,8 +55,11 @@ env:
 
   NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
 
-  NEWS_SUPPLEMENTAL_SOURCES_PER_RUN: "4"
-  NEWS_MAX_QUEUE_WRITES_PER_RUN: "24"
+  NEWS_CORE_SOURCES_PER_RUN: "4"
+  NEWS_SUPPLEMENTAL_SOURCES_PER_RUN: "2"
+  NEWS_FETCH_TIMEOUT_MS: "8000"
+  NEWS_MAX_QUEUE_WRITES_PER_RUN: "36"
+  AI_AUTOMATION_SOURCE_CHAR_LIMIT: "14000"
 
   # 8 configured coaching sources are covered by two complementary 4-source
   # evening windows. The direct inline cap is NOT the total publish cap: the
@@ -68,7 +71,7 @@ env:
   AI_PROVIDER_ORDER: "mistral,cloudflare,groq,openrouter,cerebras,sambanova,githubmodels,huggingface"
   AI_ROUTER_DEADLINE_MS: "50000"
   AI_PROVIDER_TIMEOUT_MS: "15000"
-  GEMINI_REQUEST_TIMEOUT_MS: "8000"
+  GEMINI_REQUEST_TIMEOUT_MS: "15000"
 
   EXAM_SOURCES_PER_RUN: "5"
   EXAM_ITEMS_PER_SOURCE: "50"
@@ -156,32 +159,42 @@ jobs:
           }
 
           drain_queue() {
-            local started batch tmp code processed outage
+            local max_seconds="${1:-900}"
+            local started batch tmp code curl_status processed outage
             started="$(date +%s)"
             echo
-            echo "===== DRAIN READY QUEUE ====="
+            echo "===== DRAIN READY QUEUE (${max_seconds}s budget) ====="
 
-            for batch in $(seq 1 30); do
-              if (( $(date +%s) - started >= 2400 )); then
-                echo "Queue drain reached 40-minute safety budget."
+            for batch in $(seq 1 60); do
+              if (( $(date +%s) - started >= max_seconds )); then
+                echo "Queue drain reached its safety budget."
                 break
               fi
 
               tmp="$(mktemp)"
+              set +e
               code="$(
-                curl --silent --show-error --max-time 180 \
+                curl --silent --show-error --max-time 135 \
                   --output "${tmp}" \
                   --write-out "%{http_code}" \
                   -H "Authorization: Bearer ${CRON_SECRET}" \
-                  "http://127.0.0.1:3000/api/process-queue?wait=1&limit=6"
+                  "http://127.0.0.1:3000/api/process-queue?wait=1&limit=2"
               )"
+              curl_status=$?
+              set -e
 
-              cat "${tmp}"
+              cat "${tmp}" || true
               echo
+
+              if [[ "${curl_status}" -ne 0 ]]; then
+                rm -f "${tmp}"
+                echo "Queue processor request timed out/failed; rows remain durable for the next hourly retry."
+                break
+              fi
 
               if [[ "${code}" -lt 200 || "${code}" -ge 300 ]]; then
                 rm -f "${tmp}"
-                echo "Queue processor HTTP ${code}; leave remaining items durable for next hourly retry."
+                echo "Queue processor HTTP ${code}; rows remain durable for the next hourly retry."
                 break
               fi
 
@@ -211,7 +224,7 @@ jobs:
                 break
               fi
               if [[ "${outage}" == "true" ]]; then
-                echo "Provider outage detected; retry on a later hourly run."
+                echo "Provider outage detected; retry on the next hourly run."
                 break
               fi
             done
@@ -233,7 +246,8 @@ jobs:
               drain_queue
               ;;
             news)
-              api_required "/api/auto-publish?wait=1&scope=news"
+              api_required "/api/auto-publish?scope=news&runner=github"
+              sleep 25
               mark_deploy
               drain_queue
               ;;
@@ -242,7 +256,8 @@ jobs:
               api_required "/api/coverage-import?source=all&limit=2000"
               mark_deploy
               drain_queue
-              api_optional "/api/auto-publish?wait=1&scope=news"
+              api_optional "/api/auto-publish?scope=news&runner=github"
+              sleep 25
               mark_deploy
               drain_queue
               ;;
@@ -257,7 +272,10 @@ jobs:
               echo "===== FULL MANUAL CATCH-UP: CA FIRST ====="
               api_required "/api/coverage-import?source=all&limit=2000"
               mark_deploy
-              drain_queue
+              drain_queue 1500
+
+              api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
+              mark_deploy
 
               api_optional "/api/exams/run?full=1&notifications=0&runner=github"
               mark_deploy
@@ -267,12 +285,10 @@ jobs:
 
               # Use the scheduled News slice, not the historical full=1 call
               # that timed out before CA could run.
-              api_optional "/api/auto-publish?wait=1&scope=news"
+              api_optional "/api/auto-publish?scope=news&runner=github"
+              sleep 25
               mark_deploy
-              drain_queue
-
-              api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
-              mark_deploy
+              drain_queue 600
               ;;
             smart-hourly)
               india_hour="$(TZ=Asia/Kolkata date +%H)"
@@ -282,16 +298,17 @@ jobs:
               if [[ "${india_hour}" == "19" || "${india_hour}" == "22" ]]; then
                 api_required "/api/auto-publish?wait=1&scope=coverage"
                 mark_deploy
-                drain_queue
+                drain_queue 1200
               else
                 # Pending CA/News AI fallbacks are checked every hour.
-                drain_queue
+                drain_queue 720
               fi
 
               # General News remains independent and lightweight.
               case "${india_hour}" in
                 06|09|12|15|19|22)
-                  api_optional "/api/auto-publish?wait=1&scope=news"
+                  api_optional "/api/auto-publish?scope=news&runner=github"
+              sleep 25
                   mark_deploy
                   drain_queue
                   ;;
@@ -344,7 +361,7 @@ jobs:
         continue-on-error: true
         shell: bash
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN || secrets.CLOUDFLARE_AI_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -u

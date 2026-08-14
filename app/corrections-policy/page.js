@@ -1,6 +1,8 @@
 import TrustPage from "@/components/TrustPage";
 import { SITE_URL } from "@/lib/siteUrl";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Corrections Policy",
   description: "CurrentPulse aims to correct meaningful factual, classification, sourcing and duplication errors quickly while preserving a reliable public archive.",

@@ -32,7 +32,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 150;
 
-const HARD_STOP_MS = 125000;
+const HARD_STOP_MS = 110000;
 const MINIMUM_NEXT_ITEM_BUDGET_MS = 25000;
 const STALE_PROCESSING_MINUTES = 20;
 const PROCESSING_CONCURRENCY = 2;

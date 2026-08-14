@@ -1,6 +1,8 @@
 import TrustPage from "@/components/TrustPage";
 import { SITE_URL } from "@/lib/siteUrl";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Terms",
   description: "By using CurrentPulse you agree to treat the service as educational information and revision assistance rather than an official examination authority.",
