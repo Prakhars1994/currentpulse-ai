@@ -31,7 +31,16 @@ export default async function ExamUpdatesPage({
   title = "ResultPulse AI",
   description = "Official-source exam results, admit cards, answer keys, applications and deadlines - tracked in one place.",
 }) {
-  const { updates, error } = await loadExamUpdates({ type, limit: 30 });
+  let updates = [];
+  let error = null;
+  try {
+    const result = await loadExamUpdates({ type, limit: 30 });
+    updates = result.updates || [];
+    error = result.error || null;
+  } catch (loadError) {
+    console.error("ResultPulse page load failed:", loadError?.message || loadError);
+    error = loadError instanceof Error ? loadError : new Error("ResultPulse is temporarily unavailable.");
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 py-10 text-white sm:py-14">

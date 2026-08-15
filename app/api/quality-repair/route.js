@@ -30,6 +30,7 @@ function flagsWith(existing, flag) {
   const values = Array.isArray(existing) ? existing : [];
   return [...new Set([...values, flag])];
 }
+function hasLowValueEvidence(article = {}) { const value = String(article.data_examples || ""); return /\bpotentially bring economic benefits\b/i.test(value) || /\bdata\s*:\s*(?:institution|year|economic_benefit)\b/i.test(value) || /\binstitution\s*:\s*Indian government\b/i.test(value) || /\beconomic_benefit\s*:\s*potential/i.test(value); }
 
 export async function GET(request) {
   if (!authorised(request)) {
@@ -87,9 +88,9 @@ export async function GET(request) {
 
     const quality = assessArticleQuality(article, { mode: "upsc" });
     const severeQualityFailure =
-      quality.score < 45 ||
-      ["article_too_short", "insufficient_data_or_examples", "weak_exam_utility"]
-        .every((flag) => quality.flags.includes(flag));
+      quality.score < 52 ||
+      (quality.flags.includes("insufficient_data_or_examples") && quality.flags.includes("weak_exam_utility")) ||
+      hasLowValueEvidence(article);
 
     if (severeQualityFailure) {
       const action = {

@@ -1,41 +1,11 @@
 "use client";
-
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { highlightMarkdownFacts } from "@/lib/study/highlightFacts";
-
-function extractItems(content = "", limit = 6) {
-  const text = String(content || "").trim();
-  if (!text) return [];
-  const bullets = text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => /^(?:[-*•]|\d+[.)])\s+/.test(line))
-    .map((line) => line.replace(/^(?:[-*•]|\d+[.)])\s+/, "").trim())
-    .filter(Boolean);
-  if (bullets.length) return bullets.slice(0, limit);
-  return text
-    .replace(/^#{1,6}\s+.*$/gm, " ")
-    .split(/(?<=[.!?])\s+/)
-    .map((item) => item.trim())
-    .filter((item) => item.length > 25)
-    .slice(0, limit);
-}
-
-export default function EvidenceHighlights({ content, limit = 6 }) {
-  const items = extractItems(content, limit);
-  if (!items.length) return null;
-
-  return (
-    <div className="evidence-highlight-grid">
-      {items.map((item, index) => (
-        <article key={`${index}-${item.slice(0, 24)}`} className="evidence-highlight-card">
-          <span className="evidence-highlight-number">{String(index + 1).padStart(2, "0")}</span>
-          <div className="evidence-highlight-copy">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{highlightMarkdownFacts(item)}</ReactMarkdown>
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
+function clean(value=""){return String(value||"").replace(/^[\s,;|]+|[\s,;|]+$/g,"").replace(/\s+/g," ").trim();}
+function flattenJson(value,prefix=""){if(Array.isArray(value))return value.flatMap((item)=>flattenJson(item,prefix));if(value&&typeof value==="object")return Object.entries(value).flatMap(([key,item])=>{const label=String(key).replace(/[_-]+/g," ").replace(/\b\w/g,(m)=>m.toUpperCase());if(item&&typeof item==="object")return flattenJson(item,label);const text=clean(item);return text?[`${label}: ${text}`]:[];});const text=clean(value);return text?[prefix?`${prefix}: ${text}`:text]:[];}
+function extractItems(content="",limit=6){const text=String(content||"").trim();if(!text)return[];if(/^[\[{]/.test(text)){try{const items=flattenJson(JSON.parse(text)).filter((item)=>item.length>12);if(items.length)return items.slice(0,limit);}catch{}}
+const bullets=text.split(/\r?\n/).map((line)=>line.trim()).filter((line)=>/^(?:[-*•]|(?:data|case|report|example|institution|year|figure|value|location|economic_benefit)\s*:|\d+[.)])\s*/i.test(line)).map((line)=>line.replace(/^(?:[-*•]|\d+[.)])\s+/,"").trim()).filter((line)=>clean(line).length>12);if(bullets.length>=2)return bullets.slice(0,limit);
+const structured=text.replace(/^#{1,6}\s+.*$/gm," ").split(/\s*(?:;|\n{2,}|\|\s*|(?=\b(?:data|case|report|example|institution|year|figure|value|location|economic_benefit)\s*:))/i).map(clean).filter((item)=>item.length>20);if(structured.length>=2)return structured.slice(0,limit);
+return text.replace(/^#{1,6}\s+.*$/gm," ").split(/(?<=[.!?])\s+/).map(clean).filter((item)=>item.length>25).slice(0,limit);}
+export default function EvidenceHighlights({content,limit=6}){const items=extractItems(content,limit);if(!items.length)return null;return <div className="evidence-highlight-grid">{items.map((item,index)=><article key={`${index}-${item.slice(0,24)}`} className="evidence-highlight-card"><span className="evidence-highlight-number">{String(index+1).padStart(2,"0")}</span><div className="evidence-highlight-copy"><ReactMarkdown remarkPlugins={[remarkGfm]}>{highlightMarkdownFacts(item)}</ReactMarkdown></div></article>)}</div>;}

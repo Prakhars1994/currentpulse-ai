@@ -21,25 +21,16 @@ export const maxDuration = 300;
 const ARTICLE_FIELDS = `
   id,title,slug,category,paper,why_news,syllabus_linkage,india_relevance,
   static_foundation,data_examples,prelims,mains,answer_framework,question,
-  visual_summary,memory_trick,content,seo_description,created_at,updated_at,
+  visual_summary,memory_trick,content,seo_description,map_locations,created_at,updated_at,
   views,quality_score,quality_flags,status,
   article_sources(id,source_kind,source_name,source_url,source_published_at,event_key)
 `;
 
-const SANITIZABLE_FIELDS = [
-  "why_news",
-  "syllabus_linkage",
-  "india_relevance",
-  "static_foundation",
-  "data_examples",
-  "prelims",
-  "mains",
-  "answer_framework",
-  "question",
-  "visual_summary",
-  "memory_trick",
-  "seo_description",
-];
+const SANITIZABLE_FIELDS = ["why_news","syllabus_linkage","india_relevance","static_foundation","data_examples","prelims","mains","answer_framework","question","visual_summary","memory_trick","seo_description"];
+const KNOWN_QUARANTINE_SLUGS = new Set(["new-fruit-salad-trends-emerge-as-chefs-experiment-with-global-flavors","jellyfish-hit-french-nuclear-plant-shuts-down-three-reactors","2-ex-chinese-military-personnel-arrested-in-south-korea-for-alleged-espionage","bashar-al-assad-atef-najib-sentenced-to-death-in-landmark-syria-trial","india-must-redefine-its-cities-before-urban-growth-outpaces-governance"]);
+const HANDLOOM_SLUG="indias-handloom-heritage-and-rural-livelihoods-national-handloom-day-2026";
+const HALLANIYAT_SLUG="hallaniyat-islands-a-pristine-ecosystem-threatened-by-oil-spill";
+function knownEditorialRepair(article={}){if(KNOWN_QUARANTINE_SLUGS.has(article.slug))return{quarantine:true,code:"known_audit_failure",reason:"Live audit identified this row as unsupported, broken or below the minimum public quality standard.",values:{}};const publicText=publicArticleText(article);if(/solar eclipse/i.test(publicText)&&/August\s+11,\s*2026/i.test(publicText))return{quarantine:true,code:"event_date_confusion",reason:"Source publication date was confused with the event date.",values:{}};const values={};if(article.slug===HANDLOOM_SLUG){for(const field of [...SANITIZABLE_FIELDS,"content"]){if(typeof article[field]!=="string"||!article[field])continue;const repaired=article[field].replace(/35\.22\s+lakh\s+handloom\s+households/gi,"31.45 lakh handloom households").replace(/Number of handloom households\s*:\s*35\.22\s+lakh/gi,"Number of handloom households: 31.45 lakh");if(repaired!==article[field])values[field]=repaired;}}if(article.slug===HALLANIYAT_SLUG)values.map_locations=["Hallaniyat Islands","Dhofar","Oman"];return{quarantine:false,values};}
 
 function isAuthorised(request) {
   const configuredSecret = process.env.CRON_SECRET?.trim() || "";
@@ -188,10 +179,14 @@ export async function GET(request) {
   const quarantine = [];
   const taxonomyCorrections = [];
   const sanitizationUpdates = [];
+  const knownRepairs = [];
   const safeArticles = [];
 
   for (const article of data || []) {
     const stream = articleStream(article);
+    const known = knownEditorialRepair(article);
+    if (known.quarantine) { quarantine.push({id:article.id,slug:article.slug,title:article.title,stream,code:known.code,reason:known.reason}); continue; }
+    if (Object.keys(known.values || {}).length) knownRepairs.push({id:article.id,slug:article.slug,title:article.title,values:known.values,fields:Object.keys(known.values)});
     const assessment = assessPublishedArticle(article, { stream });
     if (!assessment.allowed) {
       quarantine.push({
@@ -310,12 +305,9 @@ export async function GET(request) {
       updatesById.set(item.id, { ...(updatesById.get(item.id) || {}), ...item.values });
     }
     for (const correction of taxonomyCorrections) {
-      updatesById.set(correction.id, {
-        ...(updatesById.get(correction.id) || {}),
-        category: correction.to.category,
-        paper: correction.to.paper,
-      });
+      updatesById.set(correction.id, { ...(updatesById.get(correction.id) || {}), category: correction.to.category, paper: correction.to.paper });
     }
+    for (const repair of knownRepairs) updatesById.set(repair.id,{...(updatesById.get(repair.id)||{}),...repair.values});
 
     for (const [articleId, values] of updatesById) {
       const { error: updateError } = await supabase
@@ -390,6 +382,7 @@ export async function GET(request) {
       quarantine: quarantine.length,
       taxonomyCorrections: taxonomyCorrections.length,
       sanitizationUpdates: sanitizationUpdates.length,
+      knownRepairs: knownRepairs.length,
       duplicateGroups: duplicateGroups.length,
       duplicateArticles: duplicateFindings.length,
     },

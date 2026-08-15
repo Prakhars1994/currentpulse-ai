@@ -149,6 +149,11 @@ const WORLD_LOCATIONS = {
   "new zealand": { label: "New Zealand", lat: -40.9006, lon: 174.8860, country: "New Zealand" },
   kazakhstan: { label: "Kazakhstan", lat: 48.0196, lon: 66.9237, country: "Kazakhstan" },
   uzbekistan: { label: "Uzbekistan", lat: 41.3775, lon: 64.5853, country: "Uzbekistan" },
+  oman: { label: "Oman", lat: 21.4735, lon: 55.9754, country: "Oman" },
+  dhofar: { label: "Dhofar", lat: 17.05, lon: 54.15, country: "Oman" },
+  "hallaniyat islands": { label: "Hallaniyat Islands", lat: 17.5, lon: 56.05, country: "Oman" },
+  "arabian sea": { label: "Arabian Sea", lat: 15.0, lon: 65.0, country: "World" },
+  "gulf of oman": { label: "Gulf of Oman", lat: 24.5, lon: 58.5, country: "World" },
   "saudi arabia": { label: "Saudi Arabia", lat: 23.8859, lon: 45.0792, country: "Saudi Arabia" },
   turkey: { label: "Türkiye", lat: 38.9637, lon: 35.2433, country: "Türkiye" },
   turkiye: { label: "Türkiye", lat: 38.9637, lon: 35.2433, country: "Türkiye" },
@@ -166,6 +171,8 @@ const LOCATION_ALIASES = {
   "u.s.": "united states",
   "u.s.a.": "united states",
   america: "united states",
+  "khuriya muriya islands": "hallaniyat islands",
+  "kuria muria islands": "hallaniyat islands",
   "great britain": "united kingdom",
   "andaman & nicobar islands": "andaman and nicobar islands",
   "jammu & kashmir": "jammu and kashmir",
@@ -219,6 +226,7 @@ const WORLD_ATLAS = {
   Russia: { nearby: [["Ukraine", 48.4, 31.2], ["Kazakhstan", 48.0, 66.9], ["China", 35.9, 104.2]], physical: [["Caspian Sea", 41.7, 50.4, "feature"], ["Black Sea", 43.0, 34.0, "feature"], ["Ural Mountains", 60.0, 59.0, "mountain"]] },
   Ukraine: { nearby: [["Poland", 51.9, 19.1], ["Russia", 61.5, 105.3], ["Romania", 45.9, 24.9]], physical: [["Black Sea", 43.0, 34.0, "feature"], ["Dnieper", 49.0, 32.0, "river"]] },
   Israel: { nearby: [["Jordan", 30.6, 36.2], ["Egypt", 26.8, 30.8], ["Lebanon", 33.9, 35.9]], physical: [["Mediterranean Sea", 32.0, 34.0, "feature"], ["Dead Sea", 31.5, 35.5, "feature"]] },
+  Oman: { nearby: [["Yemen", 15.6, 48.5], ["Saudi Arabia", 23.9, 45.1], ["United Arab Emirates", 23.4, 53.8]], physical: [["Arabian Sea", 15.0, 65.0, "feature"], ["Gulf of Oman", 24.5, 58.5, "feature"], ["Al Hajar Mountains", 23.2, 57.3, "mountain"]] },
   "Saudi Arabia": { nearby: [["Yemen", 15.6, 48.5], ["Oman", 21.5, 55.9], ["United Arab Emirates", 23.4, 53.8]], physical: [["Red Sea", 21.0, 38.0, "feature"], ["Persian Gulf", 26.5, 52.0, "feature"], ["Arabian Desert", 23.0, 45.0, "feature"]] },
   "Türkiye": { nearby: [["Greece", 39.1, 21.8], ["Syria", 34.8, 38.9], ["Georgia", 42.3, 43.4]], physical: [["Black Sea", 43.0, 34.0, "feature"], ["Bosporus", 41.1, 29.0, "feature"], ["Anatolian Plateau", 39.0, 33.0, "feature"]] },
   Kazakhstan: { nearby: [["Russia", 61.5, 105.3], ["China", 35.9, 104.2], ["Uzbekistan", 41.4, 64.6]], physical: [["Caspian Sea", 43.5, 51.5, "feature"], ["Aral Sea", 45.0, 59.0, "feature"], ["Tian Shan", 42.0, 75.0, "mountain"]] },
@@ -374,6 +382,8 @@ function inferLocations(title = "", articleText = "") {
 
 function articleLocations(mapLocations, title, articleText, category = "") {
   if (!isMapRelevantArticle({ title, category, text: articleText, mapLocations })) return [];
+  const combinedText = `${title} ${articleText}`;
+  if (/\b(?:hallaniyat|khuriya muriya|kuria muria)\b/i.test(combinedText)) return ["Hallaniyat Islands", "Dhofar", "Oman"];
   const stored = filterRelevantMapLocations({ title, category, text: articleText, mapLocations });
   const resolvedStored = stored.filter((location) => resolveLocation(location).point);
   const inferred = inferLocations(title, articleText);

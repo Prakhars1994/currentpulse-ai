@@ -12,7 +12,7 @@ import EvidenceHighlights from "@/components/EvidenceHighlights";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import { resolveDisplayImage, isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
-import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
+import { isPublicNewsArticle } from "@/lib/articleStreams";
 import { parseNewsPresentation } from "@/lib/news/newsPresentation";
 
 function stripHtml(value = "") {
@@ -61,7 +61,7 @@ const getArticle = unstable_cache(
     const { data } = await supabase.from("articles")
       .select("*,article_sources(id,source_kind,source_name,source_title,source_url,source_published_at)")
       .eq("slug", slug).eq("status", "published").maybeSingle();
-    return data && isDisplayWorthyNews(data) ? data : null;
+    return data && isPublicNewsArticle(data) ? data : null;
   },
   ["currentpulse-news-detail-v2"],
   { revalidate: 120, tags: ["currentpulse-articles", "currentpulse-news"] }
