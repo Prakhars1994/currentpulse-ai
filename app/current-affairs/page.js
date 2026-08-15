@@ -9,21 +9,19 @@ import {
 import { createCategorySlug } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL } from "@/lib/siteUrl";
+import { EXAM_VERTICALS, getExamVertical } from "@/lib/examPrep/sourceRegistry";
 
 export async function generateMetadata({ searchParams }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params?.page) || 1);
   const todayOnly = params?.view === "today";
-  const canonical =
-    page <= 1
-      ? `${SITE_URL}/current-affairs`
-      : `${SITE_URL}/current-affairs?page=${page}`;
-  const title =
-    page <= 1
-      ? "Daily UPSC Current Affairs - Prelims & Mains Analysis"
-      : `UPSC Current Affairs Archive - Page ${page}`;
-  const description =
-    "Read daily UPSC current affairs with exact syllabus linkage, India relevance, static foundation, Prelims facts, data, examples and Mains answer frameworks.";
+  const exam = getExamVertical(params?.exam || "upsc");
+  const query = new URLSearchParams();
+  if (exam.slug !== "upsc") query.set("exam", exam.slug);
+  if (page > 1) query.set("page", String(page));
+  const canonical = `${SITE_URL}/current-affairs${query.toString() ? `?${query.toString()}` : ""}`;
+  const title = page <= 1 ? exam.title : `${exam.title} Archive - Page ${page}`;
+  const description = exam.description;
 
   return {
     title,
@@ -48,10 +46,11 @@ function stripHtml(content = "") {
     .trim();
 }
 
-function pageHref(page, todayOnly) {
+function pageHref(page, todayOnly, exam = "upsc") {
   const params = new URLSearchParams();
   if (page > 1) params.set("page", String(page));
   if (todayOnly) params.set("view", "today");
+  if (exam !== "upsc") params.set("exam", exam);
   const query = params.toString();
   return query ? `/current-affairs?${query}` : "/current-affairs";
 }
@@ -60,10 +59,11 @@ export default async function CurrentAffairsPage({ searchParams }) {
   const params = await searchParams;
   const requestedPage = Math.max(1, Number(params?.page) || 1);
   const todayOnly = params?.view === "today";
+  const exam = getExamVertical(params?.exam || "upsc");
   const pageSize = 24;
   const offset = (requestedPage - 1) * pageSize;
   const { articles, total, hasMore, date, error } = await loadCurrentAffairsArticles({
-    limit: pageSize, offset, todayOnly,
+    limit: pageSize, offset, todayOnly, exam: exam.slug,
   });
   const totalPages = Number.isFinite(total) ? Math.max(1, Math.ceil(total / pageSize)) : null;
 
@@ -75,21 +75,19 @@ export default async function CurrentAffairsPage({ searchParams }) {
     <main className="min-h-screen bg-slate-950 py-10 text-white sm:py-14">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400/15 bg-[radial-gradient(circle_at_90%_0%,rgba(6,182,212,.16),transparent_35%),linear-gradient(135deg,#0f172a,#08111f)] px-6 py-10 shadow-2xl shadow-slate-950/30 sm:px-10 sm:py-12">
-          <p className="font-black uppercase tracking-[.22em] text-cyan-400">Trusted coaching-source synthesis</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
-            UPSC Current Affairs
-          </h1>
-
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">
-            Every genuine Current Affairs topic from trusted coaching sources,
-            deduplicated and merged across publishers, then rebuilt as concise
-            Prelims and Mains briefs.
-          </p>
+          <p className="font-black uppercase tracking-[.22em] text-cyan-400">One canonical CA database · exam-specific views</p>
+          <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">{exam.title}</h1>
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">{exam.description} Each event is stored once, deduplicated once and reused across exam views.</p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {Object.values(EXAM_VERTICALS).map((item) => (
+              <Link key={item.slug} href={item.slug === "upsc" ? "/current-affairs" : `/current-affairs?exam=${item.slug}`} className={`rounded-full px-4 py-2 text-sm font-black ${exam.slug === item.slug ? "bg-cyan-400 text-slate-950" : "border border-slate-700 bg-slate-900/70 text-slate-200"}`}>{item.label}</Link>
+            ))}
+          </div>
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link href="/categories" className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950 transition hover:bg-cyan-300">Browse by syllabus</Link>
-            <Link href="/quiz" className="rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3 font-bold text-slate-100 transition hover:border-cyan-400">Attempt today&apos;s quiz</Link>
-            <Link href="/current-affairs" className={`rounded-xl px-4 py-2 text-sm font-black ${!todayOnly ? "bg-cyan-400 text-slate-950" : "border border-slate-700 text-slate-200"}`}>All briefs</Link>
-            <Link href="/current-affairs?view=today" className={`rounded-xl px-4 py-2 text-sm font-black ${todayOnly ? "bg-cyan-400 text-slate-950" : "border border-slate-700 text-slate-200"}`}>Today · {date}</Link>
+            <Link href={`/mock-tests/${exam.slug}`} className="rounded-xl border border-slate-700 bg-slate-900/70 px-5 py-3 font-bold text-slate-100 transition hover:border-cyan-400">Free {exam.label} mock tests</Link>
+            <Link href={pageHref(1, false, exam.slug)} className={`rounded-xl px-4 py-2 text-sm font-black ${!todayOnly ? "bg-cyan-400 text-slate-950" : "border border-slate-700 text-slate-200"}`}>All briefs</Link>
+            <Link href={pageHref(1, true, exam.slug)} className={`rounded-xl px-4 py-2 text-sm font-black ${todayOnly ? "bg-cyan-400 text-slate-950" : "border border-slate-700 text-slate-200"}`}>Today · {date}</Link>
             <span className="ml-auto rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-slate-300">{Number.isFinite(total) ? `${total} ${todayOnly ? "today" : "curated briefs"}` : "Curated CA archive"} · Page {requestedPage}{totalPages ? `/${totalPages}` : ""}</span>
           </div>
         </div>
@@ -187,9 +185,9 @@ export default async function CurrentAffairsPage({ searchParams }) {
 
         {(requestedPage > 1 || hasMore) && (
           <nav className="mt-10 flex flex-wrap items-center justify-center gap-3" aria-label="Current affairs pagination">
-            {requestedPage > 1 && <Link href={pageHref(requestedPage - 1, todayOnly)} className="rounded-xl border border-slate-700 px-5 py-3 font-black text-slate-200">← Newer briefs</Link>}
+            {requestedPage > 1 && <Link href={pageHref(requestedPage - 1, todayOnly, exam.slug)} className="rounded-xl border border-slate-700 px-5 py-3 font-black text-slate-200">← Newer briefs</Link>}
             <span className="text-sm font-bold text-slate-400">Page {requestedPage}{totalPages ? ` of ${totalPages}` : ""}</span>
-            {hasMore && <Link href={pageHref(requestedPage + 1, todayOnly)} className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950">Older briefs →</Link>}
+            {hasMore && <Link href={pageHref(requestedPage + 1, todayOnly, exam.slug)} className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950">Older briefs →</Link>}
           </nav>
         )}
       </div>

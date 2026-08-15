@@ -1,0 +1,462 @@
+[
+  {
+    "id": "exambench-sample-1",
+    "prompt": "A train travels 240 km in 4 hours. If its speed increases by 20 km/h, how much time is saved for the same journey?",
+    "options": [
+      "30 minutes",
+      "45 minutes",
+      "1 hour",
+      "2 hours"
+    ],
+    "answer": "1 hour",
+    "explanation": "Initial speed is 60 km/h; new speed is 80 km/h, so travel time falls from 4 hours to 3 hours.",
+    "subject": "Quantitative Aptitude",
+    "exams": [
+      "ssc",
+      "railway",
+      "banking"
+    ],
+    "source": "ExamBench",
+    "sourceUrl": "https://huggingface.co/datasets/169Pi/exambench",
+    "license": "Apache-2.0"
+  },
+  {
+    "id": "cp-1",
+    "prompt": "Which institution is India's central bank?",
+    "options": [
+      "SEBI",
+      "RBI",
+      "SBI",
+      "NABARD"
+    ],
+    "answer": "RBI",
+    "explanation": "The Reserve Bank of India is India's central bank.",
+    "subject": "Banking & Financial Awareness",
+    "exams": [
+      "banking",
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-2",
+    "prompt": "CRR is maintained by scheduled banks with which institution?",
+    "options": [
+      "SEBI",
+      "RBI",
+      "NABARD",
+      "Finance Commission"
+    ],
+    "answer": "RBI",
+    "explanation": "Cash Reserve Ratio is maintained with the Reserve Bank of India.",
+    "subject": "Banking & Financial Awareness",
+    "exams": [
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-3",
+    "prompt": "Which payment system operated by NPCI enables instant mobile bank-to-bank payments?",
+    "options": [
+      "UPI",
+      "SWIFT",
+      "SLR",
+      "G-Sec"
+    ],
+    "answer": "UPI",
+    "explanation": "Unified Payments Interface is operated by NPCI.",
+    "subject": "Banking & Financial Awareness",
+    "exams": [
+      "banking",
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-4",
+    "prompt": "Article 14 of the Constitution deals primarily with:",
+    "options": [
+      "Freedom of religion",
+      "Equality before law",
+      "Cultural rights",
+      "Right against exploitation"
+    ],
+    "answer": "Equality before law",
+    "explanation": "Article 14 guarantees equality before law and equal protection of the laws.",
+    "subject": "Polity",
+    "exams": [
+      "upsc",
+      "state-pcs",
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-5",
+    "prompt": "Which Constitutional Amendment gave constitutional status to Panchayats?",
+    "options": [
+      "42nd",
+      "52nd",
+      "73rd",
+      "74th"
+    ],
+    "answer": "73rd",
+    "explanation": "The 73rd Constitutional Amendment Act added Part IX on Panchayats.",
+    "subject": "Polity",
+    "exams": [
+      "upsc",
+      "state-pcs",
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-6",
+    "prompt": "Lake Baikal is located in which country?",
+    "options": [
+      "Canada",
+      "Russia",
+      "Kazakhstan",
+      "Mongolia"
+    ],
+    "answer": "Russia",
+    "explanation": "Lake Baikal lies in Siberia, Russia.",
+    "subject": "Geography",
+    "exams": [
+      "upsc",
+      "state-pcs",
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-7",
+    "prompt": "Chilika Lake is located in which Indian state?",
+    "options": [
+      "West Bengal",
+      "Odisha",
+      "Andhra Pradesh",
+      "Kerala"
+    ],
+    "answer": "Odisha",
+    "explanation": "Chilika is a large brackish-water lagoon on the Odisha coast.",
+    "subject": "Geography",
+    "exams": [
+      "upsc",
+      "state-pcs",
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-8",
+    "prompt": "Lake Mead is formed on which river?",
+    "options": [
+      "Mississippi",
+      "Colorado",
+      "Columbia",
+      "Rio Grande"
+    ],
+    "answer": "Colorado",
+    "explanation": "Lake Mead is a reservoir on the Colorado River, created by Hoover Dam.",
+    "subject": "Geography",
+    "exams": [
+      "upsc",
+      "state-pcs",
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-9",
+    "prompt": "What is the SI unit of electric current?",
+    "options": [
+      "Volt",
+      "Ampere",
+      "Ohm",
+      "Watt"
+    ],
+    "answer": "Ampere",
+    "explanation": "The ampere is the SI base unit of electric current.",
+    "subject": "General Science",
+    "exams": [
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-10",
+    "prompt": "A solution with pH 3 is:",
+    "options": [
+      "Acidic",
+      "Neutral",
+      "Basic",
+      "Always saline"
+    ],
+    "answer": "Acidic",
+    "explanation": "A pH below 7 indicates an acidic solution.",
+    "subject": "General Science",
+    "exams": [
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-11",
+    "prompt": "Which organelle is primarily associated with photosynthesis?",
+    "options": [
+      "Mitochondrion",
+      "Ribosome",
+      "Chloroplast",
+      "Lysosome"
+    ],
+    "answer": "Chloroplast",
+    "explanation": "Chloroplasts contain chlorophyll and are the main site of photosynthesis.",
+    "subject": "General Science",
+    "exams": [
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-12",
+    "prompt": "A price rises from \u20b9800 to \u20b9920. What is the percentage increase?",
+    "options": [
+      "12%",
+      "15%",
+      "18%",
+      "20%"
+    ],
+    "answer": "15%",
+    "explanation": "Increase is 120; 120/800 \u00d7 100 = 15%.",
+    "subject": "Quantitative Aptitude",
+    "exams": [
+      "ssc",
+      "railway",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-13",
+    "prompt": "Two numbers are in the ratio 3:5 and their sum is 64. What is the larger number?",
+    "options": [
+      "24",
+      "32",
+      "40",
+      "48"
+    ],
+    "answer": "40",
+    "explanation": "Eight parts equal 64, so each part is 8 and the larger number is 40.",
+    "subject": "Quantitative Aptitude",
+    "exams": [
+      "ssc",
+      "railway",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-14",
+    "prompt": "12 workers finish a job in 15 days. At the same rate, how many days will 20 workers take?",
+    "options": [
+      "7",
+      "9",
+      "10",
+      "12"
+    ],
+    "answer": "9",
+    "explanation": "Total work is 180 worker-days; 180/20 = 9 days.",
+    "subject": "Quantitative Aptitude",
+    "exams": [
+      "ssc",
+      "railway",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-15",
+    "prompt": "Find the next number: 2, 6, 12, 20, 30, ?",
+    "options": [
+      "36",
+      "40",
+      "42",
+      "44"
+    ],
+    "answer": "42",
+    "explanation": "Differences are 4, 6, 8, 10; next difference is 12.",
+    "subject": "Reasoning",
+    "exams": [
+      "ssc",
+      "railway",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-16",
+    "prompt": "A person walks 5 km north, 5 km east, then 5 km south. Where are they from the start?",
+    "options": [
+      "North",
+      "South",
+      "East",
+      "West"
+    ],
+    "answer": "East",
+    "explanation": "North and south cancel, leaving 5 km east.",
+    "subject": "Reasoning",
+    "exams": [
+      "ssc",
+      "railway",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-17",
+    "prompt": "Choose the synonym of 'abundant'.",
+    "options": [
+      "Scarce",
+      "Plentiful",
+      "Rigid",
+      "Silent"
+    ],
+    "answer": "Plentiful",
+    "explanation": "Abundant means plentiful or existing in large quantities.",
+    "subject": "English",
+    "exams": [
+      "ssc",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-18",
+    "prompt": "Choose the grammatically correct sentence.",
+    "options": [
+      "Neither of the boys were present.",
+      "Neither of the boys was present.",
+      "Neither of boys was present.",
+      "Neither boys were present."
+    ],
+    "answer": "Neither of the boys was present.",
+    "explanation": "In standard formal usage, neither is singular.",
+    "subject": "English",
+    "exams": [
+      "ssc",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-19",
+    "prompt": "The Ramsar Convention is concerned primarily with conservation of:",
+    "options": [
+      "Deserts",
+      "Wetlands",
+      "Glaciers",
+      "Grasslands only"
+    ],
+    "answer": "Wetlands",
+    "explanation": "The Ramsar Convention provides the international framework for wetlands.",
+    "subject": "Environment",
+    "exams": [
+      "upsc",
+      "state-pcs",
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-20",
+    "prompt": "The Permanent Settlement of Bengal was introduced under:",
+    "options": [
+      "Lord Cornwallis",
+      "Lord Wellesley",
+      "Lord Dalhousie",
+      "Lord Ripon"
+    ],
+    "answer": "Lord Cornwallis",
+    "explanation": "The Permanent Settlement was introduced in 1793 under Lord Cornwallis.",
+    "subject": "History",
+    "exams": [
+      "upsc",
+      "state-pcs",
+      "ssc",
+      "railway"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-21",
+    "prompt": "GDP measures final goods and services produced within:",
+    "options": [
+      "Only public firms",
+      "A country's domestic territory during a period",
+      "Only export industries",
+      "Only agriculture"
+    ],
+    "answer": "A country's domestic territory during a period",
+    "explanation": "GDP is a territorial production measure over a specified period.",
+    "subject": "Economy",
+    "exams": [
+      "upsc",
+      "state-pcs",
+      "ssc",
+      "railway",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-22",
+    "prompt": "The headquarters of the United Nations is in:",
+    "options": [
+      "Geneva",
+      "Paris",
+      "New York",
+      "Vienna"
+    ],
+    "answer": "New York",
+    "explanation": "The main UN headquarters is in New York City.",
+    "subject": "General Awareness",
+    "exams": [
+      "ssc",
+      "railway",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  },
+  {
+    "id": "cp-23",
+    "prompt": "The currency of Japan is:",
+    "options": [
+      "Won",
+      "Yuan",
+      "Yen",
+      "Ringgit"
+    ],
+    "answer": "Yen",
+    "explanation": "Japan's currency is the yen.",
+    "subject": "General Awareness",
+    "exams": [
+      "ssc",
+      "railway",
+      "banking"
+    ],
+    "source": "CurrentPulse foundation"
+  }
+]

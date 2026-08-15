@@ -48,8 +48,8 @@ export default function Navbar() {
       icon: GraduationCap,
     },
     {
-      name: "Quiz",
-      href: "/quiz",
+      name: "Mock Tests",
+      href: "/mock-tests",
       icon: CircleHelp,
     },
     {

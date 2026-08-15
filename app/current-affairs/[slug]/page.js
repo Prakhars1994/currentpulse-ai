@@ -9,6 +9,7 @@ import ArticleViewTracker from "@/components/ArticleViewTracker";
 import ArticleContent from "@/components/ArticleContent";
 import { resolveDisplayImage, isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
+import MapMasteryPanel from "@/components/MapMasteryPanel";
 import CompactMarkdownSection from "@/components/CompactMarkdownSection";
 import EvidenceHighlights from "@/components/EvidenceHighlights";
 import MainsAccordion from "@/components/MainsAccordion";
@@ -161,6 +162,7 @@ export async function generateMetadata({ params }) {
 
 export default async function ArticlePage({ params }) {
   const { slug } = await params;
+  const supabase = createServerSupabase();
 
   const article = await getCurrentAffairsArticle(slug);
 
@@ -397,6 +399,7 @@ export default async function ArticlePage({ params }) {
             articleText={article.why_news}
             category={article.category}
           />
+          <MapMasteryPanel title={article.title} articleText={`${article.why_news || ""} ${article.static_foundation || ""}`} />
 
           <section id="why-in-news" className="article-section article-section--context scroll-mt-28">
             <h2 className="article-section-title text-purple-200">📌 Why in News?</h2>

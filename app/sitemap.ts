@@ -15,7 +15,7 @@ type SitemapArticle = {
 
 function staticRoutes(): MetadataRoute.Sitemap {
   const publicPages = [
-    "current-affairs","news","categories","quiz","pdf","notes","pyq",
+    "current-affairs","news","categories","quiz","mock-tests","pdf","notes","pyq",
     "question-papers","videos","ai","contact","about","editorial-methodology",
     "sources-policy","ai-usage-policy","corrections-policy","privacy","terms",
     "exams","exams/results","exams/admit-cards","exams/notifications",

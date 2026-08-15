@@ -28,6 +28,8 @@ function formatDate(value: string | null) {
 export default function Hero({ featured = null, stats = null }: { featured?: any; stats?: any }) {
   const todayCurrentAffairs = Number(stats?.todayCurrentAffairs || 0);
   const todayNews = Number(stats?.todayNews || 0);
+  const totalCurrentAffairs = Number(stats?.totalCurrentAffairs || 0);
+  const totalNews = Number(stats?.totalNews || 0);
   const lastUpdated = stats?.lastUpdated
     ? new Date(stats.lastUpdated).toLocaleString("en-IN", {
         timeZone: "Asia/Kolkata",
@@ -123,33 +125,11 @@ export default function Hero({ featured = null, stats = null }: { featured?: any
               </Link>
             </div>
 
-            <div className="mt-10 grid grid-cols-3 gap-2 sm:gap-3">
-              <div className="rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:p-4">
-                <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
-                  {todayCurrentAffairs.toLocaleString("en-IN")}
-                </p>
-                <p className="mt-2 text-sm text-gray-400 sm:text-base">
-                  Today&apos;s CA
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:p-4">
-                <p className="text-3xl font-bold text-cyan-400 sm:text-4xl">
-                  {todayNews.toLocaleString("en-IN")}
-                </p>
-                <p className="mt-2 text-sm text-gray-400 sm:text-base">
-                  Today&apos;s News
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:p-4">
-                <p className="text-2xl font-bold text-cyan-400 sm:text-3xl">
-                  {lastUpdated}
-                </p>
-                <p className="mt-2 text-sm text-gray-400 sm:text-base">
-                  Last updated IST
-                </p>
-              </div>
+            <div className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
+              {[["Today CA",todayCurrentAffairs],["Today News",todayNews],["Total CA",totalCurrentAffairs],["Total News",totalNews]].map(([label,value]) => (
+                <div key={String(label)} className="rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:p-4"><p className="text-2xl font-bold text-cyan-400 sm:text-3xl">{Number(value).toLocaleString("en-IN")}</p><p className="mt-2 text-xs text-gray-400 sm:text-sm">{label}</p></div>
+              ))}
+              <div className="col-span-2 rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:col-span-1 sm:p-4"><p className="text-lg font-bold text-cyan-400">{lastUpdated}</p><p className="mt-2 text-xs text-gray-400">Last updated IST</p></div>
             </div>
           </div>
 

@@ -7,6 +7,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import ArticleContent from "@/components/ArticleContent";
 import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
+import MapMasteryPanel from "@/components/MapMasteryPanel";
 import EvidenceHighlights from "@/components/EvidenceHighlights";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import { resolveDisplayImage, isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
@@ -154,6 +155,7 @@ export default async function NewsArticlePage({ params }) {
             articleText={newsLead}
             category={article.category}
           />
+          <MapMasteryPanel title={newsPresentation?.title || article.title} articleText={`${newsLead || ""} ${newsContext || ""}`} />
 
           {newsFacts && (
             <section className="news-article-section news-article-facts">
