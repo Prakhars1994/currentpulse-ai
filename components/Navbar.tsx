@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -22,53 +22,61 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [language, setLanguage] = useState<"en" | "hi">("en");
 
   const router = useRouter();
   const pathname = usePathname();
 
+  useEffect(() => {
+    try {
+      setLanguage(new URLSearchParams(window.location.search).get("lang") === "hi" ? "hi" : "en");
+    } catch {}
+  }, [pathname]);
+
+  const hi = language === "hi";
   const links = [
     {
-      name: "Home",
+      name: hi ? "मुखपृष्ठ" : "Home",
       href: "/",
       icon: House,
     },
     {
-      name: "Current Affairs",
+      name: hi ? "करेंट अफेयर्स" : "Current Affairs",
       href: "/current-affairs",
       icon: BookOpenCheck,
     },
     {
-      name: "News",
+      name: hi ? "समाचार" : "News",
       href: "/news",
       icon: Newspaper,
     },
     {
-      name: "Exams",
+      name: hi ? "परीक्षाएँ" : "Exams",
       href: "/exams",
       icon: GraduationCap,
     },
     {
-      name: "Mock Tests",
+      name: hi ? "मॉक टेस्ट" : "Mock Tests",
       href: "/mock-tests",
       icon: CircleHelp,
     },
     {
-      name: "PDF",
+      name: hi ? "PDF" : "PDF",
       href: "/pdf",
       icon: Files,
     },
     {
-      name: "Notes",
+      name: hi ? "नोट्स" : "Notes",
       href: "/notes",
       icon: NotebookPen,
     },
     {
-      name: "PYQs",
+      name: hi ? "PYQ" : "PYQs",
       href: "/pyq",
       icon: LibraryBig,
     },
     {
-      name: "Papers",
+      name: hi ? "प्रश्नपत्र" : "Papers",
       href: "/question-papers",
       icon: LibraryBig,
     },
@@ -79,6 +87,19 @@ export default function Navbar() {
     },
   ];
 
+  function withLanguage(href: string) {
+    if (!hi) return href;
+    const joiner = href.includes("?") ? "&" : "?";
+    return `${href}${joiner}lang=hi`;
+  }
+
+  function toggleLanguage() {
+    const url = new URL(window.location.href);
+    if (hi) url.searchParams.delete("lang");
+    else url.searchParams.set("lang", "hi");
+    window.location.assign(`${url.pathname}${url.search}${url.hash}`);
+  }
+
   function handleSearch(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -88,7 +109,7 @@ export default function Navbar() {
       return;
     }
 
-    router.push(`/search?q=${encodeURIComponent(cleanQuery)}`);
+    router.push(`/search?q=${encodeURIComponent(cleanQuery)}${hi ? "&lang=hi" : ""}`);
 
     setQuery("");
     setSearchOpen(false);
@@ -108,7 +129,7 @@ export default function Navbar() {
       <div className="mx-auto flex h-[4.75rem] max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Logo */}
 
-        <Link href="/" className="group flex items-center gap-3" aria-label="CurrentPulse AI home">
+        <Link href={withLanguage("/")} className="group flex items-center gap-3" aria-label="CurrentPulse AI home">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-300 via-cyan-500 to-blue-600 text-lg font-black text-slate-950 shadow-lg shadow-cyan-500/20 ring-1 ring-white/20 transition group-hover:scale-105">
             CP
           </div>
@@ -133,7 +154,7 @@ export default function Navbar() {
             return (
               <Link
                 key={item.name}
-                href={item.href}
+                href={withLanguage(item.href)}
                 className={`rounded-lg px-3 py-2 text-sm font-semibold transition ${
                   active
                     ? "bg-cyan-400/12 text-cyan-300"
@@ -150,6 +171,7 @@ export default function Navbar() {
         {/* Desktop Right Buttons */}
 
         <div className="hidden items-center gap-3 xl:flex">
+          <button type="button" onClick={toggleLanguage} className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-3 py-2 text-sm font-black text-cyan-200">{hi ? "EN" : "हिन्दी"}</button>
           <button
             type="button"
             onClick={() => setSearchOpen((current) => !current)}
@@ -243,6 +265,8 @@ export default function Navbar() {
               </button>
             </form>
 
+            <button type="button" onClick={toggleLanguage} className="mb-3 w-full rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-3 text-left font-black text-cyan-200">{hi ? "Switch to English" : "हिन्दी में देखें"}</button>
+
             {links.map((item) => {
               const Icon = item.icon;
               const active = isActiveLink(item.href);
@@ -250,7 +274,7 @@ export default function Navbar() {
               return (
                 <Link
                   key={item.name}
-                  href={item.href}
+                  href={withLanguage(item.href)}
                   onClick={() => setOpen(false)}
                   className={`flex items-center gap-3 rounded-xl px-4 py-3 transition ${
                     active

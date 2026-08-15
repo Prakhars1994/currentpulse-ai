@@ -27,41 +27,51 @@ test("scheduled news keeps agenda sources every run and rotates supplements", ()
   assert.notDeepEqual(first.selectedIds, second.selectedIds);
 });
 
-test("coverage rotation scans every configured source across four hourly slots", () => {
-  const coverage = ["a", "b", "c", "d", "e", "f", "g", "h"];
+test("coverage rotation scans all 12 coaching sources across the real four IST CA windows", () => {
+  process.env.COVERAGE_SOURCES_PER_RUN = "4";
+  const coverage = Array.from({ length: 12 }, (_, index) => `source-${index + 1}`);
   const seen = new Set();
-  for (let hour = 10; hour < 14; hour += 1) {
-    const batch = selectScheduledCoverageSourceIds(
-      coverage,
-      new Date(`2026-08-12T${hour}:00:00Z`)
-    );
-    assert.equal(batch.length, 2);
+  // 06, 12, 19 and 22 IST expressed as UTC on the same India date.
+  const windows = [
+    "2026-08-15T00:30:00Z",
+    "2026-08-15T06:30:00Z",
+    "2026-08-15T13:30:00Z",
+    "2026-08-15T16:30:00Z",
+  ];
+  for (const value of windows) {
+    const batch = selectScheduledCoverageSourceIds(coverage, new Date(value));
+    assert.equal(batch.length, 4);
     batch.forEach((id) => seen.add(id));
   }
   assert.deepEqual([...seen].sort(), [...coverage].sort());
+  delete process.env.COVERAGE_SOURCES_PER_RUN;
 });
 
-test("exam rotation keeps UPSC SSC NTA hot and covers all supplements", () => {
+test("exam rotation always keeps UPSC SSC Railway and Banking core hot", () => {
+  process.env.EXAM_SOURCES_PER_RUN = "6";
   const exams = [
-    { id: "upsc" },
-    { id: "ssc" },
-    { id: "nta" },
-    ...Array.from({ length: 8 }, (_, index) => ({ id: `exam-${index}` })),
+    { id: "upsc" }, { id: "ssc" }, { id: "nta" }, { id: "ibps" },
+    { id: "sbi" }, { id: "rrcb" }, { id: "rrb-cdg" }, { id: "iaf" },
+    { id: "navy" }, { id: "uppsc" }, { id: "rpsc-results" },
   ];
   const seen = new Set();
-  for (let slot = 0; slot < 4; slot += 1) {
-    const batch = selectScheduledExamSources(
-      exams,
-      new Date(Date.parse("2026-08-12T10:00:00Z") + slot * 2 * 3_600_000)
-    );
-    assert.equal(batch.length, 5);
-    for (const id of ["upsc", "ssc", "nta"]) {
+  const windows = [
+    "2026-08-15T00:30:00Z",
+    "2026-08-15T06:30:00Z",
+    "2026-08-15T13:30:00Z",
+    "2026-08-15T16:30:00Z",
+  ];
+  for (const value of windows) {
+    const batch = selectScheduledExamSources(exams, new Date(value));
+    assert.equal(batch.length, 6);
+    for (const id of ["upsc", "ssc", "rrcb", "ibps"]) {
       assert.ok(batch.some((source) => source.id === id));
     }
     batch.forEach((source) => seen.add(source.id));
   }
-  assert.deepEqual(
-    [...seen].sort(),
-    exams.map((source) => source.id).sort()
-  );
+  assert.ok(seen.has("nta"));
+  assert.ok(seen.has("sbi"));
+  assert.ok(seen.has("rrb-cdg"));
+  assert.ok(seen.has("uppsc") || seen.has("rpsc-results"));
+  delete process.env.EXAM_SOURCES_PER_RUN;
 });

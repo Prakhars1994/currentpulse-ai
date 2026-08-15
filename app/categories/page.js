@@ -1,9 +1,8 @@
-export const revalidate = false;
+export const revalidate = 120;
 
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
 import { CATEGORY_ROUTES, articleMatchesCategory } from "@/lib/categoryRouting";
-import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
+import { loadCurrentAffairsCorpus } from "@/lib/articleStreams";
 
 export const metadata = {
   title: "UPSC Current Affairs by Subject",
@@ -13,18 +12,8 @@ export const metadata = {
 };
 
 export default async function CategoriesPage() {
-  const { data, error } = await supabase
-    .from("articles")
-    .select("category,title,why_news,prelims,mains,article_sources!inner(source_kind)")
-    .eq("status", "published")
-    .eq("article_sources.source_kind", "coaching")
-    .order("created_at", { ascending: false })
-    .limit(1000);
-
+  const { articles, error } = await loadCurrentAffairsCorpus({ maxScan: 5000 });
   if (error) console.error("Category count fetch failed:", error.message);
-  const articles = (data || []).filter((article) =>
-    isPublishedArticleSafe(article, { stream: "coverage" })
-  );
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-14 text-white">
@@ -34,8 +23,8 @@ export default async function CategoriesPage() {
         </p>
         <h1 className="mt-3 text-4xl font-black sm:text-5xl">Explore categories</h1>
         <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-400">
-          Browse published current affairs using normalized UPSC categories. Legacy
-          category names are included automatically.
+          These counts come from the same deduplicated, publication-safe Current
+          Affairs corpus used by the public archive.
         </p>
 
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
