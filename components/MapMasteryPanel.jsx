@@ -42,7 +42,15 @@ export default function MapMasteryPanel({ title = "", articleText = "" }) {
   const [reveal, setReveal] = useState(true);
   const [hi, setHi] = useState(false);
   useEffect(() => {
-    try { setHi(new URLSearchParams(window.location.search).get("lang") === "hi"); } catch {}
+    const timer = window.setTimeout(() => {
+      try {
+        setHi(
+          new URLSearchParams(window.location.search).get("lang") === "hi"
+        );
+      } catch {}
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, []);
 
   const topic = detectMapMasteryTopic(title, articleText);

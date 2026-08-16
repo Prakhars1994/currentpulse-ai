@@ -12,7 +12,37 @@ export const metadata = {
   alternates: { canonical: "/" },
 };
 
-const EMPTY_STREAMS = {
+type HomepageArticleSource = {
+  source_kind?: string | null;
+  source_name?: string | null;
+};
+
+type HomepageArticle = {
+  id: number | string;
+  slug: string;
+  title?: string | null;
+  category?: string | null;
+  paper?: string | null;
+  why_news?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  image_source_url?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  article_sources?: HomepageArticleSource[];
+};
+
+type HomepageStreamError = {
+  message?: string;
+} | null;
+
+type HomepageStreams = {
+  currentAffairs: HomepageArticle[];
+  news: HomepageArticle[];
+  error: HomepageStreamError;
+};
+
+const EMPTY_STREAMS: HomepageStreams = {
   currentAffairs: [],
   news: [],
   error: null,
@@ -43,10 +73,10 @@ export default async function Home() {
 
     streams = snapshot?.streams || EMPTY_STREAMS;
     stats = snapshot?.stats || EMPTY_STATS;
-  } catch (error) {
+  } catch (error: unknown) {
     console.error(
       "[Homepage] snapshot unavailable:",
-      error?.message || error
+      error instanceof Error ? error.message : String(error)
     );
   }
 

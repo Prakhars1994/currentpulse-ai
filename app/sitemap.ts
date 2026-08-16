@@ -14,6 +14,11 @@ type SitemapArticle = {
   article_sources?: Array<{ source_kind?: string | null }> | null;
 };
 
+type SitemapExam = {
+  slug: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
 function staticRoutes(): MetadataRoute.Sitemap {
   const publicPages = [
     "current-affairs","news","categories","quiz","mock-tests","pdf","notes","pyq",
@@ -123,7 +128,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
 
-    const examRoutes: MetadataRoute.Sitemap = sitemapData.exams.map((exam: any) => ({
+    const examRoutes: MetadataRoute.Sitemap = (sitemapData.exams as SitemapExam[]).map((exam) => ({
       url: `${SITE_URL}/exams/${exam.slug}`,
       lastModified: exam.updated_at || exam.created_at || undefined,
       changeFrequency: "daily",
@@ -136,8 +141,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
 
     return [...base, ...examRoutes, ...articleRoutes];
-  } catch (error: any) {
-    console.error("[Sitemap] dynamic data unavailable:", error?.message || error);
+  } catch (error: unknown) {
+    console.error("[Sitemap] dynamic data unavailable:", error instanceof Error ? error.message : String(error));
     // Never return a 503 sitemap. Static discovery remains available while
     // transient database errors recover.
     return base;

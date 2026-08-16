@@ -28,9 +28,17 @@ export default function Navbar() {
   const pathname = usePathname();
 
   useEffect(() => {
-    try {
-      setLanguage(new URLSearchParams(window.location.search).get("lang") === "hi" ? "hi" : "en");
-    } catch {}
+    const timer = window.setTimeout(() => {
+      try {
+        setLanguage(
+          new URLSearchParams(window.location.search).get("lang") === "hi"
+            ? "hi"
+            : "en"
+        );
+      } catch {}
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [pathname]);
 
   const hi = language === "hi";

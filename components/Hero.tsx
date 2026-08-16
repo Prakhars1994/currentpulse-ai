@@ -2,7 +2,7 @@ import Link from "next/link";
 import { hasCoachingSource } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
-function stripHtml(value: string | null) {
+function stripHtml(value?: string | null) {
   if (!value) return "";
 
   return value
@@ -15,7 +15,7 @@ function stripHtml(value: string | null) {
     .trim();
 }
 
-function formatDate(value: string | null) {
+function formatDate(value?: string | null) {
   if (!value) return "Today";
   return new Date(value).toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata",
@@ -25,7 +25,37 @@ function formatDate(value: string | null) {
   });
 }
 
-export default function Hero({ featured = null, stats = null }: { featured?: any; stats?: any }) {
+type FeaturedArticle = {
+  title?: string | null;
+  slug?: string | null;
+  category?: string | null;
+  paper?: string | null;
+  why_news?: string | null;
+  created_at?: string | null;
+  image?: string | null;
+  image_url?: string | null;
+  image_source_url?: string | null;
+  image_caption?: string | null;
+  article_sources?: Array<{
+    source_kind?: string | null;
+  }> | null;
+};
+
+type HeroStats = {
+  todayCurrentAffairs?: number | null;
+  todayNews?: number | null;
+  totalCurrentAffairs?: number | null;
+  totalNews?: number | null;
+  lastUpdated?: string | null;
+};
+
+export default function Hero({
+  featured = null,
+  stats = null,
+}: {
+  featured?: FeaturedArticle | null;
+  stats?: HeroStats | null;
+}) {
   const todayCurrentAffairs = Number(stats?.todayCurrentAffairs || 0);
   const todayNews = Number(stats?.todayNews || 0);
   const totalCurrentAffairs = Number(stats?.totalCurrentAffairs || 0);

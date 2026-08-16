@@ -9,7 +9,18 @@
           "value": "currentpulse-ai-kl7x.vercel.app"
         }
       ],
-      "destination": "https://currentpulse-ai.vercel.app/$1",
+      "destination": "https://cp.vliab.workers.dev/$1",
+      "permanent": true
+    },
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "currentpulse-ai.vercel.app"
+        }
+      ],
+      "destination": "https://cp.vliab.workers.dev/$1",
       "permanent": true
     }
   ]
