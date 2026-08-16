@@ -30,7 +30,7 @@ function redirectToLogin(request: NextRequest) {
   return protectAdminResponse(response);
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (PUBLIC_ADMIN_PATHS.has(pathname)) {

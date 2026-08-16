@@ -57,7 +57,7 @@ jobs:
         run: npm run test:automation
 
       - name: Quality, map and architecture regression tests
-        run: node --test tests/article-quality.test.mjs tests/map-relevance.test.mjs tests/taxonomy-authority.test.mjs tests/taxonomy-regression.test.mjs tests/workflow-architecture.test.mjs
+        run: node --test tests/article-quality.test.mjs tests/map-relevance.test.mjs tests/taxonomy-authority.test.mjs tests/taxonomy-regression.test.mjs tests/workflow-architecture.test.mjs tests/cloudflare-public-routes.test.mjs
 
       - name: Build Cloudflare Worker
         run: npx opennextjs-cloudflare build
@@ -92,7 +92,7 @@ jobs:
         run: |
           set -euo pipefail
           base="https://cp.vliab.workers.dev"
-          for path in / /robots.txt /sitemap.xml /news-sitemap.xml /current-affairs /news /exams /quiz; do
+          for path in / /robots.txt /sitemap.xml /news-sitemap.xml /current-affairs /news /exams /quiz /feed.xml; do
             echo "Checking ${base}${path}"
             curl --silent --show-error --fail --location \
               --retry 3 --retry-delay 2 --max-time 60 \

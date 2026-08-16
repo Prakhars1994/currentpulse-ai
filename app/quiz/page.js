@@ -12,24 +12,46 @@ export const metadata = {
   alternates: { canonical: "/quiz" },
 };
 
+async function loadQuizRows(timeoutMs = 8000) {
+  let timer;
+
+  try {
+    const supabase = createServerSupabase();
+
+    return await Promise.race([
+      supabase
+        .from("quiz_questions")
+        .select("id,quiz_date,prompt,options,correct_index,explanation,difficulty,category,paper,source_slug,source_title,generation_provider,created_at")
+        .order("quiz_date", { ascending: false })
+        .order("created_at", { ascending: true })
+        .limit(36),
+
+      new Promise((resolve) => {
+        timer = setTimeout(
+          () =>
+            resolve({
+              data: [],
+              error: { message: `Quiz query timed out after ${timeoutMs}ms` },
+            }),
+          timeoutMs
+        );
+      }),
+    ]);
+  } catch (error) {
+    return { data: [], error };
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export default async function QuizPage() {
   const today = indiaDate();
   let data = [];
   let error = null;
 
-  try {
-    const supabase = createServerSupabase();
-    const result = await supabase
-      .from("quiz_questions")
-      .select("id,quiz_date,prompt,options,correct_index,explanation,difficulty,category,paper,source_slug,source_title,generation_provider,created_at")
-      .order("quiz_date", { ascending: false })
-      .order("created_at", { ascending: true })
-      .limit(36);
-    data = result.data || [];
-    error = result.error || null;
-  } catch (loadError) {
-    error = loadError;
-  }
+  const result = await loadQuizRows();
+  data = result?.data || [];
+  error = result?.error || null;
 
   if (error) console.error("Stored quiz fetch failed:", error?.message || error);
   const approved = data.filter((question) => String(question.generation_provider || "").includes("upsc-v2"));
