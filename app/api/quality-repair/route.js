@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { inspectCoverageCandidate } from "@/lib/coverage/sourceSanitizer";
-import { classifyCategoryWithConfidence, resolvePaper } from "@/lib/contentTaxonomy";
 import { filterRelevantMapLocations, normaliseMapLocations } from "@/lib/study/mapRelevance";
 import { assessArticleQuality } from "@/lib/ai/articleQuality";
 
@@ -118,19 +117,20 @@ export async function GET(request) {
       continue;
     }
 
-    const classification = classifyCategoryWithConfidence(combined, article.category);
+    // Editorial cleanup is the single authority for category/paper changes.
+    // Quality repair may quarantine weak content and repair maps/quality flags,
+    // but it must never fight the taxonomy pass by reclassifying the same row.
     const cleanedMaps = filterRelevantMapLocations({
       title: article.title,
-      category: classification.category,
+      category: article.category,
       text: combined,
       mapLocations: article.map_locations,
     });
     const originalMaps = normaliseMapLocations(article.map_locations);
-    const categoryChanged = classification.confident && classification.category !== article.category;
     const mapChanged = JSON.stringify(cleanedMaps) !== JSON.stringify(originalMaps);
     const qualityNeedsUpgrade = !quality.passed;
 
-    if (!categoryChanged && !mapChanged && !qualityNeedsUpgrade) continue;
+    if (!mapChanged && !qualityNeedsUpgrade) continue;
 
     const action = {
       id: article.id,
@@ -138,7 +138,7 @@ export async function GET(request) {
       title: article.title,
       action: "repair",
       quality: qualityNeedsUpgrade ? { score: quality.score, flags: quality.flags } : null,
-      category: categoryChanged ? { from: article.category, to: classification.category, confidence: classification } : null,
+      category: null,
       maps: mapChanged ? { from: originalMaps, to: cleanedMaps } : null,
     };
     actions.push(action);
@@ -152,11 +152,6 @@ export async function GET(request) {
           : [...new Set([...(article.quality_flags || []), ...quality.flags, "needs_quality_upgrade_v4"])],
         quality_version: quality.passed ? Math.max(Number(article.quality_version || 0), 4) : 1,
       };
-      if (categoryChanged) {
-        values.category = classification.category;
-        values.paper = resolvePaper(classification.category, "");
-        values.quality_flags = [...new Set([...(values.quality_flags || []), "taxonomy_repaired_v4"])];
-      }
       if (mapChanged) values.map_locations = cleanedMaps;
       const { error: updateError } = await supabase.from("articles").update(values).eq("id", article.id);
       if (updateError) action.error = updateError.message;

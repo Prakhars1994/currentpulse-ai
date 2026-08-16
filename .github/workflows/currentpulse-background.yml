@@ -1,10 +1,9 @@
-name: CurrentPulse Background Automation
+name: CurrentPulse Manual Catch-up Automation
 
+# Scheduled News/Current-Affairs collection is owned by the external cron
+# runners. This workflow is an explicit manual fallback/catch-up only, which
+# prevents duplicate collection, duplicate AI calls and wasted GitHub minutes.
 on:
-  schedule:
-    # Hourly runner at :30 IST. Expensive collectors still run only in their
-    # selected windows; the hourly cadence mainly drains AI fallbacks quickly.
-    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -78,7 +77,6 @@ env:
 
 jobs:
   automate:
-    if: ${{ github.event_name == 'workflow_dispatch' || vars.AUTOMATION_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -129,10 +127,6 @@ jobs:
           MANUAL_MODE: ${{ inputs.mode }}
         run: |
           set -euo pipefail
-
-          mark_deploy() {
-            touch /tmp/currentpulse-deploy-needed
-          }
 
           api_required() {
             local path="$1"
@@ -217,7 +211,7 @@ jobs:
               echo "QUEUE_BATCH=${batch} PROCESSED=${processed} PROVIDER_OUTAGE=${outage}"
 
               if [[ "${processed}" != "0" ]]; then
-                mark_deploy
+
               fi
               if [[ "${processed}" == "0" ]]; then
                 echo "READY_QUEUE=EMPTY"
@@ -241,21 +235,21 @@ jobs:
           case "${mode}" in
             coverage)
               api_required "/api/coverage-import?source=all&limit=2000"
-              mark_deploy
+
               drain_queue
               ;;
             news)
               api_required "/api/auto-publish?wait=1&scope=news&runner=github"
-              mark_deploy
+
               drain_queue
               ;;
             collect)
               # CA first: News can never prevent Current Affairs processing.
               api_required "/api/coverage-import?source=all&limit=2000"
-              mark_deploy
+
               drain_queue
               api_optional "/api/auto-publish?wait=1&scope=news&runner=github"
-              mark_deploy
+
               drain_queue
               ;;
             queue)
@@ -263,27 +257,24 @@ jobs:
               ;;
             exams)
               api_required "/api/exams/run?full=1&notifications=0&runner=github"
-              mark_deploy
+
               ;;
             smart-full)
               echo "===== FULL MANUAL CATCH-UP: CA FIRST ====="
               api_required "/api/coverage-import?source=all&limit=2000"
-              mark_deploy
+
               drain_queue 1500
 
               api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
-              mark_deploy
 
               api_optional "/api/exams/run?full=1&notifications=0&runner=github"
-              mark_deploy
 
               api_optional "/api/generate-quiz?wait=1&force=1"
-              mark_deploy
 
               # Use the scheduled News slice, not the historical full=1 call
               # that timed out before CA could run.
               api_optional "/api/auto-publish?wait=1&scope=news&runner=github"
-              mark_deploy
+
               drain_queue 600
               ;;
             smart-hourly)
@@ -293,7 +284,7 @@ jobs:
               # Coaching CA is first in the two evening publication windows.
               if [[ "${india_hour}" == "06" || "${india_hour}" == "12" || "${india_hour}" == "19" || "${india_hour}" == "22" ]]; then
                 api_required "/api/auto-publish?wait=1&scope=coverage"
-                mark_deploy
+
                 drain_queue 1200
               else
                 # Pending CA/News AI fallbacks are checked every hour.
@@ -304,7 +295,7 @@ jobs:
               case "${india_hour}" in
                 06|09|12|15|19|22)
                   api_optional "/api/auto-publish?wait=1&scope=news&runner=github"
-                  mark_deploy
+
                   drain_queue
                   ;;
               esac
@@ -313,23 +304,23 @@ jobs:
               case "${india_hour}" in
                 06|12|19|22)
                   api_optional "/api/exams/run?notifications=0&runner=github"
-                  mark_deploy
+
                   ;;
               esac
 
               # Morning quiz plus a forced refresh after the late CA window.
               if [[ "${india_hour}" == "06" ]]; then
                 api_optional "/api/generate-quiz?wait=1"
-                mark_deploy
+
               elif [[ "${india_hour}" == "22" ]]; then
                 api_optional "/api/generate-quiz?wait=1&force=1"
-                mark_deploy
+
               fi
 
               # One daily archive cleanup after the collection windows.
               if [[ "${india_hour}" == "23" ]]; then
                 api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
-                mark_deploy
+
               fi
               ;;
             *)
@@ -350,22 +341,3 @@ jobs:
           if [[ -f /tmp/currentpulse-next.pid ]]; then
             kill "$(cat /tmp/currentpulse-next.pid)" 2>/dev/null || true
           fi
-
-      - name: Deploy refreshed Cloudflare static snapshot
-        if: always()
-        continue-on-error: true
-        shell: bash
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -u
-          if [[ ! -f /tmp/currentpulse-deploy-needed ]]; then
-            echo "No public-content change detected; deployment skipped."
-            exit 0
-          fi
-          if [[ -z "${CLOUDFLARE_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-            echo "Cloudflare deployment credentials unavailable; DB updates remain saved."
-            exit 0
-          fi
-          npm run deploy

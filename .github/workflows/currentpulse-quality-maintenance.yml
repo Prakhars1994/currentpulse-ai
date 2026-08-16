@@ -4,8 +4,7 @@ on:
   push:
     branches: [main]
   schedule:
-    # 06:30, 12:30, 19:30 and 22:30 IST. This workflow intentionally does NOT
-    # collect News/CA, so it cannot duplicate the external collection runners.
+    # 06:30, 12:30, 19:30 and 22:30 IST.
     - cron: "0 1,7,14,17 * * *"
   workflow_dispatch:
 
@@ -42,6 +41,7 @@ jobs:
   maintain:
     runs-on: ubuntu-latest
     timeout-minutes: 35
+
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -83,15 +83,19 @@ jobs:
       - name: Run ResultPulse, quiz and quality maintenance
         shell: bash
         run: |
-          set -euo pipefail
+          set -u
+          : > /tmp/currentpulse-maintenance-degraded
+
           api_optional() {
-            local path="$1"
+            local label="$1"
+            local path="$2"
             echo ">>> ${path}"
             if ! curl --silent --show-error --fail-with-body --max-time 300 \
               -H "Authorization: Bearer ${CRON_SECRET}" \
               "http://127.0.0.1:3000${path}"; then
               echo
-              echo "Optional maintenance task failed; other tasks continue."
+              echo "${label}" >> /tmp/currentpulse-maintenance-degraded
+              echo "::warning title=CurrentPulse maintenance degraded::${label} failed; independent tasks continue."
             fi
             echo
           }
@@ -99,23 +103,27 @@ jobs:
           india_hour="$(TZ=Asia/Kolkata date +%H)"
           echo "EVENT=${GITHUB_EVENT_NAME} INDIA_HOUR=${india_hour}"
 
-          api_optional "/api/exams/run?notifications=0&runner=github-maintenance"
+          # ResultPulse remains GitHub-owned at its deliberate activity windows.
+          api_optional "ResultPulse" "/api/exams/run?notifications=0&runner=github-maintenance"
 
-          # Every main push gets an immediate full repair/quiz pass so code and
-          # public data are coherent as soon as the deployment lands.
-          if [[ "${GITHUB_EVENT_NAME}" == "push" || "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
-            api_optional "/api/generate-quiz?wait=1&force=1"
-            api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
-            api_optional "/api/quality-repair?apply=1&limit=2000"
+          # Code pushes repair existing public rows but do NOT consume AI quota
+          # by forcing a new daily quiz on every commit.
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            api_optional "Editorial cleanup" "/api/editorial-cleanup?apply=1&limit=3000&days=365"
+            api_optional "Quality repair" "/api/quality-repair?apply=1&limit=2000"
+          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            api_optional "Daily quiz" "/api/generate-quiz?wait=1&force=1"
+            api_optional "Editorial cleanup" "/api/editorial-cleanup?apply=1&limit=3000&days=365"
+            api_optional "Quality repair" "/api/quality-repair?apply=1&limit=2000"
           elif [[ "${india_hour}" == "06" ]]; then
-            api_optional "/api/generate-quiz?wait=1"
+            api_optional "Daily quiz" "/api/generate-quiz?wait=1"
           elif [[ "${india_hour}" == "22" ]]; then
-            api_optional "/api/generate-quiz?wait=1&force=1"
-            api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
-            api_optional "/api/quality-repair?apply=1&limit=2000"
+            api_optional "Daily quiz" "/api/generate-quiz?wait=1&force=1"
+            api_optional "Editorial cleanup" "/api/editorial-cleanup?apply=1&limit=3000&days=365"
+            api_optional "Quality repair" "/api/quality-repair?apply=1&limit=2000"
           fi
 
-      - name: Print server log on failure
+      - name: Print server log on unexpected failure
         if: failure()
         shell: bash
         run: cat /tmp/currentpulse-maintenance.log || true
@@ -128,17 +136,14 @@ jobs:
             kill "$(cat /tmp/currentpulse-maintenance.pid)" 2>/dev/null || true
           fi
 
-      - name: Deploy Cloudflare on main push
-        if: github.event_name == 'push'
-        continue-on-error: true
+      - name: Assert maintenance health
+        if: always()
         shell: bash
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          set -u
-          if [[ -z "${CLOUDFLARE_API_TOKEN:-}" || -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-            echo "Cloudflare deployment credentials unavailable; local/other deployment remains authoritative."
-            exit 0
+          if [[ -s /tmp/currentpulse-maintenance-degraded ]]; then
+            echo "::error title=CurrentPulse maintenance degraded::One or more requested maintenance tasks failed."
+            echo "Failed tasks:"
+            cat /tmp/currentpulse-maintenance-degraded
+            exit 1
           fi
-          npm run deploy
+          echo "All requested maintenance tasks completed successfully."
