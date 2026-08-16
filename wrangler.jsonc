@@ -4,23 +4,53 @@
   "name": "cp",
   "compatibility_date": "2026-08-13",
   "minify": true,
+
   "compatibility_flags": [
     "nodejs_compat",
     "global_fetch_strictly_public"
   ],
+
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+
   "services": [
     {
       "binding": "WORKER_SELF_REFERENCE",
       "service": "cp"
     }
   ],
+
+  "kv_namespaces": [
+    {
+      "binding": "NEXT_INC_CACHE_KV",
+      "id": "7702076fde4f43b5a745717fe93b0b2c"
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "NEXT_CACHE_DO_QUEUE",
+        "class_name": "DOQueueHandler"
+      }
+    ]
+  },
+
+  "migrations": [
+    {
+      "tag": "currentpulse-isr-v1",
+      "new_sqlite_classes": [
+        "DOQueueHandler"
+      ]
+    }
+  ],
+
   "images": {
     "binding": "IMAGES"
   },
+
   "observability": {
     "enabled": true
   }
