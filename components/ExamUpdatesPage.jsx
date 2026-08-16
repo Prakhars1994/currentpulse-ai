@@ -18,7 +18,9 @@ const TYPE_ROUTE = {
 
 function dateText(value) {
   if (!value) return "Official update";
-  return new Date(value).toLocaleDateString("en-IN", {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Official update";
+  return date.toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata",
     day: "numeric",
     month: "short",

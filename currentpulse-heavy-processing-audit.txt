@@ -1,0 +1,1301 @@
+============================================================
+ CURRENTPULSE HEAVY PROCESSING AUDIT
+ Generated: 08/16/2026 14:10:39
+============================================================
+
+===== GIT STATE =====
+currentpulse-quality-wip-20260816
+ M .github/workflows/currentpulse-background.yml
+ M app/api/quality-repair/route.js
+ M app/news/page.js
+ M app/page.tsx
+ M app/quiz/page.js
+ M components/BreakingNews.tsx
+ M components/ExamUpdatesPage.jsx
+ M lib/ai/articleQuality.js
+ M lib/articleStreams.js
+ M lib/contentTaxonomy.js
+ M lib/editorial/publicationSafety.js
+ M lib/exams/repository.js
+ M lib/siteStats.js
+ M lib/siteUrl.js
+ M lib/study/mapRelevance.js
+?? .github/workflows/currentpulse-quality-maintenance.yml
+?? currentpulse-heavy-processing-audit.txt
+?? lib/news/headlinePriority.js
+?? tests/article-quality.test.mjs
+?? tests/map-relevance.test.mjs
+
+============================================================
+ FULL CORPUS / LARGE SCANS
+============================================================
+app\categories\page.js : 5 : import { loadCurrentAffairsCorpus } from "@/lib/articleStreams";
+app\categories\page.js : 15 : const { articles, error } = await loadCurrentAffairsCorpus({ maxScan: 5000 });
+app\pdf\page.js : 6 : import { loadCurrentAffairsCorpus } from "@/lib/articleStreams";
+app\pdf\page.js : 15 : const { articles, error } = await loadCurrentAffairsCorpus({ maxScan: 5000 });
+lib\articleStreams.js : 209 : async function scanCanonicalStream({ sourceKind, start = "", end = "", maxScan = 5000 } = {}) {
+lib\articleStreams.js : 252 : export function loadCurrentAffairsRange({ start = "", end = "", maxScan = 5000 } = {}) {
+lib\articleStreams.js : 255 : export function loadNewsRange({ start = "", end = "", maxScan = 5000 } = {}) {
+lib\articleStreams.js : 258 : export function loadCurrentAffairsCorpus({ maxScan = 5000 } = {}) {
+lib\articleStreams.js : 261 : export function loadNewsCorpus({ maxScan = 5000 } = {}) {
+lib\articleStreams.js : 265 : export async function loadCurrentAffairsRangePage({ start = "", end = "", limit = 80, offset = 0, maxScan = 1800 } = {}) {
+lib\articleStreams.js : 288 : const MAX_STREAM_SCAN = Math.max(exam === "upsc" ? 180 : 360, targetCount * 5);
+lib\articleStreams.js : 295 : while (rawOffset < MAX_STREAM_SCAN && prepared.length < targetCount && !exhausted) {
+lib\articleStreams.js : 296 : const end = Math.min(rawOffset + RAW_BATCH_SIZE - 1, MAX_STREAM_SCAN - 1);
+lib\articleStreams.js : 316 : hasMore: prepared.length > safeOffset + safeLimit || (!exhausted && rawOffset < MAX_STREAM_SCAN),
+lib\articleStreams.js : 328 : const MAX_STREAM_SCAN = Math.max(180, targetCount * 3);
+lib\articleStreams.js : 335 : while (rawOffset < MAX_STREAM_SCAN && prepared.length < targetCount && !exhausted) {
+lib\articleStreams.js : 336 : const end = Math.min(rawOffset + RAW_BATCH_SIZE - 1, MAX_STREAM_SCAN - 1);
+lib\articleStreams.js : 366 : hasMore: prepared.length > safeOffset + safeLimit || (!exhausted && rawOffset < MAX_STREAM_SCAN),
+
+============================================================
+ LARGE DATABASE LIMITS / RANGES
+============================================================
+app\api\process-queue\route.js : 156 : .limit(250);
+app\api\process-queue\route.js : 187 : .limit(200);
+app\sitemap.ts : 58 : .limit(2500),
+lib\articleStreams.js : 205 : .limit(240);
+lib\categoryArticles.js : 13 : .limit(240);
+lib\queue\queueCandidate.js : 69 : .limit(500);
+
+============================================================
+ FULL ROW DATABASE SELECTS
+============================================================
+app\api\articles\route.js : 84 : .select("*")
+app\api\articles\route.js : 111 : .select("*")
+app\api\process-queue\route.js : 181 : .select("*")
+lib\exams\repository.js : 94 : .select("*")
+lib\publisher\publishArticle.js : 572 : .select("*")
+lib\publisher\publishArticle.js : 640 : .select("*")
+lib\publisher\publishArticle.js : 747 : .select("*")
+
+============================================================
+ COUNT QUERIES
+============================================================
+app\api\automation-status\route.js : 92 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 58 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 64 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 71 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 80 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 87 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 94 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 101 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 108 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 115 : .select("id", { count: "exact", head: true })
+app\api\stats\route.js : 122 : .select("id", { count: "exact", head: true })
+lib\quiz\generateDailyQuiz.js : 289 : .select("id", { count: "exact", head: true })
+lib\siteStats.js : 62 : { count: "exact", head: true }
+
+============================================================
+ PROMISE.ALL MULTI-WORK
+============================================================
+app\api\automation-status\route.js : 70 : const [sourceRowsResult, latestQueueResult, latestRunsResult, ...queueCounts] = await Promise.all([
+app\api\auto-publish\route.js : 78 : await Promise.all(
+app\api\auto-publish\route.js : 93 : const sourceResults = await Promise.all(
+app\api\auto-publish\route.js : 371 : const [acceptedResults, rejectedResults] = await Promise.all([
+app\api\auto-publish\route.js : 460 : [news, coverage] = await Promise.all([
+app\api\backfill-images\route.js : 31 : await Promise.all(
+app\api\fetch-all-news\route.js : 32 : const sourceResults = await Promise.all(
+app\api\fetch-todays-news\route.js : 714 : await Promise.all(
+app\api\fetch-todays-news\route.js : 956 : await Promise.all(
+app\api\process-queue\route.js : 526 : await Promise.all(
+app\api\stats\route.js : 54 : ] = await Promise.all([
+app\sitemap.ts : 52 : const [articleResult, examResult] = await Promise.all([
+lib\articleStreams.js : 374 : const [currentAffairsResult, newsResult] = await Promise.all([
+lib\exams\collector.js : 284 : const sourceResults = await Promise.all(
+lib\exams\collector.js : 370 : await Promise.allSettled(
+lib\news\rss.js : 221 : const settled = await Promise.allSettled(
+lib\siteStats.js : 141 : ] = await Promise.all([
+
+============================================================
+ LOOPS THAT MAY PROCESS LARGE DATASETS
+============================================================
+app\api\article-visual\route.js : 28 : for (const word of words) {
+app\api\ask-ai\route.js : 141 : for (const model of MODELS) {
+app\api\auto-publish\route.js : 71 : while (nextIndex < items.length) {
+app\api\auto-publish\route.js : 141 : for (const official of officialItems) {
+app\api\auto-publish\route.js : 197 : for (const article of articles) {
+app\api\auto-publish\route.js : 269 : for (const candidate of candidates) {
+app\api\backfill-images\route.js : 24 : while (index < items.length) {
+app\api\backfill-study-aids\route.js : 52 : for (const item of generated) {
+app\api\editorial-cleanup\route.js : 33 : function knownEditorialRepair(article={}){if(KNOWN_QUARANTINE_SLUGS.has(article.slug))return{quarantine:true,code:"known_audit_failure",reason:"Live audit identified this row as unsupported, broken or below the minimum public quality standard.",values:{}};const publicText=publicArticleText(article);if(/solar eclipse/i.test(publicText)&&/August\s+11,\s*2026/i.test(publicText))return{quarantine:true,code:"event_date_confusion",reason:"Source publication date was confused with the event date.",values:{}};const values={};if(article.slug===HANDLOOM_SLUG){for(const field of [...SANITIZABLE_FIELDS,"content"]){if(typeof article[field]!=="string"||!article[field])continue;const repaired=article[field].replace(/35\.22\s+lakh\s+handloom\s+households/gi,"31.45 lakh handloom households").replace(/Number of handloom households\s*:\s*35\.22\s+lakh/gi,"Number of handloom households: 31.45 lakh");if(repaired!==article[field])values[field]=repaired;}}if(article.slug===HALLANIYAT_SLUG)values.map_locations=["Hallaniyat Islands","Dhofar","Oman"];return{quarantine:false,values};}
+app\api\editorial-cleanup\route.js : 82 : for (const field of SANITIZABLE_FIELDS) {
+app\api\editorial-cleanup\route.js : 122 : for (const article of articles) {
+app\api\editorial-cleanup\route.js : 185 : for (const article of data || []) {
+app\api\editorial-cleanup\route.js : 304 : for (const item of sanitizationUpdates) {
+app\api\editorial-cleanup\route.js : 307 : for (const correction of taxonomyCorrections) {
+app\api\editorial-cleanup\route.js : 310 : for (const repair of knownRepairs) updatesById.set(repair.id,{...(updatesById.get(repair.id)||{}),...repair.values});
+app\api\editorial-cleanup\route.js : 312 : for (const [articleId, values] of updatesById) {
+app\api\editorial-cleanup\route.js : 326 : for (const finding of duplicateFindings) {
+app\api\editorial-cleanup\route.js : 358 : for (const idGroup of chunks([...new Set([...quarantineIds, ...deduplicatedIds])], 100)) {
+app\api\fetch-todays-news\route.js : 406 : for (const selector of contentSelectors) {
+app\api\fetch-todays-news\route.js : 686 : while (true) {
+app\api\fetch-todays-news\route.js : 928 : while (true) {
+app\api\memory-visual\route.js : 22 : for (const word of words) {
+app\api\memory-visual\route.js : 50 : while (parts.length < 3) parts.push(["Latest development", "Core mechanism", "Exam relevance"][parts.length]);
+app\api\process-queue\route.js : 342 : while (!stopRequested) {
+app\api\quality-repair\route.js : 58 : for (const article of data || []) {
+app\feed.xml\route.js : 20 : for (const article of rows) {
+app\news\[slug]\page.js : 37 : for (const label of labels) {
+app\news\[slug]\page.js : 44 : for (const pattern of patterns) {
+app\news-sitemap.xml\route.js : 19 : for (const article of rows) {
+app\pdf\page.js : 19 : for (const article of articles) {
+app\sitemap.ts : 70 : for (const article of (articleResult.data || []) as SitemapArticle[]) {
+components\ArticleStudyVisuals.jsx : 366 : for (const candidate of candidates) {
+components\MockTestPlayer.jsx : 29 : for (const q of questions) {
+lib\ai\articleQuality.js : 51 : for (const token of a) if (b.has(token)) shared += 1;
+lib\ai\evaluateNews.js : 174 : for (const rawEvaluation of parsed.evaluations) {
+lib\ai\evaluateNews.js : 353 : for (const model of MODELS) {
+lib\ai\generateArticle.js : 280 : for (const [field, minimumLength] of Object.entries(minimumLengths)) {
+lib\ai\generateArticle.js : 363 : for (const model of models) {
+lib\ai\generateArticle.js : 799 : for (const match of raw.matchAll(/\b(?:2024|2025|2026)\b/g)) tokens.add(match[0]);
+lib\ai\generateArticle.js : 800 : for (const match of raw.matchAll(/\b\d+(?:\.\d+)?(?:%|\s+(?:crore|lakh|million|billion|trillion))\b/gi)) {
+lib\ai\generateArticle.js : 814 : for (const match of sensitive.matchAll(rolePattern)) {
+lib\ai\generateStudyAids.js : 100 : for (const model of MODELS) {
+lib\ai\router.js : 239 : for (const id of requested) {
+lib\ai\router.js : 327 : for (const provider of providerOrder()) {
+lib\ai\router.js : 380 : for (const definition of providerOrder()) {
+lib\ai\trustedCoverageFallback.js : 117 : for (const term of EMPHASIS_TERMS) {
+lib\articleStreams.js : 39 : for (const [cacheKey, entry] of streamCache) {
+lib\articleStreams.js : 137 : for (const article of rows) {
+lib\articleStreams.js : 219 : while (offset < safeMax && !exhausted) {
+lib\articleStreams.js : 272 : while (rawOffset < safeMax && prepared.length < targetCount && !exhausted) {
+lib\articleStreams.js : 295 : while (rawOffset < MAX_STREAM_SCAN && prepared.length < targetCount && !exhausted) {
+lib\articleStreams.js : 335 : while (rawOffset < MAX_STREAM_SCAN && prepared.length < targetCount && !exhausted) {
+lib\contentTaxonomy.js : 120 : for (const [category, terms] of Object.entries(NEWS_CATEGORY_TERMS)) {
+lib\contentTaxonomy.js : 121 : for (const term of terms) {
+lib\contentTaxonomy.js : 215 : for (const [category, terms] of Object.entries(CATEGORY_TERMS)) {
+lib\contentTaxonomy.js : 216 : for (const term of terms) {
+lib\contentTaxonomy.js : 249 : for (const [category, terms] of Object.entries(CATEGORY_TERMS)) {
+lib\contentTaxonomy.js : 250 : for (const term of terms) {
+lib\editorial\numericFactGuard.js : 35 : for (const match of value.matchAll(STRONG_NUMBER)) {
+lib\editorial\numericFactGuard.js : 65 : for (const item of left) if (right.has(item)) return false;
+lib\editorial\numericFactGuard.js : 81 : for (const fact of sourceFacts) {
+lib\editorial\numericFactGuard.js : 86 : for (const fact of outputFacts) {
+lib\editorial\publicationSafety.js : 166 : for (const source of sourceEntries(candidate)) {
+lib\editorial\sourceEntailmentGuard.js : 13 : function explicitDates(value = "") { const values=[]; for (const pattern of DATE_PATTERNS) { pattern.lastIndex=0; for (const match of String(value).matchAll(pattern)) values.push(normalize(match[0])); } return [...new Set(values)]; }
+lib\editorial\sourceEntailmentGuard.js : 16 : for (const match of text.matchAll(/\b(?:[A-Z][a-z]{2,}|[A-Z]{2,})(?:[\s-]+(?:[A-Z][a-z]{2,}|[A-Z]{2,})){1,4}\b/g)) { const item=clean(match[0]); if(!ENTITY_STOP.has(item)&&item.length>=5) found.add(item); }
+lib\editorial\sourceEntailmentGuard.js : 17 : for (const match of text.matchAll(/\b[A-Z][a-z]+[A-Z][A-Za-z]*\b/g)) { const item=clean(match[0]); if(!ENTITY_STOP.has(item)) found.add(item); }
+lib\editorial\sourceEntailmentGuard.js : 18 : for (const match of text.matchAll(/\b[A-Z]{2,8}\b/g)) { const item=match[0]; if(!["AI","CA","PDF","URL","UK","US","USA"].includes(item)) found.add(item); }
+lib\examPrep\mockBank.js : 30 : for (const item of pool) {
+lib\examPrep\mockBank.js : 41 : while (groups.some((group) => index < group.length)) {
+lib\examPrep\mockBank.js : 42 : for (const group of groups) if (group[index]) ordered.push(group[index]);
+lib\exams\collector.js : 100 : for (const item of items) {
+lib\exams\collector.js : 241 : for (const row of data || []) existing.add(row.fingerprint);
+lib\exams\collector.js : 317 : for (const sourceResult of sourceResults) {
+lib\exams\collector.js : 318 : for (const item of sourceResult.items) {
+lib\exams\repository.js : 56 : for (const [cacheKey, entry] of cache) {
+lib\news\duplicateRepository.js : 61 : for (const row of data || []) existing.add(row.slug);
+lib\news\eventCluster.js : 122 : for (const value of first) {
+lib\news\filter.js : 6 : for (const article of articles) {
+lib\news\imageExtractor.js : 275 : for (const pattern of urlPatterns) {
+lib\news\imageExtractor.js : 278 : for (const match of matches) {
+lib\news\imageExtractor.js : 443 : for (const urlVariant of googleUrlVariants) {
+lib\news\imageExtractor.js : 492 : for (const attribute of attributes) {
+lib\news\imageExtractor.js : 513 : for (const candidate of metadataCandidates) {
+lib\news\imageExtractor.js : 574 : for (const image of item.image) {
+lib\news\imageExtractor.js : 599 : for (const graphItem of item["@graph"]) {
+lib\news\imageExtractor.js : 608 : for (const value of Object.values(item)) {
+lib\news\imageExtractor.js : 616 : for (const nestedItem of value) {
+lib\news\imageExtractor.js : 627 : for (const item of parsedJson) {
+lib\news\imageExtractor.js : 645 : for (const entry of entries) {
+lib\news\imageExtractor.js : 708 : for (const candidate of candidates) {
+lib\news\newsOutputQuality.js : 35 : for (const token of a) if (b.has(token)) common += 1;
+lib\news\publisherResolver.js : 59 : for (const word of articleWords) {
+lib\news\relevantImage.js : 117 : for (const query of queries) {
+lib\news\rss.js : 60 : for (const candidate of candidates) {
+lib\news\sourceEnricher.js : 69 : for (const script of $("script[type='application/ld+json']").toArray()) {
+lib\news\sourceEnricher.js : 139 : for (const selector of ARTICLE_SELECTORS) {
+lib\notifications\dispatch.js : 136 : for (const event of events) {
+lib\notifications\dispatch.js : 141 : for (const sub of subscriptions) {
+lib\notifications\dispatch.js : 153 : for (const [channel, target] of channels) {
+lib\quiz\generateDailyQuiz.js : 129 : for (const raw of rawQuestions) {
+lib\quiz\generateDailyQuiz.js : 257 : for (const model of MODELS) {
+lib\siteStats.js : 271 : for (const [key, entry] of snapshotCache) {
+lib\study\highlightFacts.js : 53 : for (const pattern of HIGHLIGHT_PATTERNS) {
+lib\study\mapMastery.js : 50 : for (const [key, value] of Object.entries(MAP_MASTERY_DATA)) {
+scripts\quality-gates-smoke.mjs : 26 : for (const title of junkTitles) {
+scripts\resultpulse-smoke.mjs : 7 : for (const source of EXAM_OFFICIAL_SOURCES) {
+scripts\resultpulse-smoke.mjs : 11 : for (const required of ["result","admit-card","notification","answer-key","application","deadline","exam-date","cut-off","counselling"]) {
+tests\automation-schedule.test.mjs : 23 : for (const id of ["core-a", "core-b", "pib-direct"]) {
+tests\automation-schedule.test.mjs : 41 : for (const value of windows) {
+tests\automation-schedule.test.mjs : 64 : for (const value of windows) {
+tests\automation-schedule.test.mjs : 67 : for (const id of ["upsc", "ssc", "rrcb", "ibps"]) {
+tests\editorial-safety.test.mjs : 26 : for (const title of titles) {
+tests\editorial-safety.test.mjs : 49 : for (const title of rejected) {
+tests\editorial-safety.test.mjs : 70 : for (const title of genuine) {
+tests\editorial-safety.test.mjs : 145 : for (const title of rejected) {
+tests\editorial-safety.test.mjs : 249 : for (const title of [
+
+============================================================
+ SORT FILTER MAP ON POSSIBLY LARGE ARRAYS
+============================================================
+app\admin\articles\page.jsx : 118 : {articles.map((article) => (
+app\admin\page.jsx : 29 : const published = articles.filter((article) => article.status === 'published').length
+app\admin\page.jsx : 30 : const drafts = articles.filter((article) => article.status !== 'published').length
+app\admin\page.jsx : 62 : {statItems.map((item) => (
+app\admin\page.jsx : 88 : recentArticles.map((article) => (
+app\ai\page.js : 55 : {MODES.map(([value, icon, label]) => <button key={value} type="button" onClick={() => setMode(value)} className={mode === value ? "is-active" : ""}><span>{icon}</span>{label}</button>)}
+app\ai\page.js : 71 : {sources.length > 0 && <div className="ai-source-chips"><strong>Retrieved sources</strong>{sources.slice(0,5).map((source) => <a key={source.url} href={source.url}>{source.title}</a>)}</div>}
+app\api\articles\route.js : 24 : ? body.tags.map(cleanText).filter(Boolean)
+app\api\article-visual\route.js : 25 : const words = title.split(/\s+/).filter(Boolean);
+app\api\article-visual\route.js : 45 : const lines = wrapTitle(title).map(
+app\api\ask-ai\route.js : 53 : return [...new Set(String(question).toLowerCase().replace(/[^a-z0-9\s-]/g, " ").split(/\s+/).filter((word) => word.length >= 4 && !STOP.has(word)))].sort((a,b) => b.length-a.length).slice(0,5);
+app\api\ask-ai\route.js : 64 : const safeTerms = terms.slice(0, 4).map((term) => term.replace(/[^a-z0-9-]/g, "")).filter(Boolean);
+app\api\ask-ai\route.js : 87 : return (data || []).filter((article) => {
+app\api\ask-ai\route.js : 92 : }).map((article) => {
+app\api\ask-ai\route.js : 94 : const score = terms.reduce((sum, term) => sum + (haystack.includes(term) ? 2 : 0) + (String(article.title).toLowerCase().includes(term) ? 2 : 0), 0);
+app\api\ask-ai\route.js : 96 : }).sort((a,b) => b._score-a._score).slice(0,5);
+app\api\ask-ai\route.js : 104 : return articles.map((article, index) => `SOURCE ${index + 1}: ${article.title}\nURL: ${SITE_URL}${articlePath(article)}\nUPDATED: ${article.updated_at || "not supplied"}\nWHY/LEAD: ${String(article.why_news || "").slice(0,1200)}\nSTATIC/CONTEXT: ${String(article.static_foundation || "").slice(0,1000)}\nDATA/EXAMPLES: ${String(article.data_examples || "").slice(0,1200)}\nPRELIMS: ${String(article.prelims || "").slice(0,900)}\nMAINS: ${String(article.mains || "").slice(0,1200)}`).join("\n\n---\n\n");
+app\api\ask-ai\route.js : 110 : const blocks = articles.slice(0,4).map((article) => {
+app\api\ask-ai\route.js : 135 : return NextResponse.json(writeAnswerCache(cacheKey, { answer: groundedFallback(cleanQuestion, mode, articles), groundedFallback: true, sources: articles.map((a) => ({ title: a.title, url: `${SITE_URL}${articlePath(a)}` })) }));
+app\api\ask-ai\route.js : 145 : if (answer) return NextResponse.json(writeAnswerCache(cacheKey, { answer, provider: response.provider || "gemini", model: response.model || model, sources: articles.map((a) => ({ title: a.title, url: `${SITE_URL}${articlePath(a)}` })) }));
+app\api\ask-ai\route.js : 154 : if (articles.length) return NextResponse.json(writeAnswerCache(cacheKey, { answer: groundedFallback(cleanQuestion, mode, articles), groundedFallback: true, error: lastError?.message || "AI providers unavailable", sources: articles.map((a) => ({ title: a.title, url: `${SITE_URL}${articlePath(a)}` })) }));
+app\api\automation-status\route.js : 88 : ...QUEUE_STATUSES.map((status) =>
+app\api\automation-status\route.js : 104 : const latestQueue = (latestQueueResult.data || []).map((row) => ({
+app\api\automation-status\route.js : 109 : QUEUE_STATUSES.map((status, index) => [status, queueCounts[index]])
+app\api\automation-status\route.js : 111 : const coachingArticleIds = new Set(sourceRows.map((row) => row.article_id));
+app\api\automation-status\route.js : 112 : const sourceNames = [...new Set(sourceRows.map((row) => row.source_name).filter(Boolean))];
+app\api\automation-status\route.js : 135 : latestRuns: (latestRunsResult.data || []).map((run) => ({
+app\api\auto-publish\route.js : 86 : return NEWS_SOURCES.filter((source) => activeGroups.has(source.group));
+app\api\auto-publish\route.js : 94 : selectedSources.map(async (source) => {
+app\api\auto-publish\route.js : 97 : const articleLikeItems = result.articles.filter(
+app\api\auto-publish\route.js : 134 : .filter((result) => result.group !== "official")
+app\api\auto-publish\route.js : 138 : .filter((result) => result.group === "official")
+app\api\auto-publish\route.js : 156 : selectedIds: selectedSources.map((source) => source.id),
+app\api\auto-publish\route.js : 160 : sources: sourceResults.map((result) => ({
+app\api\auto-publish\route.js : 227 : const evaluations = eligible.map(localEvaluation);
+app\api\auto-publish\route.js : 228 : const accepted = eligible.map((article, index) => ({
+app\api\auto-publish\route.js : 233 : accepted.sort((first, second) =>
+app\api\auto-publish\route.js : 264 : queueRows.map((row) => cleanText(row.url)).filter(Boolean)
+app\api\auto-publish\route.js : 376 : const queued = acceptedResults.filter((result) => result.status === "queued").length;
+app\api\auto-publish\route.js : 377 : const rejectedPreserved = rejectedResults.filter(
+app\api\auto-publish\route.js : 380 : const failed = [...acceptedResults, ...rejectedResults].filter(
+app\api\backfill-images\route.js : 57 : .filter(needsReplacement)
+app\api\backfill-images\route.js : 109 : updated: results.filter((item) => item.status === "updated").length,
+app\api\backfill-images\route.js : 110 : failed: results.filter((item) => item.status === "failed").length,
+app\api\backfill-images\route.js : 113 : (data || []).filter(needsReplacement).length -
+app\api\backfill-images\route.js : 114 : results.filter((item) => item.status === "updated").length
+app\api\backfill-study-aids\route.js : 32 : .filter(
+app\api\backfill-study-aids\route.js : 49 : const originalById = new Map(selected.map((article) => [Number(article.id), article]));
+app\api\backfill-study-aids\route.js : 113 : updated: results.filter((item) => item.status === "updated").length,
+app\api\backfill-study-aids\route.js : 114 : failed: results.filter((item) => item.status === "failed").length,
+app\api\backfill-study-aids\route.js : 117 : (data || []).filter(
+app\api\backfill-study-aids\route.js : 125 : ).length - results.filter((item) => item.status === "updated").length
+app\api\coverage-test\route.js : 46 : const normalized = rawTopics.map(normalizeTopic);
+app\api\coverage-test\route.js : 54 : results: unique.map((topic) => ({
+app\api\editorial-cleanup\route.js : 62 : .filter((source) => !sourceKind || source?.source_kind === sourceKind)
+app\api\editorial-cleanup\route.js : 63 : .map((source) => source?.source_published_at)
+app\api\editorial-cleanup\route.js : 64 : .filter(Boolean)
+app\api\editorial-cleanup\route.js : 65 : .sort()
+app\api\editorial-cleanup\route.js : 74 : const years = [...text.matchAll(/\b(20\d{2})\b/g)].map((match) => Number(match[1]));
+app\api\editorial-cleanup\route.js : 110 : const knowledgeLength = fields.reduce((total, value) => total + String(value || "").length, 0);
+app\api\editorial-cleanup\route.js : 133 : .filter((cluster) => cluster.length > 1)
+app\api\editorial-cleanup\route.js : 134 : .map((cluster) => {
+app\api\editorial-cleanup\route.js : 135 : const ranked = [...cluster].sort((left, right) => keeperScore(right) - keeperScore(left));
+app\api\editorial-cleanup\route.js : 287 : duplicates.map((duplicate) => ({
+app\api\editorial-cleanup\route.js : 290 : sharedStreams: [...streamLabels(keeper)].filter((label) => streamLabels(duplicate).has(label)),
+app\api\editorial-cleanup\route.js : 357 : const quarantineIds = [...new Set(quarantine.map((item) => item.id))];
+app\api\editorial-cleanup\route.js : 370 : const updatedIds = new Set((updated || []).map((row) => row.id));
+app\api\editorial-cleanup\route.js : 371 : quarantined += quarantineIds.filter((id) => updatedIds.has(id)).length;
+app\api\editorial-cleanup\route.js : 372 : duplicatesDrafted += deduplicatedIds.filter((id) => updatedIds.has(id)).length;
+app\api\editorial-cleanup\route.js : 398 : sanitizationUpdates: sanitizationUpdates.slice(0, 200).map((item) => ({
+app\api\exams\run\route.js : 50 : selectedSources: selectedSources.map((source) => source.id),
+app\api\fetch-all-news\route.js : 25 : .map((value) => value.trim())
+app\api\fetch-all-news\route.js : 26 : .filter(Boolean);
+app\api\fetch-all-news\route.js : 29 : ? NEWS_SOURCES.filter((source) => requestedGroups.includes(source.group))
+app\api\fetch-all-news\route.js : 30 : : NEWS_SOURCES.filter((source) => source.newsAgenda === true);
+app\api\fetch-all-news\route.js : 33 : sources.map(async (source) => {
+app\api\fetch-all-news\route.js : 54 : const collected = rawCollected.filter((article) => assessNewsCandidate(article).allowed);
+app\api\fetch-all-news\route.js : 62 : configuredSources: NEWS_SOURCES.filter((source) => source.newsAgenda === true).length,
+app\api\fetch-all-news\route.js : 64 : successfulSources: sourceResults.filter((result) => result.articles.length > 0).length,
+app\api\fetch-all-news\route.js : 65 : failedSources: sourceResults.filter((result) => result.failed).length,
+app\api\fetch-all-news\route.js : 73 : sourceStatus: sourceResults.map((result) => ({
+app\api\fetch-todays-news\route.js : 170 : return UPSC_PRIORITY_WORDS.reduce(
+app\api\fetch-todays-news\route.js : 197 : return items.filter((item) => {
+app\api\fetch-todays-news\route.js : 496 : return candidates.sort(
+app\api\fetch-todays-news\route.js : 523 : navigationIndicators.filter(
+app\api\fetch-todays-news\route.js : 837 : .sort(
+app\api\fetch-todays-news\route.js : 1004 : .filter(
+app\api\fetch-todays-news\route.js : 1007 : .sort(
+app\api\fetch-todays-news\route.js : 1037 : evaluatedArticles.filter(
+app\api\fetch-todays-news\route.js : 1046 : evaluatedArticles.filter(
+app\api\fetch-todays-news\route.js : 1055 : enrichedArticles.filter(
+app\api\fetch-todays-news\route.js : 1063 : enrichedArticles.filter(
+app\api\memory-visual\route.js : 19 : const words = plain(value).split(/\s+/).filter(Boolean);
+app\api\memory-visual\route.js : 37 : .map(
+app\api\memory-visual\route.js : 49 : const parts = cleaned.split(/\s*(?:?|->)\s*/).filter(Boolean).slice(0, 3);
+app\api\memory-visual\route.js : 64 : const cards = parts.map((part, index) => {
+app\api\notifications\subscribe\route.js : 19 : const topics = [...new Set((Array.isArray(body.topics) ? body.topics : []).filter((x) => ALLOWED_TOPICS.has(x)))];
+app\api\process-queue\route.js : 50 : ? item.coverage_sources.map((reference) => ({
+app\api\process-queue\route.js : 162 : .filter((row) => /quality validation|invalid json|incomplete|gemini|openrouter|quota|rate limit|ai provider/i.test(String(row.error || "")))
+app\api\process-queue\route.js : 163 : .map((row) => row.id);
+app\api\process-queue\route.js : 193 : .filter((item) => !attemptedIds.has(item.id))
+app\api\process-queue\route.js : 194 : .filter((item) => {
+app\api\process-queue\route.js : 200 : .sort(
+app\api\process-queue\route.js : 346 : itemDurations.reduce((total, duration) => total + duration, 0) /
+app\api\process-queue\route.js : 543 : const publishedCount = results.filter((item) => ["published", "published_source_brief", "dual_stream"].includes(item.status)).length;
+app\api\process-queue\route.js : 544 : const dualStreamCount = results.filter((item) => item.status === "dual_stream").length;
+app\api\process-queue\route.js : 545 : const enrichedCount = results.filter((item) => item.status === "enriched").length;
+app\api\process-queue\route.js : 546 : const sourceBriefCount = results.filter((item) => item.status === "published_source_brief").length;
+app\api\process-queue\route.js : 547 : const rejectedCount = results.filter((item) => item.status === "rejected").length;
+app\api\process-queue\route.js : 548 : const duplicateCount = results.filter((item) => item.status === "duplicate").length;
+app\api\process-queue\route.js : 549 : const failedCount = results.filter((item) => item.status === "failed").length;
+app\api\process-queue\route.js : 550 : const retryPending = results.filter((item) => item.status === "retry_pending").length;
+app\api\quality-repair\route.js : 26 : ].filter(Boolean).join(" ");
+app\api\quality-repair\route.js : 170 : sourceQuarantines: actions.filter((item) => item.action === "quarantine_source_noise").length,
+app\api\quality-repair\route.js : 171 : qualityQuarantines: actions.filter((item) => item.action === "quarantine_quality_floor").length,
+app\api\quality-repair\route.js : 172 : repairs: actions.filter((item) => item.action === "repair").length,
+app\api\quality-repair\route.js : 173 : errors: actions.filter((item) => item.error).length,
+app\categories\page.js : 31 : {CATEGORY_ROUTES.map((route) => {
+app\categories\page.js : 32 : const count = articles.filter((article) =>
+app\category\[slug]\loading.tsx : 2 : return <main className="min-h-screen bg-slate-950 py-12 text-white"><div className="mx-auto max-w-7xl animate-pulse px-6"><div className="h-10 w-72 rounded-xl bg-slate-800"/><div className="mt-4 h-5 w-full max-w-2xl rounded bg-slate-800"/><div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">{Array.from({length:9}).map((_,i)=><div key={i} className="h-72 rounded-3xl border border-slate-800 bg-slate-900"/>)}</div></div></main>;
+app\category\[slug]\page.tsx : 70 : const articles = ((data || []) as Article[]).filter((article) =>
+app\category\[slug]\page.tsx : 76 : const related = CATEGORY_ROUTES.filter((item) => item.slug !== route.slug).slice(
+app\category\[slug]\page.tsx : 108 : {articles.map((article) => (
+app\category\[slug]\page.tsx : 175 : {related.map((item) => (
+app\current-affairs\[slug]\page.js : 42 : .filter(Boolean)
+app\current-affairs\[slug]\page.js : 43 : .map(stripHtml)
+app\current-affairs\[slug]\page.js : 49 : .filter(Boolean).length;
+app\current-affairs\[slug]\page.js : 229 : const safeRelatedArticles = (relatedArticles || []).filter((item) =>
+app\current-affairs\[slug]\page.js : 276 : citation: (articleSources || []).map((source) => source.source_url).filter(Boolean),
+app\current-affairs\[slug]\page.js : 277 : about: [article.category, article.paper].filter(Boolean).map((name) => ({ "@type": "Thing", name })),
+app\current-affairs\[slug]\page.js : 467 : {articleSources.map((source) => (
+app\current-affairs\[slug]\page.js : 602 : {safeRelatedArticles.map((item) => (
+app\current-affairs\loading.js : 1 : export default function Loading(){return <main className="min-h-screen bg-slate-950 py-12"><div className="mx-auto max-w-7xl animate-pulse px-6"><div className="h-56 rounded-[2rem] bg-slate-900"/><div className="mt-8 grid gap-5 md:grid-cols-3">{Array.from({length:9}).map((_,i)=><div key={i} className="h-80 rounded-3xl bg-slate-900"/>)}</div></div></main>}
+app\current-affairs\page.js : 84 : {Object.values(EXAM_VERTICALS).map((item) => (
+app\current-affairs\page.js : 102 : {articles.map((article) => {
+app\exams\[slug]\page.js : 29 : {related.length > 0 && <section className="mt-8 rounded-3xl border border-slate-800 bg-slate-900/70 p-6 sm:p-8"><div className="flex items-end justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-[.18em] text-violet-300">Exam timeline</p><h2 className="mt-2 text-2xl font-black">Other updates for {update.exam_name}</h2></div><Link href="/exams" className="text-sm font-black text-violet-300">All exams ?</Link></div><div className="mt-5 grid gap-3">{related.map((item)=><Link key={item.id} href={`/exams/${item.slug}`} className="flex flex-col gap-2 rounded-2xl border border-slate-800 bg-slate-950/70 p-4 transition hover:border-violet-400/50 sm:flex-row sm:items-center sm:justify-between"><div><span className="text-xs font-black uppercase text-violet-300">{EXAM_TYPE_META[item.update_type]?.label || "Update"}</span><p className="mt-1 font-bold text-slate-100">{item.title}</p></div><time className="shrink-0 text-xs font-bold text-slate-500">{formatDate(item.source_published_at || item.created_at)}</time></Link>)}</div></section>}
+app\exams\loading.js : 1 : export default function Loading(){return <main className="min-h-screen bg-slate-950 py-12"><div className="mx-auto max-w-7xl animate-pulse px-6"><div className="h-52 rounded-[2rem] bg-slate-900"/><div className="mt-8 grid gap-5 md:grid-cols-3">{Array.from({length:6}).map((_,i)=><div key={i} className="h-56 rounded-3xl bg-slate-900"/>)}</div></div></main>}
+app\feed.xml\route.js : 40 : const items = rows.map((article) => {
+app\mock-tests\[exam]\page.js : 7 : export default async function ExamMockList({params,searchParams}){const{exam}=await params;const query=await searchParams;if(!isKnownExamVertical(exam))notFound();const hi=query?.lang==="hi",vertical=getExamVertical(exam),suffix=hi?"?lang=hi":"",bankSize=examMockBankSize(exam);return <main className="min-h-screen bg-slate-950 px-4 py-12 text-white sm:px-6"><div className="mx-auto max-w-5xl"><Link href={`/mock-tests${suffix}`} className="text-sm font-bold text-cyan-300">? {hi?"??? ??????? ???":"All exam mocks"}</Link><h1 className="mt-6 text-4xl font-black">{hi?`10 ?????? ${vertical.label} ??? ?????`:`10 free ${vertical.label} mock tests`}</h1><p className="mt-3 text-slate-400">{hi?`????? ?????? ????? ${bankSize} ??? ???????? ?? 10 ??? ????`:`No login required. Ten non-overlapping sets are drawn from a ${bankSize}-question reusable/deterministic bank.`}</p><div className="mt-9 grid gap-4 sm:grid-cols-2">{Array.from({length:10},(_,i)=>i+1).map((n)=><Link key={n} href={`/mock-tests/${exam}/${n}${suffix}`} className="rounded-2xl border border-slate-800 bg-slate-900 p-5 hover:border-cyan-400"><span className="text-sm font-black text-cyan-300">MOCK {n}</span><h2 className="mt-2 text-xl font-black">{vertical.label} {hi?`?????? ????? ${n}`:`Practice Test ${n}`}</h2></Link>)}</div></div></main>;}
+app\mock-tests\page.js : 21 : {Object.values(EXAM_VERTICALS).map((exam) => <article key={exam.slug} className="rounded-3xl border border-slate-800 bg-slate-900 p-6"><p className="text-sm font-black uppercase tracking-[.16em] text-cyan-300">{exam.label}</p><h2 className="mt-2 text-2xl font-black">{hi ? "10 ?????? ???" : "10 free mocks"}</h2><p className="mt-3 text-sm leading-6 text-slate-400">{exam.subjects.join(" · ")}</p><Link href={`/mock-tests/${exam.slug}${q}`} className="mt-5 inline-block rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950">{hi ? `${exam.label} ??? ????? ?` : `Open ${exam.label} mocks ?`}</Link></article>)}
+app\news\[slug]\page.js : 96 : const newsSources = sources.filter((source) => source.source_kind === "news");
+app\news\[slug]\page.js : 124 : citation: newsSources.map((source) => source.source_url).filter(Boolean),
+app\news\[slug]\page.js : 184 : {sources.length > 0 && <section className="news-source-box"><h2>Sources</h2><ul>{sources.map((source) => <li key={source.id}><a href={source.source_url} target="_blank" rel="noopener noreferrer"><strong>{source.source_name}</strong>{source.source_title ? ` — ${source.source_title}` : ""}</a></li>)}</ul></section>}
+app\news\loading.js : 1 : export default function Loading(){return <main className="min-h-screen bg-stone-50 py-12"><div className="mx-auto max-w-7xl animate-pulse px-6"><div className="h-48 rounded-3xl bg-stone-200"/><div className="mt-8 grid gap-5 md:grid-cols-3">{Array.from({length:9}).map((_,i)=><div key={i} className="h-80 rounded-3xl bg-stone-200"/>)}</div></div></main>}
+app\news\page.js : 95 : {topStories.map((article, index) => (
+app\news\page.js : 107 : {articles.map((article) => {
+app\news-sitemap.xml\route.js : 40 : const urls = dedupe(data || []).map((article) => `<url>
+app\page.tsx : 21 : .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime())[0] || null;
+app\pdf\[period]\page.js : 11 : export default async function DigestPage({params,searchParams}){const{period}=await params;const query=await searchParams;if(!VALID_PERIODS.has(period))notFound();const range=resolveDigestRange(period,query?.date);const page=Math.max(1,Number(query?.page)||1);const pageSize=period==="daily"?80:period==="weekly"?70:60;const offset=(page-1)*pageSize;const result=await loadCurrentAffairsRangePage({start:range.start.toISOString(),end:range.end.toISOString(),limit:pageSize,offset,maxScan:period==="daily"?900:period==="weekly"?1600:2400});if(result.error)console.error("Digest article fetch failed:",result.error.message);const articles=[...result.articles].reverse();const compact=period!=="daily";const dateParam=query?.date||(period==="monthly"?range.start.toISOString().slice(0,7):range.start.toISOString().slice(0,10));return <main className="print-document min-h-screen bg-slate-100 px-4 py-10 text-slate-900 print:bg-white print:p-0"><div className="mx-auto max-w-5xl"><div className="mb-6 flex flex-wrap items-center justify-between gap-4 print:hidden"><Link href="/pdf" className="font-bold text-cyan-700">? PDF library</Link><PrintActions/></div><header className="rounded-2xl bg-slate-950 p-8 text-white print:bg-white print:text-slate-950"><p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-400">CurrentPulse AI</p><h1 className="mt-3 text-4xl font-black capitalize">{period} current-affairs digest</h1><p className="mt-3 text-slate-300 print:text-slate-600">{range.label}</p><p className="mt-5 text-sm text-slate-400 print:text-slate-600">Part {page} · bounded zero-cost rendering · {articles.length} canonical briefs</p></header>{articles.length?<div className={compact?"mt-6 space-y-3":"mt-6 space-y-6"}>{articles.map((article,index)=><article key={article.id} className={compact?"rounded-xl bg-white p-5 shadow-sm":"break-inside-avoid rounded-2xl bg-white p-7 shadow-sm"}><div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-600"><span>{String(offset+index+1).padStart(2,"0")}</span><span>•</span><span>{article.category||"Current Affairs"}</span><span>•</span><span>{article.paper||"General Studies"}</span></div><h2 className={compact?"mt-2 text-lg font-black":"mt-3 text-2xl font-black"}>{article.title}</h2>{compact?<><p className="mt-3 text-sm leading-6 text-slate-700">{plain(article.why_news,period==="monthly"?300:440)}</p>{article.prelims&&<p className="mt-2 text-sm leading-6 text-slate-600"><strong>Prelims:</strong> {plain(article.prelims,period==="monthly"?260:380)}</p>}</>:<><section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Why in news</h3><ArticleContent content={article.why_news}/></section>{article.prelims&&<section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Prelims focus</h3><ArticleContent content={article.prelims}/></section>}{article.mains&&<section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Mains analysis</h3><ArticleContent content={article.mains}/></section>}</>}<Link href={`/current-affairs/${article.slug}`} className="mt-4 inline-block text-sm font-bold text-cyan-700 print:hidden">Open full article ?</Link></article>)}</div>:<div className="mt-6 rounded-2xl bg-white p-10 text-center"><h2 className="text-2xl font-bold">No articles in this part</h2></div>}<div className="mt-8 flex items-center justify-between gap-4 print:hidden">{page>1?<Link href={hrefFor(period,dateParam,page-1)} className="rounded-xl border bg-white px-5 py-3 font-bold">? Previous part</Link>:<span/>}{result.hasMore?<Link href={hrefFor(period,dateParam,page+1)} className="rounded-xl bg-slate-950 px-5 py-3 font-bold text-white">Next part ?</Link>:<span/>}</div></div></main>;}
+app\pdf\page.js : 24 : const dates = [...counts.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 21);
+app\pdf\page.js : 64 : {dates.map(([date, count]) => (
+app\quiz\page.js : 35 : const approved = data.filter((question) => String(question.generation_provider || "").includes("upsc-v2"));
+app\quiz\page.js : 36 : const todayRows = approved.filter((question) => question.quiz_date === today);
+app\search\loading.tsx : 2 : return <main className="min-h-screen bg-slate-100 py-12"><div className="mx-auto max-w-6xl animate-pulse px-6"><div className="h-36 rounded-2xl bg-white"/><div className="mt-8 space-y-5">{Array.from({length:5}).map((_,i)=><div key={i} className="h-48 rounded-2xl bg-white"/>)}</div></div></main>;
+app\search\page.tsx : 79 : articles = ((data || []) as Article[]).filter((article) => {
+app\search\page.tsx : 148 : {articles.map((article) => {
+app\sitemap.ts : 24 : ].map((path) => ({
+app\sitemap.ts : 34 : const categoryPages = CATEGORY_ROUTES.map((category) => ({
+app\sitemap.ts : 72 : const kinds = new Set((article.article_sources || []).map((s) => s?.source_kind));
+app\sitemap.ts : 102 : const examRoutes: MetadataRoute.Sitemap = (examResult.data || []).map((exam: any) => ({
+app\videos\page.js : 25 : const articles = (data || []).filter((article) =>
+app\videos\page.js : 41 : {articles.map((article) => {
+components\admin\AdminSidebar.jsx : 34 : {navigation.map((item) => {
+components\admin\ArticleForm.jsx : 123 : .map((tag) => tag.trim())
+components\admin\ArticleForm.jsx : 124 : .filter(Boolean),
+components\ArticleStudyVisuals.jsx : 317 : if (Array.isArray(value)) return value.map(String).filter(Boolean).slice(0, 4);
+components\ArticleStudyVisuals.jsx : 321 : return Array.isArray(parsed) ? parsed.map(String).filter(Boolean).slice(0, 4) : [];
+components\ArticleStudyVisuals.jsx : 323 : return value.split(",").map((item) => item.trim()).filter(Boolean).slice(0, 4);
+components\ArticleStudyVisuals.jsx : 346 : .sort((left, right) => right.length - left.length)
+components\ArticleStudyVisuals.jsx : 351 : .sort((left, right) => right.length - left.length)
+components\ArticleStudyVisuals.jsx : 359 : ...Object.entries(LOCATION_ALIASES).map(([term, canonical]) => ({ term, canonical })),
+components\ArticleStudyVisuals.jsx : 360 : ...Object.keys(INDIA_LOCATIONS).map((term) => ({ term, canonical: term })),
+components\ArticleStudyVisuals.jsx : 361 : ...Object.keys(WORLD_LOCATIONS).map((term) => ({ term, canonical: term })),
+components\ArticleStudyVisuals.jsx : 362 : ].sort((left, right) => right.term.length - left.term.length);
+components\ArticleStudyVisuals.jsx : 388 : const resolvedStored = stored.filter((location) => resolveLocation(location).point);
+components\ArticleStudyVisuals.jsx : 392 : return combined.filter((location) => {
+components\ArticleStudyVisuals.jsx : 469 : {trail.map(([type, value], index) => (
+components\ArticleStudyVisuals.jsx : 493 : {context.map((item) => <Marker key={`${item.label}-${item.variant}`} point={item.point} label={item.label} variant={item.variant} />)}
+components\ArticleStudyVisuals.jsx : 502 : return (STATE_NEIGHBORS[state] || []).slice(0, 5).map(([label, lat, lon]) => ({
+components\ArticleStudyVisuals.jsx : 513 : .sort((left, right) => {
+components\ArticleStudyVisuals.jsx : 520 : .map(([label, lat, lon, type]) => ({
+components\ArticleStudyVisuals.jsx : 547 : const contextMarkers = (items = [], physical = false) => items.map(([label, lat, lon, type]) => ({
+components\ArticleStudyVisuals.jsx : 549 : })).filter((item) => item.point);
+components\ArticleStudyVisuals.jsx : 554 : .filter((item) => item.state === meta.state && item.city && item.label !== meta.label)
+components\ArticleStudyVisuals.jsx : 555 : .filter((item, index, all) => all.findIndex((candidate) => candidate.label === item.label) === index)
+components\ArticleStudyVisuals.jsx : 556 : .sort((left, right) => {
+components\ArticleStudyVisuals.jsx : 562 : .map((item) => [item.label, item.lat, item.lon])
+components\ArticleStudyVisuals.jsx : 565 : .filter((item) => Number.isFinite(item.lat) && Number.isFinite(item.lon) && item.label !== meta.label && item.country !== "World")
+components\ArticleStudyVisuals.jsx : 566 : .filter((item, index, all) => all.findIndex((candidate) => candidate.label === item.label) === index)
+components\ArticleStudyVisuals.jsx : 567 : .sort((left, right) => {
+components\ArticleStudyVisuals.jsx : 573 : .map((item) => [item.label, item.lat, item.lon])
+components\ArticleStudyVisuals.jsx : 577 : const waterFeatures = features.filter((item) => ["river", "feature"].includes(item.variant));
+components\ArticleStudyVisuals.jsx : 578 : const reliefFeatures = features.filter((item) => item.variant === "mountain");
+components\ArticleStudyVisuals.jsx : 583 : const neighbourStates = meta.mapType === "india" && meta.state ? stateContextMarkers(meta.state, mapBounds).filter((item) => item.point) : [];
+components\ArticleStudyVisuals.jsx : 584 : const protectedAreas = meta.mapType === "india" && meta.state ? protectedContextMarkers(meta.state, mapBounds, meta).filter((item) => item.point) : [];
+components\ArticleStudyVisuals.jsx : 616 : {panels.map((panel) => (
+components\ArticleStudyVisuals.jsx : 632 : {neighbourStates.length > 0 && <span><strong>States:</strong> {neighbourStates.map((item) => item.label).join(" · ")}</span>}
+components\ArticleStudyVisuals.jsx : 633 : {nearby.length > 0 && <span><strong>Nearby:</strong> {nearby.map((item) => item.label).join(" · ")}</span>}
+components\ArticleStudyVisuals.jsx : 634 : {features.length > 0 && <span><strong>Physical:</strong> {features.map((item) => item.label).join(" · ")}</span>}
+components\ArticleStudyVisuals.jsx : 635 : {protectedAreas.length > 0 && <span><strong>Protected:</strong> {protectedAreas.map((item) => item.label).join(" · ")}</span>}
+components\ArticleStudyVisuals.jsx : 640 : {locations.map((location) => {
+components\BreakingNews.tsx : 32 : {news.map((article, index) => (
+components\Categories.tsx : 5 : const categories = CATEGORY_ROUTES.filter((category) =>
+components\Categories.tsx : 30 : {categories.map((category) => (
+components\CompactMarkdownSection.jsx : 13 : .map((line) => line.trim())
+components\CompactMarkdownSection.jsx : 14 : .filter((line) => /^(?:[-*•]|\d+[.)])\s+/.test(line))
+components\CompactMarkdownSection.jsx : 15 : .map((line) => line.replace(/^(?:[-*•]|\d+[.)])\s+/, "").trim())
+components\CompactMarkdownSection.jsx : 16 : .filter(Boolean);
+components\CompactMarkdownSection.jsx : 23 : .map((item) => item.trim())
+components\CompactMarkdownSection.jsx : 24 : .filter((item) => item.length > 20)
+components\CompactMarkdownSection.jsx : 38 : {items.map((item, index) => (
+components\EvidenceHighlights.jsx : 7 : function extractItems(content="",limit=6){const text=String(content||"").trim();if(!text)return[];if(/^[\[{]/.test(text)){try{const items=flattenJson(JSON.parse(text)).filter((item)=>item.length>12);if(items.length)return items.slice(0,limit);}catch{}}
+components\EvidenceHighlights.jsx : 8 : const bullets=text.split(/\r?\n/).map((line)=>line.trim()).filter((line)=>/^(?:[-*•]|(?:data|case|report|example|institution|year|figure|value|location|economic_benefit)\s*:|\d+[.)])\s*/i.test(line)).map((line)=>line.replace(/^(?:[-*•]|\d+[.)])\s+/,"").trim()).filter((line)=>clean(line).length>12);if(bullets.length>=2)return bullets.slice(0,limit);
+components\EvidenceHighlights.jsx : 9 : const structured=text.replace(/^#{1,6}\s+.*$/gm," ").split(/\s*(?:;|\n{2,}|\|\s*|(?=\b(?:data|case|report|example|institution|year|figure|value|location|economic_benefit)\s*:))/i).map(clean).filter((item)=>item.length>20);if(structured.length>=2)return structured.slice(0,limit);
+components\EvidenceHighlights.jsx : 10 : return text.replace(/^#{1,6}\s+.*$/gm," ").split(/(?<=[.!?])\s+/).map(clean).filter((item)=>item.length>25).slice(0,limit);}
+components\EvidenceHighlights.jsx : 11 : export default function EvidenceHighlights({content,limit=6}){const items=extractItems(content,limit);if(!items.length)return null;return <div className="evidence-highlight-grid">{items.map((item,index)=><article key={`${index}-${item.slice(0,24)}`} className="evidence-highlight-card"><span className="evidence-highlight-number">{String(index+1).padStart(2,"0")}</span><div className="evidence-highlight-copy"><ReactMarkdown remarkPlugins={[remarkGfm]}>{highlightMarkdownFacts(item)}</ReactMarkdown></div></article>)}</div>;}
+components\ExamSubscriptionForm.jsx : 21 : const toggleTopic = (topic) => setTopics((current) => current.includes(topic) ? current.filter((x) => x !== topic) : [...current, topic]);
+components\ExamSubscriptionForm.jsx : 46 : <div className="mt-4 flex flex-wrap gap-2">{TOPICS.map(([topic,label]) => <button type="button" key={topic} onClick={()=>toggleTopic(topic)} className={`rounded-full border px-3 py-1.5 text-xs font-black ${topics.includes(topic) ? "border-cyan-400 bg-cyan-400/10 text-cyan-300" : "border-slate-700 text-slate-400"}`}>{label}</button>)}</div>
+components\ExamUpdatesPage.jsx : 56 : {Object.entries(EXAM_TYPE_META).map(([key, meta]) => (
+components\ExamUpdatesPage.jsx : 71 : {updates.map((item) => (
+components\Features.tsx : 61 : {features.map((item) => {
+components\Footer.tsx : 61 : {studyLinks.map(([label, href]) => (
+components\Footer.tsx : 79 : {categoryLinks.map(([label, href]) => (
+components\Footer.tsx : 97 : {trustLinks.map(([label, href]) => (
+components\Hero.tsx : 75 : {["Exact syllabus link", "Current + static", "Maps & memory aids", "Answer framework"].map((label) => (
+components\Hero.tsx : 129 : {[["Today CA",todayCurrentAffairs],["Today News",todayNews],["Total CA",totalCurrentAffairs],["Total News",totalNews]].map(([label,value]) => (
+components\LatestNews.tsx : 185 : {articles.map((article) => (
+components\MainsPaperNavigator.jsx : 12 : ...new Set(papers.map((item) => String(item.year)).sort((left, right) => Number(right) - Number(left))),
+components\MainsPaperNavigator.jsx : 15 : const filtered = useMemo(() => papers.filter((item) =>
+components\MainsPaperNavigator.jsx : 20 : const grouped = filtered.reduce((result, item) => {
+components\MainsPaperNavigator.jsx : 44 : {paperOptions.map((value) => <option key={value}>{value}</option>)}
+components\MainsPaperNavigator.jsx : 50 : {yearOptions.map((value) => <option key={value}>{value}</option>)}
+components\MainsPaperNavigator.jsx : 57 : .sort(([left], [right]) => Number(right) - Number(left))
+components\MainsPaperNavigator.jsx : 58 : .map(([groupYear, items]) => (
+components\MainsPaperNavigator.jsx : 65 : {items.map((item) => (
+components\MapMasteryPanel.jsx : 20 : {points.map(([name, lat, lon], index) => <span key={name} title={reveal ? name : `${index + 1}`} style={pos(lat, lon, world)} className="absolute flex h-5 w-5 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-cyan-300 text-[9px] font-black text-slate-950 ring-2 ring-slate-950">{index + 1}</span>)}
+components\MapMasteryPanel.jsx : 23 : {points.map(([name,,,note], index) => <div key={name}><b className="text-cyan-300">{index + 1}.</b> {reveal ? <>{name}<span className="text-slate-500"> · {note}</span></> : <span className="text-slate-500"> ?</span>}</div>)}
+components\MapMasteryPanel.jsx : 35 : {["Lake Mead","Colorado River","Hoover Dam","Las Vegas","Grand Canyon","Nevada–Arizona border"].map((name,index) => <div key={name}><b className="text-amber-300">{index+1}.</b> {reveal ? name : "?"}</div>)}
+components\MockTestPlayer.jsx : 63 : {result.subjects.map(([name, s]) => <div key={name} className="rounded-2xl border border-slate-800 bg-slate-900 p-4"><b>{name}</b><p className="mt-1 text-sm text-slate-400">{s.correct}/{s.total} {w.correct} · {s.attempted} {w.attempted}</p></div>)}
+components\MockTestPlayer.jsx : 66 : {questions.map((q, i) => <div key={q.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><b>{i+1}. {q.prompt}</b><p className="mt-2 text-sm text-slate-400">{w.your}: {answers[q.id] || "—"}</p><p className="text-sm text-emerald-300">{w.right}: {q.answer}</p><p className="mt-2 text-sm leading-6 text-slate-400">{q.explanation}</p>{q.sourceUrl && <a className="mt-2 inline-block text-xs font-bold text-cyan-300" href={q.sourceUrl} target="_blank" rel="noopener noreferrer">{q.source || "Source"} · {q.license || "source"} ?</a>}</div>)}
+components\MockTestPlayer.jsx : 76 : {questions.map((q, i) => <article key={q.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><div className="flex justify-between text-xs font-black uppercase tracking-[.12em] text-cyan-300"><span>{q.subject}</span><span>Q{i+1}</span></div><h2 className="mt-3 font-black leading-7">{q.prompt}</h2><div className="mt-4 grid gap-2">{q.options.map((option) => <button key={option} onClick={() => setAnswers((a) => ({ ...a, [q.id]: option }))} className={`rounded-xl border p-3 text-left text-sm ${answers[q.id] === option ? "border-cyan-300 bg-cyan-400/10" : "border-slate-700 bg-slate-950"}`}>{option}</button>)}</div></article>)}
+components\Navbar.tsx : 151 : {links.map((item) => {
+components\Navbar.tsx : 270 : {links.map((item) => {
+components\NotesWorkspace.jsx : 51 : return notes.filter((note) =>
+components\NotesWorkspace.jsx : 66 : current.map((note) =>
+components\NotesWorkspace.jsx : 76 : const remaining = notes.filter((note) => note.id !== activeNote.id);
+components\NotesWorkspace.jsx : 114 : {filteredNotes.map((note) => (
+components\OfficialPapers.jsx : 10 : const stagePapers = papers.filter((paper) => stage === "All" || paper.stage === stage);
+components\OfficialPapers.jsx : 11 : const years = [...new Set(stagePapers.map((paper) => String(paper.year)))].sort((a,b) => Number(b)-Number(a));
+components\OfficialPapers.jsx : 12 : const filtered = stagePapers.filter((paper) => year === "All" || String(paper.year) === year);
+components\OfficialPapers.jsx : 23 : {["Prelims", "Mains", "All"].map((value) => <button key={value} type="button" className={stage === value ? "is-active" : ""} onClick={() => selectStage(value)}>{value}</button>)}
+components\OfficialPapers.jsx : 25 : <label>{stage === "All" ? "Year" : `${stage} year`}<select value={year} onChange={(event) => setYear(event.target.value)}><option>All</option>{years.map((value) => <option key={value}>{value}</option>)}</select></label>
+components\OfficialPapers.jsx : 31 : {filtered.map((paper, index) => (
+components\PyqExplorer.jsx : 12 : const papers = ["All papers", ...new Set(items.map((item) => item.paper))];
+components\PyqExplorer.jsx : 13 : const years = ["All years", ...new Set(items.map((item) => String(item.year)))];
+components\PyqExplorer.jsx : 17 : return items.filter((item) => {
+components\PyqExplorer.jsx : 38 : {papers.map((value) => <option key={value}>{value}</option>)}
+components\PyqExplorer.jsx : 41 : {years.map((value) => <option key={value}>{value}</option>)}
+components\PyqExplorer.jsx : 46 : {results.map((item, index) => {
+components\PyqExplorer.jsx : 68 : {item.approach.map((point) => <li key={point}>{point}</li>)}
+components\QuizPlayer.jsx : 23 : questions.reduce(
+components\QuizPlayer.jsx : 88 : {questions.map((question, index) => {
+components\QuizPlayer.jsx : 140 : {question.options.map((option, index) => {
+components\RelatedYouTubeVideo.jsx : 5 : .filter(Boolean)
+components\ResultPulsePreview.jsx : 7 : <div className="mt-8 grid gap-4 md:grid-cols-3">{updates.length ? updates.map((item)=><Link key={item.id} href={`/exams/${item.slug}`} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 transition hover:border-violet-400/50"><span className="text-xs font-black uppercase text-violet-300">{getExamUpdateDisplayType(item)}</span><h3 className="mt-3 line-clamp-3 text-lg font-black leading-snug text-white">{item.title}</h3><p className="mt-3 text-xs font-bold text-slate-500">{item.source_name || item.agency}</p></Link>) : <div className="md:col-span-3 rounded-2xl border border-dashed border-slate-700 p-7 text-slate-400">ResultPulse is ready. Run the official-source collector after the database migration.</div>}</div>
+components\TrustPage.jsx : 16 : {sections.map((section) => (
+components\TrustPage.jsx : 19 : {(section.paragraphs || []).map((paragraph) => (
+components\TrustPage.jsx : 24 : {section.bullets.map((bullet) => <li key={bullet}>{bullet}</li>)}
+lib\ai\articleQuality.js : 6 : return text(value).split(/\s+/).filter(Boolean).length;
+lib\ai\articleQuality.js : 41 : .filter((token) => token.length > 4 && !REPETITION_STOP_WORDS.has(token))
+lib\ai\articleQuality.js : 62 : ].filter(([, value]) => words(value) >= 35);
+lib\ai\articleQuality.js : 76 : .filter(Boolean)
+lib\ai\evaluateNews.js : 126 : .map((keyword) => cleanText(keyword))
+lib\ai\evaluateNews.js : 127 : .filter(Boolean)
+lib\ai\evaluateNews.js : 218 : .map((item, index) => {
+lib\ai\evaluateNews.js : 235 : .filter((item) => item.title);
+lib\ai\evaluateNews.js : 240 : .map(
+lib\ai\evaluateNews.js : 271 : ${VALID_CATEGORIES.map((category) => `- ${category}`).join("\n")}
+lib\ai\evaluateNews.js : 275 : ${VALID_PAPERS.map((paper) => `- ${paper}`).join("\n")}
+lib\ai\generateArticle.js : 154 : .map((item) => cleanText(item))
+lib\ai\generateArticle.js : 155 : .filter(Boolean)
+lib\ai\generateArticle.js : 163 : .map(([key, item]) => {
+lib\ai\generateArticle.js : 167 : .filter(Boolean)
+lib\ai\generateArticle.js : 241 : ? article.map_locations.map(cleanText).filter(Boolean).slice(0, 4)
+lib\ai\generateArticle.js : 453 : ${VALID_CATEGORIES.map((category) => `- ${category}`).join("\n")}
+lib\ai\generateArticle.js : 457 : ${VALID_PAPERS.map((paper) => `- ${paper}`).join("\n")}
+lib\ai\generateArticle.js : 619 : ${VALID_CATEGORIES.map((category) => `- ${category}`).join("\n")}
+lib\ai\generateArticle.js : 696 : ${VALID_CATEGORIES.map((category) => `- ${category}`).join("\n")}
+lib\ai\generateArticle.js : 700 : ${VALID_PAPERS.map((paper) => `- ${paper}`).join("\n")}
+lib\ai\generateArticle.js : 767 : ${VALID_CATEGORIES.map((category) => `- ${category}`).join("\n")}
+lib\ai\generateArticle.js : 771 : ${VALID_PAPERS.map((paper) => `- ${paper}`).join("\n")}
+lib\ai\generateArticle.js : 809 : .filter(Boolean)
+lib\ai\generateArticle.js : 811 : const unsupported = currentFactTokens(sensitive).filter((token) => !source.includes(token));
+lib\ai\generateArticle.js : 816 : const surname = name.split(" ").filter(Boolean).at(-1);
+lib\ai\generateStudyAids.js : 54 : const ids = new Set(articles.map((article) => Number(article.id)));
+lib\ai\generateStudyAids.js : 56 : .map((item) => ({
+lib\ai\generateStudyAids.js : 62 : ? item.mapLocations.map((location) => plain(location, 100)).filter(Boolean).slice(0, 4)
+lib\ai\generateStudyAids.js : 65 : .filter(
+lib\ai\generateStudyAids.js : 75 : const sources = articles.map((article) => ({
+lib\ai\router.js : 124 : .map((part) => {
+lib\ai\router.js : 150 : .map((part) => (typeof part === "string" ? part : part?.text || ""))
+lib\ai\router.js : 233 : .map((value) => value.trim())
+lib\ai\router.js : 234 : .filter(Boolean);
+lib\ai\router.js : 237 : const byId = new Map(all.map((provider) => [provider.id, provider]));
+lib\ai\trustedCoverageFallback.js : 92 : .map((line) => clean(line))
+lib\ai\trustedCoverageFallback.js : 93 : .filter((line) => line.length >= 25)
+lib\ai\trustedCoverageFallback.js : 94 : .filter((line) => !NOISE_LINES.some((pattern) => pattern.test(line)))
+lib\ai\trustedCoverageFallback.js : 102 : .map((value) => clean(value).replace(/^\d+[.)]\s*/, ""))
+lib\ai\trustedCoverageFallback.js : 103 : .filter((value) => value.length >= 35 && value.length <= 360);
+lib\ai\trustedCoverageFallback.js : 106 : return candidates.filter((value) => {
+lib\ai\trustedCoverageFallback.js : 128 : .map((point) => `- ${emphasize(point)}`)
+lib\ai\trustedCoverageFallback.js : 133 : const evidence = points.filter((point) =>
+lib\ai\trustedCoverageFallback.js : 142 : .filter((name) => new RegExp(`\\b${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(haystack))
+lib\ai\trustedCoverageFallback.js : 143 : .sort((left, right) => right.length - left.length)
+lib\ai\trustedCoverageFallback.js : 144 : .filter((name, index, all) => !all.slice(0, index).some((kept) => kept.toLowerCase().includes(name.toLowerCase())))
+lib\ai\trustedCoverageFallback.js : 161 : const indiaPoints = points.filter((point) => /\bIndia(?:n|'s|’s)?\b/i.test(point));
+lib\ai\trustedCoverageFallback.js : 170 : why_news: whyPoints.map(emphasize).join(" "),
+lib\ai\trustedCoverageFallback.js : 176 : ? indiaPoints.slice(0, 4).map(emphasize).join(" ")
+lib\ai\trustedCoverageFallback.js : 181 : `### Data, Reports, Cases & Examples\n${evidence.map((point) => `- ${emphasize(point)}`).join("\n")}`,
+lib\articleStreams.js : 80 : .filter((source) => source?.source_kind === "coaching")
+lib\articleStreams.js : 81 : .map((source) => String(source.source_name || "").trim())
+lib\articleStreams.js : 82 : .filter(Boolean)
+lib\articleStreams.js : 95 : .filter((source) => source?.source_kind === "news")
+lib\articleStreams.js : 96 : .map((source) => String(source.source_name || "").trim())
+lib\articleStreams.js : 97 : .filter(Boolean)
+lib\articleStreams.js : 115 : .map((token) => token.replace(/^-+|-+$/g, ""))
+lib\articleStreams.js : 116 : .filter((token) => token.length > 2 && !TITLE_STOP_WORDS.has(token));
+lib\articleStreams.js : 131 : const overlap = a.filter((token) => bSet.has(token)).length;
+lib\articleStreams.js : 155 : .filter(isPublicNewsArticle)
+lib\articleStreams.js : 156 : .map((article) => {
+lib\articleStreams.js : 241 : ? dedupeStream(rawRows.filter(isCurrentAffairsReady))
+lib\articleStreams.js : 276 : const batch = data || []; rawRows = rawRows.concat(batch); prepared = dedupeStream(rawRows.filter(isCurrentAffairsReady));
+lib\articleStreams.js : 307 : prepared = dedupeStream(rawRows.filter(isCurrentAffairsReady).filter((article) => articleMatchesExam(article, exam)));
+lib\articleStreams.js : 354 : const legacyRows = (legacyData || []).filter(isLegacyNewsArticle);
+lib\articleStreams.js : 355 : const combined = [...rawRows, ...legacyRows].sort(
+lib\automation\schedulePolicy.js : 17 : return items.filter((item) => {
+lib\automation\schedulePolicy.js : 57 : const active = sources.filter((source) => activeGroups.has(source.group));
+lib\automation\schedulePolicy.js : 58 : const persistent = active.filter((source) => source.id === "pib-direct");
+lib\automation\schedulePolicy.js : 59 : const agenda = active.filter(
+lib\automation\schedulePolicy.js : 62 : const agendaIds = new Set(agenda.map((source) => source.id));
+lib\automation\schedulePolicy.js : 63 : const persistentIds = new Set(persistent.map((source) => source.id));
+lib\automation\schedulePolicy.js : 64 : const supplemental = active.filter(
+lib\automation\schedulePolicy.js : 97 : selectedIds: selected.map((source) => source.id),
+lib\automation\schedulePolicy.js : 109 : const ids = [...new Set(sourceIds.map((value) => String(value || "").trim()).filter(Boolean))];
+lib\automation\schedulePolicy.js : 126 : const core = sources.filter((source) => coreIds.has(String(source?.id || "")));
+lib\automation\schedulePolicy.js : 127 : const coreSet = new Set(core.map((source) => source.id));
+lib\automation\schedulePolicy.js : 128 : const supplemental = sources.filter((source) => !coreSet.has(source.id));
+lib\categoryRouting.js : 146 : .filter(Boolean)
+lib\contentTaxonomy.js : 117 : Object.keys(NEWS_CATEGORY_TERMS).map((category) => [category, 0])
+lib\contentTaxonomy.js : 128 : const ranked = [...scores.entries()].sort((a, b) => b[1] - a[1]);
+lib\contentTaxonomy.js : 209 : const scores = new Map(VALID_CATEGORIES.map((category) => [category, 0]));
+lib\contentTaxonomy.js : 227 : const ranked = [...scores.entries()].sort((a, b) => b[1] - a[1]);
+lib\contentTaxonomy.js : 246 : const scores = new Map(VALID_CATEGORIES.map((category) => [category, 0]));
+lib\contentTaxonomy.js : 261 : const ranked = [...scores.entries()].sort((a, b) => b[1] - a[1]);
+lib\editorial\numericFactGuard.js : 28 : CLASS_RULES.filter(([, pattern]) => pattern.test(context)).map(([name]) => name)
+lib\editorial\numericFactGuard.js : 51 : ].filter(Boolean).join("\n");
+lib\editorial\numericFactGuard.js : 60 : ].filter(Boolean).join("\n");
+lib\editorial\publicationSafety.js : 147 : const entries = nested.map((source) => ({
+lib\editorial\publicationSafety.js : 155 : return entries.filter((entry) => entry.name || entry.url);
+lib\editorial\publicationSafety.js : 184 : .map((part) => part.trim())
+lib\editorial\publicationSafety.js : 185 : .filter(Boolean)
+lib\editorial\publicationSafety.js : 186 : .filter((part) => !firstMatch(clean(part), [...INTERNAL_PIPELINE_PATTERNS, ...PROMOTIONAL_TEXT_PATTERNS]))
+lib\editorial\publicationSafety.js : 195 : .map((source) => source?.source_url)
+lib\editorial\publicationSafety.js : 196 : .filter(Boolean);
+lib\editorial\publicationSafety.js : 197 : return [direct, ...sourceUrls].filter(Boolean).join(" ");
+lib\editorial\publicationSafety.js : 216 : ].filter(Boolean).join("\n"));
+lib\editorial\publicationSafety.js : 387 : .map((match) => Number(match[1]))
+lib\editorial\publicationSafety.js : 388 : .filter((year) => year <= currentYear - 2);
+lib\editorial\sourceEntailmentGuard.js : 11 : function sourceText(source = {}) { return clean([source.title,source.description,source.content,...(Array.isArray(source.sourceReferences)?source.sourceReferences.flatMap((item)=>[item?.sourceTitle,item?.summary,item?.content]):[])].filter(Boolean).join("\n")); }
+lib\editorial\sourceEntailmentGuard.js : 12 : function generatedText(article = {}) { return clean([article.title,article.why_news,article.data_examples,article.static_foundation,article.india_relevance,article.content].filter(Boolean).join("\n")); }
+lib\editorial\sourceEntailmentGuard.js : 21 : function supportedPhrase(phrase, sourceNormalized) { const n=normalize(phrase); if(!n||n.length<4)return true; if(sourceNormalized.includes(n))return true; const words=n.split(" ").filter((w)=>w.length>2); return words.length>=2&&words.every((w)=>sourceNormalized.includes(w)); }
+lib\editorial\sourceEntailmentGuard.js : 28 : const unsupportedDates=explicitDates(generatedValue).filter((date)=>!sourceDates.has(date));
+lib\editorial\sourceEntailmentGuard.js : 30 : const unsupportedEntities=entities(generatedValue).filter((entity)=>!supportedPhrase(entity,sourceNormalized)).slice(0,12);
+lib\examPrep\examRelevance.js : 10 : ].filter(Boolean).join(" ").toLowerCase();
+lib\examPrep\examRelevance.js : 23 : const tags = Array.isArray(article.tags) ? article.tags.map(String) : [];
+lib\examPrep\generatedFoundationBank.js : 7 : return { id, prompt, options: [...new Set(options.map(String))], answer: String(answer), explanation, subject, exams, source: "CurrentPulse deterministic foundation bank" };
+lib\examPrep\generatedFoundationBank.js : 12 : return [n, n + steps[0], Math.max(0, n - steps[1]), n + steps[2]].map(String);
+lib\examPrep\generatedFoundationBank.js : 25 : [answer, answer + 20, Math.max(1, answer - 20), answer + 40].map(String),
+lib\examPrep\generatedFoundationBank.js : 55 : [hours, hours + 1, Math.max(1, hours - 1), hours + 2].map(String),
+lib\examPrep\generatedFoundationBank.js : 75 : [answer, answer + step, answer - 1, answer + 1].map(String),
+lib\examPrep\generatedFoundationBank.js : 106 : return STATIC.map(([id,prompt,answer,options,explanation,subject,exams]) =>
+lib\examPrep\generatedFoundationBank.js : 118 : MAP_MASTERY_DATA[kind][scope].map(([name,lat,lon,note]) => ({kind,label,scope,name,lat,lon,note}))
+lib\examPrep\generatedFoundationBank.js : 122 : const notes = [...new Set(flattened.map((item) => item.note))];
+lib\examPrep\generatedFoundationBank.js : 123 : const names = flattened.map((item) => item.name);
+lib\examPrep\generatedFoundationBank.js : 126 : const noteDistractors = notes.filter((value) => value !== item.note).slice(index % Math.max(1, notes.length - 4)).concat(notes).filter((value, i, arr) => value !== item.note && arr.indexOf(value) === i).slice(0, 3);
+lib\examPrep\generatedFoundationBank.js : 127 : const nameDistractors = flattened.filter((other) => other.note !== item.note && other.name !== item.name).slice(index % Math.max(1, flattened.length - 4)).concat(flattened).filter((other, i, arr) => other.name !== item.name && other.note !== item.note && arr.findIndex((x) => x.name === other.name) === i).slice(0, 3).map((other) => other.name);
+lib\examPrep\generatedFoundationBank.js : 153 : return output.filter((item) => item.options.length === 4);
+lib\examPrep\mockBank.js : 20 : return items.filter((item) => {
+lib\examPrep\mockBank.js : 36 : .sort(([a],[b]) => a.localeCompare(b))
+lib\examPrep\mockBank.js : 37 : .map(([,items]) => [...items].sort((a,b) => hash(`${exam}|${a.id}`) - hash(`${exam}|${b.id}`)));
+lib\examPrep\mockBank.js : 50 : return uniqueQuestions([...questions, ...GENERATED_FOUNDATION_QUESTIONS]).filter(
+lib\examPrep\mockBank.js : 56 : new Set(q.options.map(String)).size === 4 &&
+lib\examPrep\mockBank.js : 57 : q.options.map(String).includes(String(q.answer))
+lib\exams\collector.js : 112 : const keys = sources.map(sourceStateKey);
+lib\exams\collector.js : 127 : return new Map((data || []).map((row) => [row.source_key, row]));
+lib\exams\collector.js : 233 : const unique = [...new Set(fingerprints.filter(Boolean))];
+lib\exams\collector.js : 256 : failures.push(...batch.map((row) => ({ title: row.title, error: error.message })));
+lib\exams\collector.js : 285 : selectedSources.map(async (source) => {
+lib\exams\collector.js : 350 : prepared.map((row) => row.fingerprint)
+lib\exams\collector.js : 352 : const unseenRows = prepared.filter((row) => !existingFingerprints.has(row.fingerprint));
+lib\exams\collector.js : 357 : const insertedFingerprints = new Set(insertedRows.map((row) => row.fingerprint));
+lib\exams\collector.js : 358 : const concurrentDuplicates = unseenRows.filter(
+lib\exams\collector.js : 366 : const notificationCandidates = insertedRows.filter(
+lib\exams\collector.js : 371 : notificationCandidates.map((data) => {
+lib\exams\collector.js : 385 : ...insertedRows.map((data) => ({
+lib\exams\collector.js : 392 : ...saved.failures.map((failure) => ({ status: "failed", ...failure })),
+lib\exams\collector.js : 396 : .filter((result) => !result.initializedBefore && !result.error)
+lib\exams\collector.js : 397 : .map((result) => result.source.id);
+lib\exams\collector.js : 399 : .filter((result) => result.unchanged)
+lib\exams\collector.js : 400 : .map((result) => result.source.id);
+lib\exams\collector.js : 404 : selectedSourceIds: selectedSources.map((source) => source.id),
+lib\exams\collector.js : 405 : sources: sourceResults.map(({ source, items, error, unchanged, httpStatus, initializedBefore }) => ({
+lib\exams\repository.js : 41 : return rows.map(normalizeRow).sort((a, b) => {
+lib\news\categoryImage.js : 26 : const hash = [...String(value)].reduce(
+lib\news\categoryImage.js : 42 : ].map((url) => url.split("?")[0]));
+lib\news\categoryImage.js : 78 : .filter((token) => token.length > 3 && !IMAGE_STOP_WORDS.has(token));
+lib\news\categoryImage.js : 85 : ].filter(Boolean).join(" ");
+lib\news\categoryImage.js : 97 : const matches = queryTokens.filter((token) => descriptorTokens.has(token)).length;
+lib\news\duplicateRepository.js : 54 : const uniqueSlugs = [...new Set(slugs.filter(Boolean))];
+lib\news\eventCluster.js : 91 : .map(stemToken)
+lib\news\eventCluster.js : 92 : .filter((word) => word.length > 2 && !STOP_WORDS.has(word))
+lib\news\eventCluster.js : 99 : .map(stemToken)
+lib\news\eventCluster.js : 100 : .filter((word) => word.length > 2 && !STOP_WORDS.has(word) && !EVENT_ACTIONS.has(word));
+lib\news\eventCluster.js : 148 : return ENTITY_DICTIONARY.filter((entity) => text.includes(entity));
+lib\news\eventCluster.js : 153 : return LOCATION_DICTIONARY.filter((location) => text.includes(location));
+lib\news\eventCluster.js : 157 : return [...tokenSet(article.title || "")].filter((token) => EVENT_ACTIONS.has(token));
+lib\news\eventCluster.js : 166 : .filter((token) => !/^\d+$/.test(token))
+lib\news\eventCluster.js : 167 : .sort();
+lib\news\eventCluster.js : 171 : return coreTitleTokens(article).filter((token) => !EVENT_ACTIONS.has(token));
+lib\news\eventCluster.js : 180 : .map((value) => normalizeText(value).replace(/\s+/g, "_"))
+lib\news\eventCluster.js : 181 : .filter((value) => value && value.length > 1)
+lib\news\eventCluster.js : 192 : const entities = extractEntities(article).map((value) => value.replace(/\s+/g, "_"));
+lib\news\eventCluster.js : 193 : const actions = extractActions(article).map((value) => `action:${value}`);
+lib\news\eventCluster.js : 194 : const locations = extractLocations(article).map((value) => `place:${value.replace(/\s+/g, "_")}`);
+lib\news\filter.js : 35 : return accepted.sort((a, b) => {
+lib\news\headlinePriority.js : 36 : const impactScore = HIGH_IMPACT.reduce((score, pattern) => score + (pattern.test(combined) ? 5 : 0), 0);
+lib\news\headlinePriority.js : 37 : const penalty = LOW_IMPACT.reduce((score, pattern) => score + (pattern.test(combined) ? 8 : 0), 0);
+lib\news\headlinePriority.js : 45 : return [...items].sort((left, right) =>
+lib\news\imageExtractor.js : 378 : const uniqueCandidates = [...new Set(candidates)].filter(
+lib\news\newsOutputQuality.js : 26 : .filter((token) => token.length > 2)
+lib\news\newsOutputQuality.js : 70 : .map(([name, value]) => [name, clean(value)])
+lib\news\newsOutputQuality.js : 71 : .filter(([, value]) => value.length >= 30);
+lib\news\newsOutputQuality.js : 72 : const combined = sections.map(([, value]) => String(value || "")).join("\n");
+lib\news\newsOutputQuality.js : 84 : const byName = Object.fromEntries(sections.map(([name, value]) => [name, clean(value)]));
+lib\news\newsQuality.js : 87 : .map((source) => parseDate(source?.source_published_at))
+lib\news\newsQuality.js : 88 : .filter(Boolean);
+lib\news\newsQuality.js : 91 : const newestSource = new Date(Math.max(...sourceDates.map((date) => date.getTime())));
+lib\news\newsQuality.js : 101 : const years = [...combined.matchAll(/\b(20\d{2})\b/g)].map((match) => Number(match[1]));
+lib\news\publisherResolver.js : 44 : .filter((word) => word.length > 3)
+lib\news\publisherResolver.js : 50 : .filter((word) => word.length > 3)
+lib\news\publisherResolver.js : 149 : .filter((result) => {
+lib\news\publisherResolver.js : 156 : .map((result) => ({
+lib\news\publisherResolver.js : 161 : .sort((a, b) => b.score - a.score);
+lib\news\relevantImage.js : 21 : .filter((word) => word.length > 3 && !STOP_WORDS.has(word));
+lib\news\relevantImage.js : 58 : const matches = queryTokens.filter((word) => haystack.includes(word)).length;
+lib\news\relevantImage.js : 110 : return [...new Set([primary, titleQuery, compact].filter((value) => value.length >= 8))];
+lib\news\relevantImage.js : 121 : .map((page) => ({ page, score: candidateScore(page, query) }))
+lib\news\relevantImage.js : 122 : .filter((candidate) => candidate.score >= 8)
+lib\news\relevantImage.js : 123 : .sort((first, second) => second.score - first.score);
+lib\news\relevantImage.js : 141 : .filter(Boolean)
+lib\news\rss.js : 78 : .filter(Boolean)
+lib\news\rss.js : 222 : effectiveTerms.map(async (term) => {
+lib\news\rss.js : 236 : .filter((result) => result.status === "rejected")
+lib\news\rss.js : 237 : .map((result) => result.reason?.message || "Unknown feed error");
+lib\news\upscRelevanceGate.js : 59 : return signals.filter((signal) => text.includes(signal));
+lib\publisher\publishArticle.js : 68 : const ids = [...new Set((rows || []).map((row) => Number(row.article_id)).filter(Boolean))];
+lib\publisher\publishArticle.js : 186 : .map(
+lib\publisher\publishArticle.js : 446 : .filter(Boolean)
+lib\publisher\publishArticle.js : 672 : .filter(Boolean)
+lib\publisher\publishArticle.js : 691 : .filter(Boolean)
+lib\publisher\publishArticle.js : 778 : .filter(Boolean)
+lib\quiz\generateDailyQuiz.js : 99 : .filter((word) => word.length > 4 && !GROUNDING_STOP_WORDS.has(word));
+lib\quiz\generateDailyQuiz.js : 111 : const shared = [...questionTokens].filter((token) => sourceTokens.has(token));
+lib\quiz\generateDailyQuiz.js : 113 : const titleOverlap = shared.filter((token) => titleTokens.has(token)).length;
+lib\quiz\generateDailyQuiz.js : 125 : const byId = new Map(articles.map((article) => [Number(article.id), article]));
+lib\quiz\generateDailyQuiz.js : 134 : ? raw.options.map((option) => cleanText(option, 500))
+lib\quiz\generateDailyQuiz.js : 144 : if (new Set(options.map((option) => option.toLowerCase())).size !== 4) continue;
+lib\quiz\generateDailyQuiz.js : 182 : const statementCount = validated.filter((item) => isUpscStatementFormat(item.prompt)).length;
+lib\quiz\generateDailyQuiz.js : 189 : const answerDistribution = [0, 1, 2, 3].map(
+lib\quiz\generateDailyQuiz.js : 190 : (index) => validated.filter((item) => item.correct_index === index).length
+lib\quiz\generateDailyQuiz.js : 198 : const difficultyCounts = validated.reduce(
+lib\quiz\generateDailyQuiz.js : 215 : return articles.slice(0, 8).map((article) => ({
+lib\quiz\generateDailyQuiz.js : 302 : const usable = (sourceResult.articles || []).filter(
+lib\siteStats.js : 23 : .map((item) => timestamp(item?.updated_at || item?.created_at))
+lib\siteStats.js : 24 : .filter((value) => value > 0);
+lib\siteStats.js : 209 : currentAffairs.filter((item) =>
+lib\siteStats.js : 214 : news.filter((item) =>
+lib\study\buildQuiz.js : 126 : .filter(
+lib\study\buildQuiz.js : 135 : .map((row) => ({
+lib\study\digestDates.js : 39 : const [year, monthNumber] = month.split("-").map(Number);
+lib\study\highlightFacts.js : 63 : .map((segment, index) => (index % 2 === 1 ? segment : emphasizeSegment(segment)))
+lib\study\mapRelevance.js : 18 : if (Array.isArray(value)) return value.map(clean).filter(Boolean).slice(0, 6);
+lib\study\mapRelevance.js : 22 : return Array.isArray(parsed) ? parsed.map(clean).filter(Boolean).slice(0, 6) : [];
+lib\study\mapRelevance.js : 24 : return value.split(",").map(clean).filter(Boolean).slice(0, 6);
+lib\study\mapRelevance.js : 31 : const nonGenericLocations = locations.filter((location) => !/^(?:india|world|global)$/i.test(location));
+lib\study\mapRelevance.js : 45 : const nonIndia = locations.filter((location) => !/^india$/i.test(location));
+lib\upsc\questionPapers.js : 77 : return paperSet.map(([paper, paperTitle]) => {
+scripts\resultpulse-smoke.mjs : 6 : assert.equal(new Set(EXAM_OFFICIAL_SOURCES.map((source) => source.id)).size, EXAM_OFFICIAL_SOURCES.length, "ResultPulse source ids must be unique");
+tests\automation-schedule.test.mjs : 46 : assert.deepEqual([...seen].sort(), [...coverage].sort());
+
+============================================================
+ PUBLIC ROUTES USING DATABASE / CORPUS LOADERS
+============================================================
+app\api\ask-ai\route.js : 3 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\ask-ai\route.js : 63 : const client = createServerSupabase();
+app\api\automation-status\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\automation-status\route.js : 40 : const supabase = createServerSupabase();
+app\api\auto-publish\route.js : 5 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\auto-publish\route.js : 9 : loadRecentArticles,
+app\api\auto-publish\route.js : 189 : const recentArticles = await loadRecentArticles(supabase, {
+app\api\auto-publish\route.js : 358 : const supabase = createServerSupabase();
+app\api\backfill-images\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\backfill-images\route.js : 39 : const supabase = createServerSupabase();
+app\api\backfill-study-aids\route.js : 7 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\backfill-study-aids\route.js : 21 : const supabase = createServerSupabase();
+app\api\editorial-cleanup\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\editorial-cleanup\route.js : 161 : const supabase = createServerSupabase();
+app\api\exams\collect\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\exams\collect\route.js : 17 : const result = await collectOfficialExamUpdates(createServerSupabase());
+app\api\exams\run\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\exams\run\route.js : 36 : const supabase = createServerSupabase();
+app\api\generate-quiz\route.js : 4 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\generate-quiz\route.js : 17 : const result = await generateDailyQuiz(createServerSupabase(), { force });
+app\api\notifications\dispatch\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\notifications\dispatch\route.js : 10 : try { return NextResponse.json({ success: true, ...(await dispatchNotificationBatch(createServerSupabase())) }, { headers: { "Cache-Control": "no-store" } }); }
+app\api\notifications\subscribe\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\notifications\subscribe\route.js : 26 : const supabase = createServerSupabase();
+app\api\notifications\unsubscribe\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\notifications\unsubscribe\route.js : 7 : const { error } = await createServerSupabase().from("notification_subscriptions").update({ status: "unsubscribed", updated_at: new Date().toISOString() }).eq("unsubscribe_token", token);
+app\api\process-queue\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\process-queue\route.js : 324 : const supabase = createServerSupabase();
+app\api\quality-repair\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\quality-repair\route.js : 43 : const supabase = createServerSupabase();
+app\api\stats\route.js : 2 : import { createServerSupabase } from "@/lib/supabase-server";
+app\api\stats\route.js : 40 : const supabase = createServerSupabase();
+app\categories\page.js : 5 : import { loadCurrentAffairsCorpus } from "@/lib/articleStreams";
+app\categories\page.js : 15 : const { articles, error } = await loadCurrentAffairsCorpus({ maxScan: 5000 });
+app\current-affairs\[slug]\page.js : 4 : import { createServerSupabase } from "@/lib/supabase-server";
+app\current-affairs\[slug]\page.js : 78 : const supabase = createServerSupabase();
+app\current-affairs\[slug]\page.js : 165 : const supabase = createServerSupabase();
+app\current-affairs\page.js : 7 : loadCurrentAffairsArticles,
+app\current-affairs\page.js : 67 : const { articles, total, hasMore, date, error } = await loadCurrentAffairsArticles({
+app\feed.xml\route.js : 1 : import { createServerSupabase } from "@/lib/supabase-server";
+app\feed.xml\route.js : 33 : const { data, error } = await createServerSupabase()
+app\news\[slug]\page.js : 4 : import { createServerSupabase } from "@/lib/supabase-server";
+app\news\[slug]\page.js : 60 : const supabase = createServerSupabase();
+app\news\page.js : 5 : import { loadNewsArticles } from "@/lib/articleStreams";
+app\news\page.js : 55 : const { articles, total, hasMore, error } = await loadNewsArticles({ limit: pageSize, offset });
+app\news-sitemap.xml\route.js : 1 : import { createServerSupabase } from "@/lib/supabase-server";
+app\news-sitemap.xml\route.js : 32 : const { data, error } = await createServerSupabase()
+app\pdf\[period]\page.js : 7 : import { loadCurrentAffairsRangePage } from "@/lib/articleStreams";
+app\pdf\[period]\page.js : 11 : export default async function DigestPage({params,searchParams}){const{period}=await params;const query=await searchParams;if(!VALID_PERIODS.has(period))notFound();const range=resolveDigestRange(period,query?.date);const page=Math.max(1,Number(query?.page)||1);const pageSize=period==="daily"?80:period==="weekly"?70:60;const offset=(page-1)*pageSize;const result=await loadCurrentAffairsRangePage({start:range.start.toISOString(),end:range.end.toISOString(),limit:pageSize,offset,maxScan:period==="daily"?900:period==="weekly"?1600:2400});if(result.error)console.error("Digest article fetch failed:",result.error.message);const articles=[...result.articles].reverse();const compact=period!=="daily";const dateParam=query?.date||(period==="monthly"?range.start.toISOString().slice(0,7):range.start.toISOString().slice(0,10));return <main className="print-document min-h-screen bg-slate-100 px-4 py-10 text-slate-900 print:bg-white print:p-0"><div className="mx-auto max-w-5xl"><div className="mb-6 flex flex-wrap items-center justify-between gap-4 print:hidden"><Link href="/pdf" className="font-bold text-cyan-700">? PDF library</Link><PrintActions/></div><header className="rounded-2xl bg-slate-950 p-8 text-white print:bg-white print:text-slate-950"><p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-400">CurrentPulse AI</p><h1 className="mt-3 text-4xl font-black capitalize">{period} current-affairs digest</h1><p className="mt-3 text-slate-300 print:text-slate-600">{range.label}</p><p className="mt-5 text-sm text-slate-400 print:text-slate-600">Part {page} · bounded zero-cost rendering · {articles.length} canonical briefs</p></header>{articles.length?<div className={compact?"mt-6 space-y-3":"mt-6 space-y-6"}>{articles.map((article,index)=><article key={article.id} className={compact?"rounded-xl bg-white p-5 shadow-sm":"break-inside-avoid rounded-2xl bg-white p-7 shadow-sm"}><div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-600"><span>{String(offset+index+1).padStart(2,"0")}</span><span>•</span><span>{article.category||"Current Affairs"}</span><span>•</span><span>{article.paper||"General Studies"}</span></div><h2 className={compact?"mt-2 text-lg font-black":"mt-3 text-2xl font-black"}>{article.title}</h2>{compact?<><p className="mt-3 text-sm leading-6 text-slate-700">{plain(article.why_news,period==="monthly"?300:440)}</p>{article.prelims&&<p className="mt-2 text-sm leading-6 text-slate-600"><strong>Prelims:</strong> {plain(article.prelims,period==="monthly"?260:380)}</p>}</>:<><section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Why in news</h3><ArticleContent content={article.why_news}/></section>{article.prelims&&<section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Prelims focus</h3><ArticleContent content={article.prelims}/></section>}{article.mains&&<section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Mains analysis</h3><ArticleContent content={article.mains}/></section>}</>}<Link href={`/current-affairs/${article.slug}`} className="mt-4 inline-block text-sm font-bold text-cyan-700 print:hidden">Open full article ?</Link></article>)}</div>:<div className="mt-6 rounded-2xl bg-white p-10 text-center"><h2 className="text-2xl font-bold">No articles in this part</h2></div>}<div className="mt-8 flex items-center justify-between gap-4 print:hidden">{page>1?<Link href={hrefFor(period,dateParam,page-1)} className="rounded-xl border bg-white px-5 py-3 font-bold">? Previous part</Link>:<span/>}{result.hasMore?<Link href={hrefFor(period,dateParam,page+1)} className="rounded-xl bg-slate-950 px-5 py-3 font-bold text-white">Next part ?</Link>:<span/>}</div></div></main>;}
+app\pdf\page.js : 6 : import { loadCurrentAffairsCorpus } from "@/lib/articleStreams";
+app\pdf\page.js : 15 : const { articles, error } = await loadCurrentAffairsCorpus({ maxScan: 5000 });
+app\quiz\page.js : 4 : import { createServerSupabase } from "@/lib/supabase-server";
+app\quiz\page.js : 21 : const supabase = createServerSupabase();
+app\sitemap.ts : 4 : import { createServerSupabase } from "@/lib/supabase-server";
+app\sitemap.ts : 51 : const supabase = createServerSupabase();
+lib\adminAuth.js : 4 : import { createServerSupabase } from "@/lib/supabase-server";
+lib\adminAuth.js : 56 : const supabase = createServerSupabase();
+lib\articleStreams.js : 1 : import { createServerSupabase } from "@/lib/supabase-server";
+lib\articleStreams.js : 171 : const supabase = createServerSupabase();
+lib\articleStreams.js : 186 : const supabase = createServerSupabase();
+lib\articleStreams.js : 199 : const supabase = createServerSupabase();
+lib\articleStreams.js : 213 : const supabase = createServerSupabase();
+lib\articleStreams.js : 252 : export function loadCurrentAffairsRange({ start = "", end = "", maxScan = 5000 } = {}) {
+lib\articleStreams.js : 255 : export function loadNewsRange({ start = "", end = "", maxScan = 5000 } = {}) {
+lib\articleStreams.js : 258 : export function loadCurrentAffairsCorpus({ maxScan = 5000 } = {}) {
+lib\articleStreams.js : 259 : return loadCurrentAffairsRange({ maxScan });
+lib\articleStreams.js : 261 : export function loadNewsCorpus({ maxScan = 5000 } = {}) {
+lib\articleStreams.js : 262 : return loadNewsRange({ maxScan });
+lib\articleStreams.js : 265 : export async function loadCurrentAffairsRangePage({ start = "", end = "", limit = 80, offset = 0, maxScan = 1800 } = {}) {
+lib\articleStreams.js : 282 : export async function loadCurrentAffairsArticles({ limit = 24, offset = 0, todayOnly = false, exam = "upsc" } = {}) {
+lib\articleStreams.js : 323 : export async function loadNewsArticles({ limit = 24, offset = 0 } = {}) {
+lib\articleStreams.js : 375 : loadCurrentAffairsArticles({ limit: safeLimit, offset: 0 }),
+lib\articleStreams.js : 376 : loadNewsArticles({ limit: safeLimit, offset: 0 }),
+lib\automation\runLog.js : 1 : import { createServerSupabase } from "@/lib/supabase-server";
+lib\automation\runLog.js : 5 : const supabase = createServerSupabase();
+lib\automation\runLog.js : 26 : const supabase = createServerSupabase();
+lib\exams\repository.js : 1 : import { createServerSupabase } from "@/lib/supabase-server";
+lib\exams\repository.js : 75 : const supabase = createServerSupabase();
+lib\exams\repository.js : 91 : const supabase = createServerSupabase();
+lib\exams\repository.js : 106 : const supabase = createServerSupabase();
+lib\news\duplicateRepository.js : 13 : export async function loadRecentArticles(supabase, { lookbackDays = 21, limit = 500 } = {}) {
+lib\news\duplicateRepository.js : 49 : const recentArticles = await loadRecentArticles(supabase, options);
+lib\queue\queueCandidate.js : 1 : import { createServerSupabase } from "@/lib/supabase-server";
+lib\queue\queueCandidate.js : 90 : const supabase = options.supabase || createServerSupabase();
+lib\quiz\generateDailyQuiz.js : 6 : import { loadCurrentAffairsArticles } from "@/lib/articleStreams";
+lib\quiz\generateDailyQuiz.js : 297 : let sourceResult = await loadCurrentAffairsArticles({ limit: 24, offset: 0, todayOnly: true });
+lib\quiz\generateDailyQuiz.js : 300 : sourceResult = await loadCurrentAffairsArticles({ limit: 24, offset: 0, todayOnly: false });
+lib\siteStats.js : 2 : loadCurrentAffairsArticles,
+lib\siteStats.js : 3 : loadNewsArticles,
+lib\siteStats.js : 5 : import { createServerSupabase } from "@/lib/supabase-server";
+lib\siteStats.js : 56 : const supabase = createServerSupabase();
+lib\siteStats.js : 144 : loadCurrentAffairsArticles({
+lib\siteStats.js : 156 : loadNewsArticles({
+lib\supabase-server.js : 3 : export function createServerSupabase() {
+
+============================================================
+ PDF / SITEMAP / SEARCH HEAVY PATHS
+============================================================
+app\ai\page.js : 65 : {loading && <div className="ai-thinking-card"><span></span><div><strong>Searching CurrentPulse first</strong><p>Retrieving relevant articles before generating the answer.</p></div></div>}
+app\api\fetch-todays-news\route.js : 340 : const pdfDiv = $("#PdfDiv");
+app\api\fetch-todays-news\route.js : 342 : if (pdfDiv.length) {
+app\api\fetch-todays-news\route.js : 343 : const clone = pdfDiv.clone();
+app\api\quality-repair\route.js : 176 : ? "Quality repair applied. Quarantined rows are drafts and disappear from public streams/sitemaps."
+app\categories\page.js : 5 : import { loadCurrentAffairsCorpus } from "@/lib/articleStreams";
+app\categories\page.js : 15 : const { articles, error } = await loadCurrentAffairsCorpus({ maxScan: 5000 });
+app\layout.tsx : 27 : "Selection-oriented daily UPSC current affairs with syllabus linkage, current-static notes, Prelims facts, Mains analysis, quizzes, maps, PDFs and official PYQs.",
+app\news-sitemap.xml\route.js : 38 : if (error) console.error("[News sitemap] Article fetch failed:", error.message);
+app\news-sitemap.xml\route.js : 50 : <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+app\pdf\[period]\page.js : 10 : function hrefFor(period,date,page){const params=new URLSearchParams();if(date)params.set("date",date);if(page>1)params.set("page",String(page));return `/pdf/${period}?${params.toString()}`;}
+app\pdf\[period]\page.js : 11 : export default async function DigestPage({params,searchParams}){const{period}=await params;const query=await searchParams;if(!VALID_PERIODS.has(period))notFound();const range=resolveDigestRange(period,query?.date);const page=Math.max(1,Number(query?.page)||1);const pageSize=period==="daily"?80:period==="weekly"?70:60;const offset=(page-1)*pageSize;const result=await loadCurrentAffairsRangePage({start:range.start.toISOString(),end:range.end.toISOString(),limit:pageSize,offset,maxScan:period==="daily"?900:period==="weekly"?1600:2400});if(result.error)console.error("Digest article fetch failed:",result.error.message);const articles=[...result.articles].reverse();const compact=period!=="daily";const dateParam=query?.date||(period==="monthly"?range.start.toISOString().slice(0,7):range.start.toISOString().slice(0,10));return <main className="print-document min-h-screen bg-slate-100 px-4 py-10 text-slate-900 print:bg-white print:p-0"><div className="mx-auto max-w-5xl"><div className="mb-6 flex flex-wrap items-center justify-between gap-4 print:hidden"><Link href="/pdf" className="font-bold text-cyan-700">? PDF library</Link><PrintActions/></div><header className="rounded-2xl bg-slate-950 p-8 text-white print:bg-white print:text-slate-950"><p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-400">CurrentPulse AI</p><h1 className="mt-3 text-4xl font-black capitalize">{period} current-affairs digest</h1><p className="mt-3 text-slate-300 print:text-slate-600">{range.label}</p><p className="mt-5 text-sm text-slate-400 print:text-slate-600">Part {page} · bounded zero-cost rendering · {articles.length} canonical briefs</p></header>{articles.length?<div className={compact?"mt-6 space-y-3":"mt-6 space-y-6"}>{articles.map((article,index)=><article key={article.id} className={compact?"rounded-xl bg-white p-5 shadow-sm":"break-inside-avoid rounded-2xl bg-white p-7 shadow-sm"}><div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-600"><span>{String(offset+index+1).padStart(2,"0")}</span><span>•</span><span>{article.category||"Current Affairs"}</span><span>•</span><span>{article.paper||"General Studies"}</span></div><h2 className={compact?"mt-2 text-lg font-black":"mt-3 text-2xl font-black"}>{article.title}</h2>{compact?<><p className="mt-3 text-sm leading-6 text-slate-700">{plain(article.why_news,period==="monthly"?300:440)}</p>{article.prelims&&<p className="mt-2 text-sm leading-6 text-slate-600"><strong>Prelims:</strong> {plain(article.prelims,period==="monthly"?260:380)}</p>}</>:<><section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Why in news</h3><ArticleContent content={article.why_news}/></section>{article.prelims&&<section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Prelims focus</h3><ArticleContent content={article.prelims}/></section>}{article.mains&&<section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Mains analysis</h3><ArticleContent content={article.mains}/></section>}</>}<Link href={`/current-affairs/${article.slug}`} className="mt-4 inline-block text-sm font-bold text-cyan-700 print:hidden">Open full article ?</Link></article>)}</div>:<div className="mt-6 rounded-2xl bg-white p-10 text-center"><h2 className="text-2xl font-bold">No articles in this part</h2></div>}<div className="mt-8 flex items-center justify-between gap-4 print:hidden">{page>1?<Link href={hrefFor(period,dateParam,page-1)} className="rounded-xl border bg-white px-5 py-3 font-bold">? Previous part</Link>:<span/>}{result.hasMore?<Link href={hrefFor(period,dateParam,page+1)} className="rounded-xl bg-slate-950 px-5 py-3 font-bold text-white">Next part ?</Link>:<span/>}</div></div></main>;}
+app\pdf\page.js : 6 : import { loadCurrentAffairsCorpus } from "@/lib/articleStreams";
+app\pdf\page.js : 9 : title: "Current Affairs PDF Digests",
+app\pdf\page.js : 11 : alternates: { canonical: "/pdf" },
+app\pdf\page.js : 14 : export default async function PdfPage() {
+app\pdf\page.js : 15 : const { articles, error } = await loadCurrentAffairsCorpus({ maxScan: 5000 });
+app\pdf\page.js : 16 : if (error) console.error("PDF library fetch failed:", error.message);
+app\pdf\page.js : 29 : <main className="pdf-library-theme min-h-screen px-6 py-14 text-white">
+app\pdf\page.js : 32 : <h1 className="mt-3 text-4xl font-black sm:text-5xl">Current-affairs PDFs</h1>
+app\pdf\page.js : 39 : <Link href={`/pdf/daily?date=${today}`} className="rounded-2xl border border-cyan-500/40 bg-cyan-500/10 p-6 hover:border-cyan-300">
+app\pdf\page.js : 45 : <Link href={`/pdf/weekly?date=${today}`} className="rounded-2xl border border-slate-800 bg-slate-900 p-6 hover:border-cyan-500">
+app\pdf\page.js : 51 : <Link href={`/pdf/monthly?date=${month}`} className="rounded-2xl border border-slate-800 bg-slate-900 p-6 hover:border-cyan-500">
+app\pdf\page.js : 65 : <Link key={date} href={`/pdf/daily?date=${date}`} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-5 transition hover:border-cyan-500">
+app\pyq\page.js : 36 : <p className="mt-3 max-w-3xl leading-7 text-slate-300">Direct UPSC PDFs, official archive entries and older trusted indexes are kept visibly separate so a mirror is never mistaken for an official host.</p>
+app\question-papers\page.js : 19 : <p className="paper-library-description">A clean academic library for Civil Services question papers. Direct UPSC PDFs, the official UPSC archive and any trusted legacy index are labelled separately.</p>
+app\robots.ts : 18 : sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/news-sitemap.xml`],
+app\search\page.tsx : 100 : Search articles by title, category or GS paper.
+app\sitemap.ts : 9 : type SitemapArticle = {
+app\sitemap.ts : 16 : function staticRoutes(): MetadataRoute.Sitemap {
+app\sitemap.ts : 18 : "current-affairs","news","categories","quiz","mock-tests","pdf","notes","pyq",
+app\sitemap.ts : 47 : export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+app\sitemap.ts : 68 : const articleRoutes: MetadataRoute.Sitemap = [];
+app\sitemap.ts : 70 : for (const article of (articleResult.data || []) as SitemapArticle[]) {
+app\sitemap.ts : 102 : const examRoutes: MetadataRoute.Sitemap = (examResult.data || []).map((exam: any) => ({
+app\sitemap.ts : 109 : if (articleResult.error) console.error("[Sitemap] article query:", articleResult.error.message);
+app\sitemap.ts : 111 : console.error("[Sitemap] exam query:", examResult.error.message);
+app\sitemap.ts : 116 : console.error("[Sitemap] dynamic data unavailable:", error?.message || error);
+app\sitemap.ts : 117 : // Never return a 503 sitemap. Static discovery remains available while
+components\Features.tsx : 27 : title: "Daily PDFs",
+components\Features.tsx : 29 : link: "/pdf",
+components\Footer.tsx : 6 : ["PDF Digests", "/pdf"],
+components\MainsPaperNavigator.jsx : 78 : {item.direct ? "Direct official PDF" : item.official ? "Find this year in UPSC archive" : `Verified via ${item.sourceName}`}
+components\Navbar.tsx : 64 : name: hi ? "PDF" : "PDF",
+components\Navbar.tsx : 65 : href: "/pdf",
+components\Navbar.tsx : 253 : placeholder="Search articles..."
+components\OfficialPapers.jsx : 28 : <p className="paper-coverage-note"><strong>Verified coverage:</strong> Prelims 2011–2026 and 15 Mains examination years, 2011–2025. The year menu follows the selected stage. Recent papers use direct UPSC PDFs; older years use the UPSC archive where available and a clearly labelled trusted legacy index where the official public archive does not expose that year.</p>
+components\OfficialPapers.jsx : 36 : ? "Original PDF hosted by the Union Public Service Commission."
+components\OfficialPapers.jsx : 38 : ? `Locate the paper in the ${paper.sourceName || "verified legacy index"}; this is not presented as a UPSC-hosted PDF.`
+components\OfficialPapers.jsx : 42 : ? <><Download size={17} /> Open official PDF</>
+components\PrintActions.jsx : 22 : <Printer size={18} /> Print / Save as PDF
+lib\articleStreams.js : 258 : export function loadCurrentAffairsCorpus({ maxScan = 5000 } = {}) {
+lib\articleStreams.js : 261 : export function loadNewsCorpus({ maxScan = 5000 } = {}) {
+lib\editorial\publicationSafety.js : 36 : /^\s*(?:weekly|monthly) current affairs(?: compilation)?(?: pdf)?\b/i,
+lib\editorial\publicationSafety.js : 47 : /\b(?:study material|static notes?|download(?:able)? pdf|course material)\b/i,
+lib\editorial\publicationSafety.js : 48 : /\b(?:weekly|monthly)\b[\s\S]*\b(?:compilation|current affairs|pdf)\b/i,
+lib\editorial\publicationSafety.js : 69 : /\/(?:weekly|monthly)-current-affairs(?:-compilation)?(?:-pdf)?(?:\/|\?|$)/i,
+lib\editorial\publicationSafety.js : 125 : /\bdownload (?:the )?(?:weekly|monthly|complete)?\s*current affairs pdf\b/i,
+lib\editorial\sourceEntailmentGuard.js : 18 : for (const match of text.matchAll(/\b[A-Z]{2,8}\b/g)) { const item=match[0]; if(!["AI","CA","PDF","URL","UK","US","USA"].includes(item)) found.add(item); }
+lib\siteUrl.js : 3 : // Keep every canonical, sitemap and structured-data URL on the actual
+lib\upsc\questionPapers.js : 8 : { year: 2026, stage: "Prelims", paper: "General Studies Paper I", url: `${UPSC_FILES}/QP_CSP_2026_GENERAL_STUDIES_PAPER-I_25052026.pdf` },
+lib\upsc\questionPapers.js : 9 : { year: 2026, stage: "Prelims", paper: "General Studies Paper II (CSAT)", url: `${UPSC_FILES}/QP_CSP_2026_GENERAL_STUDIES_PAPER-II_25052026.pdf` },
+lib\upsc\questionPapers.js : 10 : { year: 2025, stage: "Prelims", paper: "General Studies Paper I", url: `${UPSC_FILES}/QP-CSP-25-GENERAL-STUDIES-PAPER-I-260525.pdf` },
+lib\upsc\questionPapers.js : 11 : { year: 2025, stage: "Prelims", paper: "General Studies Paper II (CSAT)", url: `${UPSC_FILES}/QP-CSP-25-GENERAL-STUDIES-PAPER-II-260525.pdf` },
+lib\upsc\questionPapers.js : 12 : { year: 2025, stage: "Mains", paper: "Essay", url: `${UPSC_FILES}/ESSAY-QP-CSM-25-010925.pdf` },
+lib\upsc\questionPapers.js : 13 : { year: 2025, stage: "Mains", paper: "General Studies Paper I", url: `${UPSC_FILES}/GENERAL-STUDIES-PAPER%20I-QP-CSM-25-010925.pdf` },
+lib\upsc\questionPapers.js : 14 : { year: 2025, stage: "Mains", paper: "General Studies Paper II", url: `${UPSC_FILES}/GENERAL-STUDIES-PAPER-II-QP-CSM-25-010925.pdf` },
+lib\upsc\questionPapers.js : 15 : { year: 2025, stage: "Mains", paper: "General Studies Paper III", url: `${UPSC_FILES}/GENERAL-STUDIES-PAPER-III-QP-CSM-25-010925.pdf` },
+lib\upsc\questionPapers.js : 16 : { year: 2025, stage: "Mains", paper: "General Studies Paper IV", url: `${UPSC_FILES}/GENERAL-STUDIES-PAPER-IV-QP-CSM-25-010925.pdf` },
+lib\upsc\questionPapers.js : 17 : { year: 2024, stage: "Prelims", paper: "General Studies Paper I", url: `${UPSC_FILES}/QP-CSP-24-GENERAL-STUDIES-PAPER-I-180624.pdf` },
+lib\upsc\questionPapers.js : 18 : { year: 2024, stage: "Prelims", paper: "General Studies Paper II (CSAT)", url: `${UPSC_FILES}/QP-CSP-24-GENERAL-STUDIES-PAPER-II-180624.pdf` },
+lib\upsc\questionPapers.js : 19 : { year: 2024, stage: "Mains", paper: "General Studies Paper I", url: `${UPSC_FILES}/QP_CSM_2024_GenStud_I_03102024.pdf` },
+lib\upsc\questionPapers.js : 20 : { year: 2024, stage: "Mains", paper: "General Studies Paper II", url: `${UPSC_FILES}/QP_CSM_2024_GenStud_II_03102024.pdf` },
+lib\upsc\questionPapers.js : 21 : { year: 2024, stage: "Mains", paper: "General Studies Paper III", url: `${UPSC_FILES}/QP_CSM_2024_GenStud_III_03102024.pdf` },
+lib\upsc\questionPapers.js : 22 : { year: 2024, stage: "Mains", paper: "General Studies Paper IV", url: `${UPSC_FILES}/QP_CSM_2024_GenStud_IV_03102024.pdf` },
+lib\upsc\questionPapers.js : 23 : { year: 2024, stage: "Mains", paper: "Essay", url: `${UPSC_FILES}/QP_CSM_2024_ESSAY_03102024.pdf` },
+lib\upsc\questionPapers.js : 24 : { year: 2023, stage: "Mains", paper: "General Studies Paper I", url: `${UPSC_FILES}/QP-CSM-23-GENERAL-STUDIES-PAPER-I-180923.pdf` },
+lib\upsc\questionPapers.js : 25 : { year: 2023, stage: "Mains", paper: "General Studies Paper II", url: `${UPSC_FILES}/QP-CSM-23-GENERAL-STUDIES-PAPER-II-180923.pdf` },
+lib\upsc\questionPapers.js : 26 : { year: 2023, stage: "Mains", paper: "General Studies Paper III", url: `${UPSC_FILES}/QP-CSM-23-GENERAL-STUDIES-PAPER-III-180923.pdf` },
+lib\upsc\questionPapers.js : 27 : { year: 2023, stage: "Mains", paper: "General Studies Paper IV", url: `${UPSC_FILES}/QP-CSM-23-GENERAL-STUDIES-PAPER-IV-180923.pdf` },
+lib\upsc\questionPapers.js : 31 : // than guessing legacy PDF filenames. The archive contains the original
+scripts\quality-gates-smoke.mjs : 21 : "Weekly Current Affairs PDF For UPSC",
+tests\editorial-safety.test.mjs : 20 : "Weekly Current Affairs PDF For UPSC",
+
+============================================================
+ RESULTPULSE / EXAM DATA WORK
+============================================================
+.github\workflows\currentpulse-background.yml : 312 : # ResultPulse official-source activity windows.
+.github\workflows\currentpulse-quality-maintenance.yml : 83 : - name: Run ResultPulse, quiz and quality maintenance
+app\about\page.js : 16 : "ResultPulse surfaces official-source exam and recruitment updates with links back to the issuing authority."
+app\api\auto-publish\route.js : 10 : } from "@/lib/news/duplicateRepository";
+app\api\exams\collect\route.js : 3 : import { collectOfficialExamUpdates } from "@/lib/exams/collector";
+app\api\exams\collect\route.js : 17 : const result = await collectOfficialExamUpdates(createServerSupabase());
+app\api\exams\run\route.js : 3 : import { collectOfficialExamUpdates } from "@/lib/exams/collector";
+app\api\exams\run\route.js : 30 : message: "External ResultPulse heartbeat accepted; GitHub Actions owns scheduled scans.",
+app\api\exams\run\route.js : 39 : const collection = await collectOfficialExamUpdates(supabase, {
+app\api\exams\run\route.js : 58 : { success: false, message: error?.message || "ResultPulse run failed" },
+app\api\notifications\subscribe\route.js : 31 : if (findError && findError.code === "42P01") return NextResponse.json({ success: false, message: "Alerts are being activated. Run the ResultPulse database migration first." }, { status: 503 });
+app\exams\[slug]\page.js : 4 : import { loadExamUpdateBySlug, loadRelatedExamUpdates } from "@/lib/exams/repository";
+app\exams\[slug]\page.js : 11 : const { slug } = await params; const { update } = await loadExamUpdateBySlug(slug);
+app\exams\[slug]\page.js : 12 : if (!update) return { title: "Exam Update Not Found | ResultPulse AI", robots: { index: false, follow: false } };
+app\exams\[slug]\page.js : 14 : return { title: `${update.title} | ResultPulse AI`, description, alternates: { canonical: `${SITE_URL}/exams/${slug}` }, openGraph: { title: update.title, description, url: `${SITE_URL}/exams/${slug}`, type: "article" }, robots: { index: true, follow: true } };
+app\exams\[slug]\page.js : 17 : const { slug } = await params; const { update } = await loadExamUpdateBySlug(slug); if (!update) notFound();
+app\exams\[slug]\page.js : 18 : const { updates: related } = await loadRelatedExamUpdates(update.exam_name, update.id, 8);
+app\exams\[slug]\page.js : 27 : <p className="mt-4 text-xs leading-5 text-slate-500">ResultPulse links to the official authority for applications, admit cards, answer keys and results. Verify candidate-specific details only on the official site.</p>
+app\exams\admit-cards\page.js : 1 : export const revalidate = false; import ExamUpdatesPage from "@/components/ExamUpdatesPage"; export const metadata={title:"Admit Cards 2026 | ResultPulse AI"}; export default function Page(){return <ExamUpdatesPage type="admit-card" title="Admit Cards" description="Official admit cards, call letters and exam-city updates."/>}
+app\exams\answer-keys\page.js : 1 : export const revalidate = false; import ExamUpdatesPage from "@/components/ExamUpdatesPage"; export const metadata={title:"Answer Keys 2026 | ResultPulse AI"}; export default function Page(){return <ExamUpdatesPage type="answer-key" title="Answer Keys" description="Official provisional/final answer keys, response sheets and objection windows."/>}
+app\exams\applications\page.js : 1 : export const revalidate = false; import ExamUpdatesPage from "@/components/ExamUpdatesPage"; export const metadata={title:"Exam Applications Open 2026 | ResultPulse AI"}; export default function Page(){return <ExamUpdatesPage type="application" title="Applications Open" description="Official application and registration windows with direct source links."/>}
+app\exams\counselling\page.js : 2 : import ExamUpdatesPage from "@/components/ExamUpdatesPage";
+app\exams\counselling\page.js : 3 : export const metadata={title:"Counselling & Seat Allotment 2026 | ResultPulse AI"};
+app\exams\counselling\page.js : 4 : export default function Page(){return <ExamUpdatesPage type="counselling" title="Counselling & Seat Allotment" description="Official counselling, seat-allotment and admission updates."/>}
+app\exams\cut-offs\page.js : 2 : import ExamUpdatesPage from "@/components/ExamUpdatesPage";
+app\exams\cut-offs\page.js : 3 : export const metadata={title:"Exam Cut-offs 2026 | ResultPulse AI"};
+app\exams\cut-offs\page.js : 4 : export default function Page(){return <ExamUpdatesPage type="cut-off" title="Cut-offs" description="Official cut-off marks and allocation updates from examination authorities."/>}
+app\exams\deadlines\page.js : 1 : export const revalidate = false; import ExamUpdatesPage from "@/components/ExamUpdatesPage"; export const metadata={title:"Exam Deadlines 2026 | ResultPulse AI"}; export default function Page(){return <ExamUpdatesPage type="deadline" title="Closing Soon" description="Application, correction and objection deadlines that need action."/>}
+app\exams\exam-dates\page.js : 2 : import ExamUpdatesPage from "@/components/ExamUpdatesPage";
+app\exams\exam-dates\page.js : 3 : export const metadata={title:"Exam Dates & Schedules 2026 | ResultPulse AI"};
+app\exams\exam-dates\page.js : 4 : export default function Page(){return <ExamUpdatesPage type="exam-date" title="Exam Dates & Schedules" description="Official exam schedules, rescheduling, interview/document-verification and city-intimation updates."/>}
+app\exams\notifications\page.js : 1 : export const revalidate = false; import ExamUpdatesPage from "@/components/ExamUpdatesPage"; export const metadata={title:"Exam Notifications 2026 | ResultPulse AI"}; export default function Page(){return <ExamUpdatesPage type="notification" title="Exam Notifications" description="Official recruitment and examination notifications from verified authorities."/>}
+app\exams\page.js : 3 : import ExamUpdatesPage from "@/components/ExamUpdatesPage";
+app\exams\page.js : 5 : export const metadata={title:"ResultPulse AI — Exam Results, Admit Cards & Notifications",description:"Official-source exam results, admit cards, answer keys, applications, deadlines and notifications across India.",alternates:{canonical:`${SITE_URL}/exams`}};
+app\exams\page.js : 6 : export default function Page(){return <ExamUpdatesPage/>;}
+app\exams\results\page.js : 1 : export const revalidate = false; import ExamUpdatesPage from "@/components/ExamUpdatesPage"; export const metadata={title:"Exam Results 2026 | ResultPulse AI"}; export default function Page(){return <ExamUpdatesPage type="result" title="Results Today" description="Official results, score cards, selection lists and marks updates."/>}
+app\page.tsx : 5 : import ResultPulsePreview from "@/components/ResultPulsePreview";
+app\page.tsx : 30 : <ResultPulsePreview />
+app\privacy\page.js : 12 : "heading": "ResultPulse alerts",
+app\sitemap.ts : 60 : .from("exam_updates")
+components\ExamSubscriptionForm.jsx : 47 : <label className="mt-5 flex items-start gap-2 text-xs leading-5 text-slate-400"><input className="mt-1" type="checkbox" checked={consent} onChange={(e)=>setConsent(e.target.checked)} required /><span>I agree to receive the selected CurrentPulse/ResultPulse alerts. I can unsubscribe at any time.</span></label>
+components\ExamUpdatesPage.jsx : 3 : import { loadExamUpdates } from "@/lib/exams/repository";
+components\ExamUpdatesPage.jsx : 31 : export default async function ExamUpdatesPage({
+components\ExamUpdatesPage.jsx : 33 : title = "ResultPulse AI",
+components\ExamUpdatesPage.jsx : 39 : const result = await loadExamUpdates({ type, limit: 30 });
+components\ExamUpdatesPage.jsx : 43 : console.error("ResultPulse page load failed:", loadError?.message || loadError);
+components\ExamUpdatesPage.jsx : 44 : error = loadError instanceof Error ? loadError : new Error("ResultPulse is temporarily unavailable.");
+components\ExamUpdatesPage.jsx : 66 : ResultPulse database is not ready yet: {error.message}
+components\ExamUpdatesPage.jsx : 97 : <h2 className="text-2xl font-black">ResultPulse is ready for its first official-source scan</h2>
+components\ResultPulsePreview.jsx : 2 : import { loadExamUpdates } from "@/lib/exams/repository";
+components\ResultPulsePreview.jsx : 4 : export default async function ResultPulsePreview() {
+components\ResultPulsePreview.jsx : 5 : const { updates } = await loadExamUpdates({ limit: 6 });
+components\ResultPulsePreview.jsx : 6 : return <section className="border-y border-violet-400/10 bg-slate-950 py-16"><div className="mx-auto max-w-7xl px-4 sm:px-6"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="font-black uppercase tracking-[.2em] text-violet-400">New · ResultPulse AI</p><h2 className="mt-2 text-4xl font-black text-white">Results, admit cards & exam alerts</h2><p className="mt-3 max-w-3xl text-lg leading-8 text-slate-400">Official-source exam updates without storing candidate marks. Open the authority link when action is required.</p></div><Link href="/exams" className="w-fit rounded-xl bg-violet-400 px-5 py-3 font-black text-slate-950">Open ResultPulse ?</Link></div>
+components\ResultPulsePreview.jsx : 7 : <div className="mt-8 grid gap-4 md:grid-cols-3">{updates.length ? updates.map((item)=><Link key={item.id} href={`/exams/${item.slug}`} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 transition hover:border-violet-400/50"><span className="text-xs font-black uppercase text-violet-300">{getExamUpdateDisplayType(item)}</span><h3 className="mt-3 line-clamp-3 text-lg font-black leading-snug text-white">{item.title}</h3><p className="mt-3 text-xs font-bold text-slate-500">{item.source_name || item.agency}</p></Link>) : <div className="md:col-span-3 rounded-2xl border border-dashed border-slate-700 p-7 text-slate-400">ResultPulse is ready. Run the official-source collector after the database migration.</div>}</div>
+lib\automation\schedulePolicy.js : 120 : * Keep UPSC/SSC plus one Railway and one Banking authority hot every ResultPulse
+lib\exams\collector.js : 122 : "Low-CPU automation migration is not installed. Run supabase/migrations/20260812_low_cpu_automation.sql before enabling ResultPulse automation."
+lib\exams\collector.js : 156 : console.error(`[ResultPulse] Failed to persist source state for ${source.id}:`, error.message);
+lib\exams\collector.js : 165 : "User-Agent": "CurrentPulse-ResultPulse/1.0 (+https://currentpulse-ai.vercel.app/exams)",
+lib\exams\collector.js : 237 : .from("exam_updates")
+lib\exams\collector.js : 246 : async function insertExamUpdates(supabase, rows = []) {
+lib\exams\collector.js : 252 : .from("exam_updates")
+lib\exams\collector.js : 264 : export async function collectOfficialExamUpdates(
+lib\exams\collector.js : 273 : .from("exam_updates")
+lib\exams\collector.js : 278 : "ResultPulse database migration is not installed. Run supabase/migrations/20260811100000_resultpulse_notifications.sql first."
+lib\exams\collector.js : 354 : ? await insertExamUpdates(supabase, unseenRows)
+lib\exams\constants.js : 25 : export const RESULTPULSE_PUBLIC_TYPES = [
+lib\exams\repository.js : 6 : const cache = globalThis.__currentPulseExamRepositoryCache || new Map();
+lib\exams\repository.js : 7 : globalThis.__currentPulseExamRepositoryCache = cache;
+lib\exams\repository.js : 67 : console.error("ResultPulse repository query failed:", error?.message || error);
+lib\exams\repository.js : 72 : export async function loadExamUpdates({ type = "", limit = 24 } = {}) {
+lib\exams\repository.js : 77 : .from("exam_updates")
+lib\exams\repository.js : 88 : export async function loadExamUpdateBySlug(slug) {
+lib\exams\repository.js : 93 : .from("exam_updates")
+lib\exams\repository.js : 102 : export async function loadRelatedExamUpdates(examName, excludeId = 0, limit = 12) {
+lib\exams\repository.js : 108 : .from("exam_updates")
+lib\exams\sourceCatalog.js : 2 : * ResultPulse starts with official, high-value exam/recruitment authorities.
+lib\publisher\publishArticle.js : 2 : import { findDuplicateArticle } from "@/lib/news/duplicateRepository";
+scripts\resultpulse-smoke.mjs : 5 : assert.ok(EXAM_OFFICIAL_SOURCES.length >= 10, "ResultPulse should start with at least 10 official source pages");
+scripts\resultpulse-smoke.mjs : 6 : assert.equal(new Set(EXAM_OFFICIAL_SOURCES.map((source) => source.id)).size, EXAM_OFFICIAL_SOURCES.length, "ResultPulse source ids must be unique");
+scripts\resultpulse-smoke.mjs : 14 : console.log(`ResultPulse smoke: PASS (${EXAM_OFFICIAL_SOURCES.length} official source pages, ${EXAM_UPDATE_TYPES.length} update types)`);
+
+============================================================
+ NEWS / CURRENT AFFAIRS FETCHING
+============================================================
+app\categories\page.js : 5 : import { loadCurrentAffairsCorpus } from "@/lib/articleStreams";
+app\categories\page.js : 15 : const { articles, error } = await loadCurrentAffairsCorpus({ maxScan: 5000 });
+app\current-affairs\page.js : 7 : loadCurrentAffairsArticles,
+app\current-affairs\page.js : 67 : const { articles, total, hasMore, date, error } = await loadCurrentAffairsArticles({
+app\news\page.js : 5 : import { loadNewsArticles } from "@/lib/articleStreams";
+app\news\page.js : 55 : const { articles, total, hasMore, error } = await loadNewsArticles({ limit: pageSize, offset });
+app\pdf\[period]\page.js : 7 : import { loadCurrentAffairsRangePage } from "@/lib/articleStreams";
+app\pdf\[period]\page.js : 11 : export default async function DigestPage({params,searchParams}){const{period}=await params;const query=await searchParams;if(!VALID_PERIODS.has(period))notFound();const range=resolveDigestRange(period,query?.date);const page=Math.max(1,Number(query?.page)||1);const pageSize=period==="daily"?80:period==="weekly"?70:60;const offset=(page-1)*pageSize;const result=await loadCurrentAffairsRangePage({start:range.start.toISOString(),end:range.end.toISOString(),limit:pageSize,offset,maxScan:period==="daily"?900:period==="weekly"?1600:2400});if(result.error)console.error("Digest article fetch failed:",result.error.message);const articles=[...result.articles].reverse();const compact=period!=="daily";const dateParam=query?.date||(period==="monthly"?range.start.toISOString().slice(0,7):range.start.toISOString().slice(0,10));return <main className="print-document min-h-screen bg-slate-100 px-4 py-10 text-slate-900 print:bg-white print:p-0"><div className="mx-auto max-w-5xl"><div className="mb-6 flex flex-wrap items-center justify-between gap-4 print:hidden"><Link href="/pdf" className="font-bold text-cyan-700">? PDF library</Link><PrintActions/></div><header className="rounded-2xl bg-slate-950 p-8 text-white print:bg-white print:text-slate-950"><p className="text-sm font-black uppercase tracking-[0.22em] text-cyan-400">CurrentPulse AI</p><h1 className="mt-3 text-4xl font-black capitalize">{period} current-affairs digest</h1><p className="mt-3 text-slate-300 print:text-slate-600">{range.label}</p><p className="mt-5 text-sm text-slate-400 print:text-slate-600">Part {page} · bounded zero-cost rendering · {articles.length} canonical briefs</p></header>{articles.length?<div className={compact?"mt-6 space-y-3":"mt-6 space-y-6"}>{articles.map((article,index)=><article key={article.id} className={compact?"rounded-xl bg-white p-5 shadow-sm":"break-inside-avoid rounded-2xl bg-white p-7 shadow-sm"}><div className="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-600"><span>{String(offset+index+1).padStart(2,"0")}</span><span>•</span><span>{article.category||"Current Affairs"}</span><span>•</span><span>{article.paper||"General Studies"}</span></div><h2 className={compact?"mt-2 text-lg font-black":"mt-3 text-2xl font-black"}>{article.title}</h2>{compact?<><p className="mt-3 text-sm leading-6 text-slate-700">{plain(article.why_news,period==="monthly"?300:440)}</p>{article.prelims&&<p className="mt-2 text-sm leading-6 text-slate-600"><strong>Prelims:</strong> {plain(article.prelims,period==="monthly"?260:380)}</p>}</>:<><section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Why in news</h3><ArticleContent content={article.why_news}/></section>{article.prelims&&<section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Prelims focus</h3><ArticleContent content={article.prelims}/></section>}{article.mains&&<section className="mt-5"><h3 className="text-sm font-black uppercase text-cyan-700">Mains analysis</h3><ArticleContent content={article.mains}/></section>}</>}<Link href={`/current-affairs/${article.slug}`} className="mt-4 inline-block text-sm font-bold text-cyan-700 print:hidden">Open full article ?</Link></article>)}</div>:<div className="mt-6 rounded-2xl bg-white p-10 text-center"><h2 className="text-2xl font-bold">No articles in this part</h2></div>}<div className="mt-8 flex items-center justify-between gap-4 print:hidden">{page>1?<Link href={hrefFor(period,dateParam,page-1)} className="rounded-xl border bg-white px-5 py-3 font-bold">? Previous part</Link>:<span/>}{result.hasMore?<Link href={hrefFor(period,dateParam,page+1)} className="rounded-xl bg-slate-950 px-5 py-3 font-bold text-white">Next part ?</Link>:<span/>}</div></div></main>;}
+app\pdf\page.js : 6 : import { loadCurrentAffairsCorpus } from "@/lib/articleStreams";
+app\pdf\page.js : 15 : const { articles, error } = await loadCurrentAffairsCorpus({ maxScan: 5000 });
+lib\articleStreams.js : 168 : async function fetchCurrentAffairsChunk(startIndex, endIndex, dayStart = "", dayEnd = "") {
+lib\articleStreams.js : 184 : async function fetchNewsChunk(startIndex, endIndex) {
+lib\articleStreams.js : 252 : export function loadCurrentAffairsRange({ start = "", end = "", maxScan = 5000 } = {}) {
+lib\articleStreams.js : 255 : export function loadNewsRange({ start = "", end = "", maxScan = 5000 } = {}) {
+lib\articleStreams.js : 258 : export function loadCurrentAffairsCorpus({ maxScan = 5000 } = {}) {
+lib\articleStreams.js : 259 : return loadCurrentAffairsRange({ maxScan });
+lib\articleStreams.js : 261 : export function loadNewsCorpus({ maxScan = 5000 } = {}) {
+lib\articleStreams.js : 262 : return loadNewsRange({ maxScan });
+lib\articleStreams.js : 265 : export async function loadCurrentAffairsRangePage({ start = "", end = "", limit = 80, offset = 0, maxScan = 1800 } = {}) {
+lib\articleStreams.js : 274 : const { data, error } = await fetchCurrentAffairsChunk(rawOffset, endIndex, start, end);
+lib\articleStreams.js : 282 : export async function loadCurrentAffairsArticles({ limit = 24, offset = 0, todayOnly = false, exam = "upsc" } = {}) {
+lib\articleStreams.js : 297 : const { data, error } = await fetchCurrentAffairsChunk(
+lib\articleStreams.js : 323 : export async function loadNewsArticles({ limit = 24, offset = 0 } = {}) {
+lib\articleStreams.js : 337 : const { data, error } = await fetchNewsChunk(rawOffset, end);
+lib\articleStreams.js : 375 : loadCurrentAffairsArticles({ limit: safeLimit, offset: 0 }),
+lib\articleStreams.js : 376 : loadNewsArticles({ limit: safeLimit, offset: 0 }),
+lib\quiz\generateDailyQuiz.js : 6 : import { loadCurrentAffairsArticles } from "@/lib/articleStreams";
+lib\quiz\generateDailyQuiz.js : 297 : let sourceResult = await loadCurrentAffairsArticles({ limit: 24, offset: 0, todayOnly: true });
+lib\quiz\generateDailyQuiz.js : 300 : sourceResult = await loadCurrentAffairsArticles({ limit: 24, offset: 0, todayOnly: false });
+lib\siteStats.js : 2 : loadCurrentAffairsArticles,
+lib\siteStats.js : 3 : loadNewsArticles,
+lib\siteStats.js : 144 : loadCurrentAffairsArticles({
+lib\siteStats.js : 156 : loadNewsArticles({
+
+============================================================
+ NETWORK FETCHES
+============================================================
+app\admin\ai-generator\page.jsx : 30 : const response = await fetch("/api/ai/generate-article", {
+app\admin\ai-generator\page.jsx : 75 : const response = await fetch("/api/articles", {
+app\admin\articles\edit\[id]\page.jsx : 18 : const response = await fetch(`/api/articles?id=${encodeURIComponent(id)}`, {
+app\admin\articles\page.jsx : 17 : const response = await fetch('/api/articles', { cache: 'no-store' })
+app\admin\articles\page.jsx : 46 : const response = await fetch(`/api/articles?id=${encodeURIComponent(id)}`, {
+app\admin\current-affairs\page.js : 80 : const uploadResponse = await fetch("/api/upload", {
+app\admin\current-affairs\page.js : 119 : const response = await fetch("/api/articles", {
+app\admin\login\page.jsx : 26 : const response = await fetch("/api/admin/session", {
+app\admin\login\page.jsx : 70 : const sessionResponse = await fetch("/api/admin/session", {
+app\admin\page.jsx : 16 : const response = await fetch('/api/articles', { cache: 'no-store' })
+app\admin\reset-password\page.jsx : 64 : await fetch("/api/admin/session", { method: "DELETE" });
+app\ai\page.js : 33 : const res = await fetch("/api/ask-ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, mode }) });
+app\api\fetch-todays-news\route.js : 229 : return await fetch(url, {
+app\api\fetch-todays-news\route.js : 567 : const iframeResponse = await fetch(iframeUrl, {
+components\admin\AdminSidebar.jsx : 21 : await fetch('/api/admin/session', { method: 'DELETE' })
+components\admin\ArticleForm.jsx : 127 : const response = await fetch("/api/articles", {
+components\admin\AuthProvider.jsx : 11 : await fetch("/api/admin/session", { method: "DELETE" });
+components\admin\AuthProvider.jsx : 15 : const response = await fetch("/api/admin/session", {
+components\admin\ImageUpload.jsx : 37 : const response = await fetch('/api/upload', {
+components\ExamSubscriptionForm.jsx : 26 : const response = await fetch("/api/notifications/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, phone, emailEnabled, whatsappEnabled, topics, consent, website }) });
+lib\ai\router.js : 287 : const response = await fetch(provider.endpoint, {
+lib\exams\collector.js : 171 : const response = await fetch(source.url, {
+lib\news\imageExtractor.js : 299 : const response = await fetch(url, {
+lib\news\imageStorage.js : 28 : const response = await fetch(imageUrl, {
+lib\news\publisherResolver.js : 122 : const response = await fetch(
+lib\news\relevantImage.js : 92 : const response = await fetch(`${COMMONS_API}?${params.toString()}`, {
+lib\news\rss.js : 103 : return await fetch(url, {
+lib\news\sourceEnricher.js : 90 : const response = await fetch(current, {
+lib\notifications\dispatch.js : 8 : const response = await fetch("https://api.resend.com/emails", {
+lib\notifications\dispatch.js : 23 : const response = await fetch(`https://graph.facebook.com/${version}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`, {
+middleware.ts : 66 : const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
+
+============================================================
+ SUPABASE DATABASE CALLS
+============================================================
+app\api\articles\route.js : 83 : .from("articles")
+app\api\articles\route.js : 110 : .from("articles")
+app\api\articles\route.js : 153 : .from("articles")
+app\api\articles\route.js : 165 : .from("articles")
+app\api\articles\route.js : 221 : .from("articles")
+app\api\articles\route.js : 260 : .from("articles")
+app\api\ask-ai\route.js : 75 : const { data, error } = await client.from("articles")
+app\api\automation-status\route.js : 48 : .from("article_queue")
+app\api\automation-status\route.js : 52 : .from("automation_runs")
+app\api\automation-status\route.js : 72 : .from("article_sources")
+app\api\automation-status\route.js : 78 : .from("article_queue")
+app\api\automation-status\route.js : 84 : .from("automation_runs")
+app\api\automation-status\route.js : 91 : .from("article_queue")
+app\api\auto-publish\route.js : 79 : Array.from({ length: Math.min(concurrency, items.length) }, () => worker())
+app\api\auto-publish\route.js : 250 : .from("article_queue")
+app\api\backfill-images\route.js : 32 : Array.from({ length: Math.min(CONCURRENCY, items.length) }, () => worker())
+app\api\backfill-images\route.js : 41 : .from("articles")
+app\api\backfill-images\route.js : 75 : .from("articles")
+app\api\backfill-study-aids\route.js : 23 : .from("articles")
+app\api\backfill-study-aids\route.js : 68 : .from("articles")
+app\api\editorial-cleanup\route.js : 165 : .from("articles")
+app\api\editorial-cleanup\route.js : 314 : .from("articles")
+app\api\editorial-cleanup\route.js : 330 : .from("article_sources")
+app\api\editorial-cleanup\route.js : 341 : .from("article_queue")
+app\api\editorial-cleanup\route.js : 348 : .from("article_queue")
+app\api\editorial-cleanup\route.js : 360 : .from("articles")
+app\api\fetch-todays-news\route.js : 188 : return `pib-${Buffer.from(url)
+app\api\fetch-todays-news\route.js : 715 : Array.from(
+app\api\fetch-todays-news\route.js : 957 : Array.from(
+app\api\notifications\subscribe\route.js : 27 : let query = supabase.from("notification_subscriptions").select("id").limit(1);
+app\api\notifications\subscribe\route.js : 35 : ? supabase.from("notification_subscriptions").update(payload).eq("id", existing.id)
+app\api\notifications\subscribe\route.js : 36 : : supabase.from("notification_subscriptions").insert(payload);
+app\api\notifications\unsubscribe\route.js : 7 : const { error } = await createServerSupabase().from("notification_subscriptions").update({ status: "unsubscribed", updated_at: new Date().toISOString() }).eq("unsubscribe_token", token);
+app\api\process-queue\route.js : 128 : .from("article_queue")
+app\api\process-queue\route.js : 151 : .from("article_queue")
+app\api\process-queue\route.js : 166 : .from("article_queue")
+app\api\process-queue\route.js : 180 : .from("article_queue")
+app\api\process-queue\route.js : 210 : .from("article_queue")
+app\api\process-queue\route.js : 229 : .from("article_queue")
+app\api\process-queue\route.js : 301 : .from("article_queue")
+app\api\process-queue\route.js : 527 : Array.from({ length: PROCESSING_CONCURRENCY }, (_, index) =>
+app\api\quality-repair\route.js : 46 : .from("articles")
+app\api\quality-repair\route.js : 78 : const { error: updateError } = await supabase.from("articles").update({
+app\api\quality-repair\route.js : 109 : const { error: updateError } = await supabase.from("articles").update({
+app\api\quality-repair\route.js : 161 : const { error: updateError } = await supabase.from("articles").update(values).eq("id", article.id);
+app\api\stats\route.js : 57 : .from("articles")
+app\api\stats\route.js : 63 : .from("articles")
+app\api\stats\route.js : 70 : .from("articles")
+app\api\stats\route.js : 79 : .from("articles")
+app\api\stats\route.js : 86 : .from("article_queue")
+app\api\stats\route.js : 93 : .from("article_queue")
+app\api\stats\route.js : 100 : .from("article_queue")
+app\api\stats\route.js : 107 : .from("article_queue")
+app\api\stats\route.js : 114 : .from("article_queue")
+app\api\stats\route.js : 121 : .from("article_queue")
+app\api\upload\route.js : 61 : const fileBuffer = Buffer.from(await file.arrayBuffer());
+app\api\upload\route.js : 64 : .from("article-images")
+app\api\upload\route.js : 84 : .from("article-images")
+app\category\[slug]\loading.tsx : 2 : return <main className="min-h-screen bg-slate-950 py-12 text-white"><div className="mx-auto max-w-7xl animate-pulse px-6"><div className="h-10 w-72 rounded-xl bg-slate-800"/><div className="mt-4 h-5 w-full max-w-2xl rounded bg-slate-800"/><div className="mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3">{Array.from({length:9}).map((_,i)=><div key={i} className="h-72 rounded-3xl border border-slate-800 bg-slate-900"/>)}</div></div></main>;
+app\current-affairs\[slug]\page.js : 80 : .from("articles")
+app\current-affairs\[slug]\page.js : 185 : .from("articles")
+app\current-affairs\[slug]\page.js : 200 : .from("articles")
+app\current-affairs\[slug]\page.js : 216 : .from("articles")
+app\current-affairs\loading.js : 1 : export default function Loading(){return <main className="min-h-screen bg-slate-950 py-12"><div className="mx-auto max-w-7xl animate-pulse px-6"><div className="h-56 rounded-[2rem] bg-slate-900"/><div className="mt-8 grid gap-5 md:grid-cols-3">{Array.from({length:9}).map((_,i)=><div key={i} className="h-80 rounded-3xl bg-slate-900"/>)}</div></div></main>}
+app\exams\loading.js : 1 : export default function Loading(){return <main className="min-h-screen bg-slate-950 py-12"><div className="mx-auto max-w-7xl animate-pulse px-6"><div className="h-52 rounded-[2rem] bg-slate-900"/><div className="mt-8 grid gap-5 md:grid-cols-3">{Array.from({length:6}).map((_,i)=><div key={i} className="h-56 rounded-3xl bg-slate-900"/>)}</div></div></main>}
+app\feed.xml\route.js : 34 : .from("articles")
+app\mock-tests\[exam]\page.js : 7 : export default async function ExamMockList({params,searchParams}){const{exam}=await params;const query=await searchParams;if(!isKnownExamVertical(exam))notFound();const hi=query?.lang==="hi",vertical=getExamVertical(exam),suffix=hi?"?lang=hi":"",bankSize=examMockBankSize(exam);return <main className="min-h-screen bg-slate-950 px-4 py-12 text-white sm:px-6"><div className="mx-auto max-w-5xl"><Link href={`/mock-tests${suffix}`} className="text-sm font-bold text-cyan-300">? {hi?"??? ??????? ???":"All exam mocks"}</Link><h1 className="mt-6 text-4xl font-black">{hi?`10 ?????? ${vertical.label} ??? ?????`:`10 free ${vertical.label} mock tests`}</h1><p className="mt-3 text-slate-400">{hi?`????? ?????? ????? ${bankSize} ??? ???????? ?? 10 ??? ????`:`No login required. Ten non-overlapping sets are drawn from a ${bankSize}-question reusable/deterministic bank.`}</p><div className="mt-9 grid gap-4 sm:grid-cols-2">{Array.from({length:10},(_,i)=>i+1).map((n)=><Link key={n} href={`/mock-tests/${exam}/${n}${suffix}`} className="rounded-2xl border border-slate-800 bg-slate-900 p-5 hover:border-cyan-400"><span className="text-sm font-black text-cyan-300">MOCK {n}</span><h2 className="mt-2 text-xl font-black">{vertical.label} {hi?`?????? ????? ${n}`:`Practice Test ${n}`}</h2></Link>)}</div></div></main>;}
+app\news\[slug]\page.js : 61 : const { data } = await supabase.from("articles")
+app\news\loading.js : 1 : export default function Loading(){return <main className="min-h-screen bg-stone-50 py-12"><div className="mx-auto max-w-7xl animate-pulse px-6"><div className="h-48 rounded-3xl bg-stone-200"/><div className="mt-8 grid gap-5 md:grid-cols-3">{Array.from({length:9}).map((_,i)=><div key={i} className="h-80 rounded-3xl bg-stone-200"/>)}</div></div></main>}
+app\news-sitemap.xml\route.js : 33 : .from("articles")
+app\quiz\page.js : 23 : .from("quiz_questions")
+app\search\loading.tsx : 2 : return <main className="min-h-screen bg-slate-100 py-12"><div className="mx-auto max-w-6xl animate-pulse px-6"><div className="h-36 rounded-2xl bg-white"/><div className="mt-8 space-y-5">{Array.from({length:5}).map((_,i)=><div key={i} className="h-48 rounded-2xl bg-white"/>)}</div></div></main>;
+app\search\page.tsx : 64 : .from("articles")
+app\sitemap.ts : 54 : .from("articles")
+app\sitemap.ts : 60 : .from("exam_updates")
+app\videos\page.js : 17 : .from("articles")
+lib\articleStreams.js : 173 : .from("articles")
+lib\articleStreams.js : 188 : .from("articles")
+lib\articleStreams.js : 201 : .from("articles")
+lib\articleStreams.js : 222 : .from("articles")
+lib\automation\runLog.js : 7 : .from("automation_runs")
+lib\automation\runLog.js : 28 : .from("automation_runs")
+lib\automation\schedulePolicy.js : 12 : return Array.from({ length: count }, (_, index) => items[(offset + index) % items.length]);
+lib\categoryArticles.js : 9 : .from("articles")
+lib\examPrep\generatedFoundationBank.js : 70 : const seq = Array.from({ length: 5 }, (_, index) => start + step * index);
+lib\exams\collector.js : 116 : .from("automation_source_state")
+lib\exams\collector.js : 153 : .from("automation_source_state")
+lib\exams\collector.js : 237 : .from("exam_updates")
+lib\exams\collector.js : 252 : .from("exam_updates")
+lib\exams\collector.js : 273 : .from("exam_updates")
+lib\exams\repository.js : 77 : .from("exam_updates")
+lib\exams\repository.js : 93 : .from("exam_updates")
+lib\exams\repository.js : 108 : .from("exam_updates")
+lib\news\duplicateRepository.js : 16 : .from("articles")
+lib\news\duplicateRepository.js : 59 : const { data, error } = await supabase.from("articles").select("slug").in("slug", batch);
+lib\news\filter.js : 13 : duplicate.coverage = Array.from(
+lib\news\imageStorage.js : 22 : const { data: existing } = await supabase.storage.from(BUCKET).list("shared", { limit: 5, search: digest });
+lib\news\imageStorage.js : 25 : return supabase.storage.from(BUCKET).getPublicUrl(`shared/${cached.name}`).data.publicUrl || imageUrl;
+lib\news\imageStorage.js : 48 : const bytes = Buffer.from(await response.arrayBuffer());
+lib\news\imageStorage.js : 55 : const { error } = await supabase.storage.from(BUCKET).upload(filePath, bytes, {
+lib\news\imageStorage.js : 63 : return supabase.storage.from(BUCKET).getPublicUrl(filePath).data.publicUrl || imageUrl;
+lib\news\rss.js : 147 : return `${sourceId}-${Buffer.from(value)
+lib\notifications\dispatch.js : 55 : .from("notification_deliveries")
+lib\notifications\dispatch.js : 65 : .from("notification_deliveries")
+lib\notifications\dispatch.js : 71 : const { error } = await supabase.from("notification_deliveries").insert({
+lib\notifications\dispatch.js : 81 : .from("notification_subscriptions")
+lib\notifications\dispatch.js : 109 : .from("notification_events")
+lib\notifications\dispatch.js : 159 : .from("notification_deliveries")
+lib\notifications\dispatch.js : 169 : .from("notification_deliveries")
+lib\notifications\dispatch.js : 183 : .from("notification_events")
+lib\notifications\events.js : 16 : .from("notification_events")
+lib\publisher\publishArticle.js : 34 : const { error } = await supabase.from("article_sources").upsert({
+lib\publisher\publishArticle.js : 59 : .from("article_sources")
+lib\publisher\publishArticle.js : 72 : .from("articles")
+lib\publisher\publishArticle.js : 291 : .from("articles")
+lib\publisher\publishArticle.js : 533 : .from("articles")
+lib\publisher\publishArticle.js : 571 : .from("articles")
+lib\publisher\publishArticle.js : 611 : .from("articles")
+lib\publisher\publishArticle.js : 639 : .from("articles")
+lib\publisher\publishArticle.js : 703 : .from("articles")
+lib\publisher\publishArticle.js : 746 : .from("articles")
+lib\publisher\publishArticle.js : 802 : .from("articles")
+lib\queue\queueCandidate.js : 50 : .from("article_queue")
+lib\queue\queueCandidate.js : 64 : .from("article_queue")
+lib\queue\queueCandidate.js : 104 : .from("article_queue")
+lib\queue\queueCandidate.js : 134 : .from("article_queue")
+lib\queue\queueCandidate.js : 144 : .from("article_queue")
+lib\quiz\generateDailyQuiz.js : 288 : .from("quiz_questions")
+lib\quiz\generateDailyQuiz.js : 323 : .from("quiz_questions")
+lib\quiz\generateDailyQuiz.js : 330 : .from("quiz_questions")
+lib\siteStats.js : 59 : .from("articles")
+lib\upsc\questionPapers.js : 70 : export const MAINS_GENERAL_STUDIES_LIBRARY = Array.from(
+tests\article-quality.test.mjs : 11 : static_foundation: Array.from({ length: 7 }, (_, i) => bullet(`Static ${i + 1}`, "constitutional institutional administrative federal legal")).join("\n"),
+tests\article-quality.test.mjs : 20 : prelims: Array.from({ length: 5 }, (_, i) => bullet(`Prelims ${i + 1}`, "scope authority legal-status distinction exception" )).join("\n"),
+tests\article-quality.test.mjs : 21 : mains: Array.from({ length: 12 }, (_, i) => bullet(`Mains ${i + 1}`, `dimension-${i} challenge reform stakeholder outcome evidence`)).join("\n"),
+tests\article-quality.test.mjs : 22 : answer_framework: Array.from({ length: 7 }, (_, i) => bullet(`Framework ${i + 1}`, `intro body-${i} argument example counterpoint conclusion`)).join("\n"),
+tests\automation-schedule.test.mjs : 32 : const coverage = Array.from({ length: 12 }, (_, index) => `source-${index + 1}`);
+
+============================================================
+ CRON / WORKFLOW SCHEDULES
+============================================================
+.github\workflows\currentpulse-background.yml : 4 : schedule:
+.github\workflows\currentpulse-background.yml : 7 : - cron: "0 * * * *"
+.github\workflows\currentpulse-background.yml : 8 : workflow_dispatch:
+.github\workflows\currentpulse-background.yml : 81 : if: ${{ github.event_name == 'workflow_dispatch' || vars.AUTOMATION_ENABLED == 'true' }}
+.github\workflows\currentpulse-background.yml : 128 : EVENT_SCHEDULE: ${{ github.event.schedule }}
+.github\workflows\currentpulse-background.yml : 234 : if [[ -n "${EVENT_SCHEDULE:-}" ]]; then
+.github\workflows\currentpulse-quality-maintenance.yml : 6 : schedule:
+.github\workflows\currentpulse-quality-maintenance.yml : 9 : - cron: "0 1,7,14,17 * * *"
+.github\workflows\currentpulse-quality-maintenance.yml : 10 : workflow_dispatch:
+.github\workflows\currentpulse-quality-maintenance.yml : 106 : if [[ "${GITHUB_EVENT_NAME}" == "push" || "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+
+============================================================
+ FILES WITH MOST DATABASE/CORPUS REFERENCES
+============================================================
+  26  lib\articleStreams.js
+  14  app\api\automation-status\route.js
+  13  app\api\process-queue\route.js
+  13  app\api\stats\route.js
+  12  lib\publisher\publishArticle.js
+  10  app\current-affairs\[slug]\page.js
+  10  lib\notifications\dispatch.js
+   9  lib\exams\repository.js
+   9  lib\queue\queueCandidate.js
+   9  app\api\editorial-cleanup\route.js
+   9  app\api\auto-publish\route.js
+   8  lib\exams\collector.js
+   7  app\api\quality-repair\route.js
+   7  app\api\backfill-images\route.js
+   7  app\sitemap.ts
+   6  app\api\articles\route.js
+   5  lib\automation\runLog.js
+   5  app\api\fetch-todays-news\route.js
+   5  app\api\backfill-study-aids\route.js
+   5  lib\news\imageStorage.js
+   5  app\api\notifications\subscribe\route.js
+   4  app\feed.xml\route.js
+   4  app\api\ask-ai\route.js
+   4  app\news-sitemap.xml\route.js
+   4  app\quiz\page.js
+   4  tests\article-quality.test.mjs
+   4  lib\siteStats.js
+   3  lib\news\duplicateRepository.js
+   3  lib\quiz\generateDailyQuiz.js
+   3  app\api\upload\route.js
+   3  app\news\[slug]\page.js
+   2  app\api\generate-quiz\route.js
+   2  lib\categoryArticles.js
+   2  app\api\exams\run\route.js
+   2  app\api\notifications\dispatch\route.js
+   2  app\categories\page.js
+   2  app\api\notifications\unsubscribe\route.js
+   2  lib\news\rss.js
+   2  app\search\page.tsx
+   2  app\api\exams\collect\route.js
+   2  app\pdf\page.js
+   2  app\videos\page.js
+   2  lib\adminAuth.js
+   1  tests\automation-schedule.test.mjs
+   1  lib\notifications\events.js
+   1  lib\upsc\questionPapers.js
+   1  app\api\fetch-all-news\route.js
+   1  lib\news\filter.js
+   1  app\mock-tests\[exam]\page.js
+   1  app\exams\loading.js
+
+============================================================
+ MODIFIED FILE DIFF STAT
+============================================================
+ .github/workflows/currentpulse-background.yml |   3 +-
+ app/api/quality-repair/route.js               |   4 +-
+ app/news/page.js                              |  66 +++---
+ app/page.tsx                                  |  17 +-
+ app/quiz/page.js                              |  44 ++--
+ components/BreakingNews.tsx                   |  55 ++---
+ components/ExamUpdatesPage.jsx                |   4 +-
+ lib/ai/articleQuality.js                      |  82 ++++++-
+ lib/articleStreams.js                         |   1 +
+ lib/contentTaxonomy.js                        |   4 +-
+ lib/editorial/publicationSafety.js            |  22 +-
+ lib/exams/repository.js                       | 129 +++++++++--
+ lib/siteStats.js                              | 294 +++++++++++++++++++++++---
+ lib/siteUrl.js                                |  16 +-
+ lib/study/mapRelevance.js                     |  15 +-
+ 15 files changed, 590 insertions(+), 166 deletions(-)

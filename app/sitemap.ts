@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { unstable_cache } from "next/cache";
 import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
 import { createServerSupabase } from "@/lib/supabase-server";
@@ -44,11 +45,10 @@ function staticRoutes(): MetadataRoute.Sitemap {
   ];
 }
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = staticRoutes();
-
-  try {
+const loadSitemapDatabaseRows = unstable_cache(
+  async () => {
     const supabase = createServerSupabase();
+
     const [articleResult, examResult] = await Promise.all([
       supabase
         .from("articles")
@@ -64,10 +64,34 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .limit(1500),
     ]);
 
+    return {
+      articles: articleResult.data || [],
+      exams: examResult.data || [],
+      articleError: articleResult.error
+        ? { message: articleResult.error.message, code: articleResult.error.code }
+        : null,
+      examError: examResult.error
+        ? { message: examResult.error.message, code: examResult.error.code }
+        : null,
+    };
+  },
+  ["currentpulse-sitemap-database-v2"],
+  {
+    revalidate: 3600,
+    tags: ["currentpulse-articles", "currentpulse-exams"],
+  }
+);
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const base = staticRoutes();
+
+  try {
+    const sitemapData = await loadSitemapDatabaseRows();
+
     const seen = new Set<string>();
     const articleRoutes: MetadataRoute.Sitemap = [];
 
-    for (const article of (articleResult.data || []) as SitemapArticle[]) {
+    for (const article of sitemapData.articles as SitemapArticle[]) {
       if (!article?.slug) continue;
       const kinds = new Set((article.article_sources || []).map((s) => s?.source_kind));
       const lastModified = article.updated_at || article.created_at || undefined;
@@ -99,16 +123,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
 
-    const examRoutes: MetadataRoute.Sitemap = (examResult.data || []).map((exam: any) => ({
+    const examRoutes: MetadataRoute.Sitemap = sitemapData.exams.map((exam: any) => ({
       url: `${SITE_URL}/exams/${exam.slug}`,
       lastModified: exam.updated_at || exam.created_at || undefined,
       changeFrequency: "daily",
       priority: 0.82,
     }));
 
-    if (articleResult.error) console.error("[Sitemap] article query:", articleResult.error.message);
-    if (examResult.error && examResult.error.code !== "42P01") {
-      console.error("[Sitemap] exam query:", examResult.error.message);
+    if (sitemapData.articleError) console.error("[Sitemap] article query:", sitemapData.articleError.message);
+    if (sitemapData.examError && sitemapData.examError.code !== "42P01") {
+      console.error("[Sitemap] exam query:", sitemapData.examError.message);
     }
 
     return [...base, ...examRoutes, ...articleRoutes];

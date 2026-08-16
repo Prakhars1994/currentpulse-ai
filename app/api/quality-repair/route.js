@@ -88,7 +88,9 @@ export async function GET(request) {
 
     const quality = assessArticleQuality(article, { mode: "upsc" });
     const severeQualityFailure =
-      quality.score < 52 ||
+      quality.score < 60 ||
+      quality.flags.includes("editorial_residue") ||
+      quality.flags.includes("repetitive_sections") ||
       (quality.flags.includes("insufficient_data_or_examples") && quality.flags.includes("weak_exam_utility")) ||
       hasLowValueEvidence(article);
 

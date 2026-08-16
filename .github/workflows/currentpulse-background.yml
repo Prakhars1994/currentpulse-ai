@@ -29,7 +29,8 @@ concurrency:
 
 env:
   CRON_SECRET: currentpulse-github-actions-local-runner
-  NEXT_PUBLIC_BASE_URL: https://currentpulse-ai.vercel.app
+  NEXT_PUBLIC_BASE_URL: https://cp.vliab.workers.dev
+  NEXT_PUBLIC_SITE_URL: https://cp.vliab.workers.dev
 
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
