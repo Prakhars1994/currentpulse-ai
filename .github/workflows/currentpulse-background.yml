@@ -1,9 +1,13 @@
 name: CurrentPulse Manual Catch-up Automation
 
-# Scheduled News/Current-Affairs collection is owned by the external cron
-# runners. This workflow is an explicit manual fallback/catch-up only, which
-# prevents duplicate collection, duplicate AI calls and wasted GitHub minutes.
+# GitHub Actions is the single heavy scheduler for News, Current Affairs,
+# ResultPulse, queue processing and the static-reader release. Existing external
+# cron-job.org calls remain compatibility heartbeats only and are intentionally
+# skipped by the production APIs so expensive work cannot run twice.
 on:
+  schedule:
+    # 06:30, 09:30, 12:30, 15:30, 19:30, 22:30 and 23:30 IST.
+    - cron: "0 1,4,7,10,14,17,18 * * *"
   workflow_dispatch:
     inputs:
       mode:
@@ -43,6 +47,7 @@ env:
   SAMBANOVA_API_KEY: ${{ secrets.SAMBANOVA_API_KEY }}
   HF_TOKEN: ${{ secrets.HF_TOKEN }}
   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
   CLOUDFLARE_AI_API_TOKEN: ${{ secrets.CLOUDFLARE_AI_API_TOKEN }}
   CP_GH_MODELS_TOKEN: ${{ secrets.CP_GH_MODELS_TOKEN }}
 
@@ -78,7 +83,7 @@ env:
 jobs:
   automate:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
       - name: Checkout current main
@@ -341,3 +346,53 @@ jobs:
           if [[ -f /tmp/currentpulse-next.pid ]]; then
             kill "$(cat /tmp/currentpulse-next.pid)" 2>/dev/null || true
           fi
+
+      - name: Build validated reader release
+        run: npx opennextjs-cloudflare build
+
+      - name: Start production reader renderer
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx next start --hostname 127.0.0.1 --port 3100 > /tmp/currentpulse-reader.log 2>&1 &
+          echo $! > /tmp/currentpulse-reader.pid
+          for attempt in {1..60}; do
+            if curl --silent --fail --max-time 3 http://127.0.0.1:3100/icon.svg >/dev/null; then
+              echo "Production reader renderer ready."
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/currentpulse-reader.log || true
+          exit 1
+
+      - name: Materialize public reader into Cloudflare Static Assets
+        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --out .open-next/assets --max-pages 3200 --concurrency 3
+
+      - name: Stop production reader renderer
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f /tmp/currentpulse-reader.pid ]]; then
+            kill "$(cat /tmp/currentpulse-reader.pid)" 2>/dev/null || true
+          fi
+
+      - name: Validate static-reader deploy credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]] || { echo "::error title=Cloudflare deploy blocked::Add repository secret CLOUDFLARE_API_TOKEN."; exit 1; }
+          [[ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]] || { echo "::error title=Cloudflare deploy blocked::Add repository secret CLOUDFLARE_ACCOUNT_ID."; exit 1; }
+
+      - name: Deploy refreshed static reader
+        run: npx wrangler deploy --config wrangler.jsonc
+
+      - name: Verify refreshed reader
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://cp.vliab.workers.dev"
+          for path in / /current-affairs /news /exams /quiz /feed.xml /currentpulse-static-reader-manifest.json; do
+            echo "Checking ${base}${path}"
+            curl --silent --show-error --fail --location --retry 3 --retry-delay 2 --max-time 60 "${base}${path}" >/dev/null
+          done

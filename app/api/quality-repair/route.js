@@ -150,7 +150,7 @@ export async function GET(request) {
         quality_flags: quality.passed
           ? article.quality_flags
           : [...new Set([...(article.quality_flags || []), ...quality.flags, "needs_quality_upgrade_v4"])],
-        quality_version: quality.passed ? Math.max(Number(article.quality_version || 0), 4) : 1,
+        quality_version: Math.max(Number(article.quality_version || 0), 4),
       };
       if (mapChanged) values.map_locations = cleanedMaps;
       const { error: updateError } = await supabase.from("articles").update(values).eq("id", article.id);

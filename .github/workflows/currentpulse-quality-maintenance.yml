@@ -1,11 +1,6 @@
 name: CurrentPulse Quality & Freshness Maintenance
 
 on:
-  push:
-    branches: [main]
-  schedule:
-    # 06:30, 12:30, 19:30 and 22:30 IST.
-    - cron: "0 1,7,14,17 * * *"
   workflow_dispatch:
 
 permissions:
