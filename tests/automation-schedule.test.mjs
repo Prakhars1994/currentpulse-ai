@@ -27,9 +27,9 @@ test("scheduled news keeps agenda sources every run and rotates supplements", ()
   assert.notDeepEqual(first.selectedIds, second.selectedIds);
 });
 
-test("coverage rotation scans all 12 coaching sources across the real four IST CA windows", () => {
+test("coverage rotation scans all 7 UPSC coaching sources across the real four IST CA windows", () => {
   process.env.COVERAGE_SOURCES_PER_RUN = "4";
-  const coverage = Array.from({ length: 12 }, (_, index) => `source-${index + 1}`);
+  const coverage = Array.from({ length: 7 }, (_, index) => `source-${index + 1}`);
   const seen = new Set();
   // 06, 12, 19 and 22 IST expressed as UTC on the same India date.
   const windows = [

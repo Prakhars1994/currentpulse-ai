@@ -37,17 +37,38 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const apply = ["1", "true", "yes"].includes((searchParams.get("apply") || "").toLowerCase());
-  const limit = Math.min(Math.max(Number(searchParams.get("limit")) || 1200, 1), 2000);
+  const apply = ["1", "true", "yes"].includes(
+    (searchParams.get("apply") || "").toLowerCase()
+  );
+  const limit = Math.min(
+    Math.max(Number(searchParams.get("limit")) || 300, 1),
+    300
+  );
+  const rawBefore = searchParams.get("before") || "";
+  const parsedBefore = rawBefore ? new Date(rawBefore) : null;
+  const before =
+    parsedBefore && !Number.isNaN(parsedBefore.getTime())
+      ? parsedBefore.toISOString()
+      : null;
   const supabase = createServerSupabase();
 
-  const { data, error } = await supabase
+  let scanQuery = supabase
     .from("articles")
     .select("id,title,slug,category,paper,why_news,syllabus_linkage,india_relevance,static_foundation,data_examples,prelims,mains,answer_framework,question,map_locations,quality_score,quality_flags,quality_version,created_at,article_sources!inner(source_kind,source_url,source_title)")
     .eq("status", "published")
     .eq("article_sources.source_kind", "coaching")
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (before) {
+    scanQuery = scanQuery.lt("created_at", before);
+  }
+
+  const { data, error } = await scanQuery;
+  const nextBefore =
+    data?.length ? data[data.length - 1]?.created_at || null : null;
+  const hasMore =
+    Boolean(nextBefore) && (data?.length || 0) === limit;
 
   if (error) {
     return NextResponse.json({ success: false, message: `Quality repair scan failed: ${error.message}` }, { status: 500 });
@@ -162,6 +183,12 @@ export async function GET(request) {
     success: true,
     mode: apply ? "applied" : "dry_run",
     scanned: data?.length || 0,
+    pagination: {
+      limit,
+      before,
+      nextBefore,
+      hasMore,
+    },
     sourceQuarantines: actions.filter((item) => item.action === "quarantine_source_noise").length,
     qualityQuarantines: actions.filter((item) => item.action === "quarantine_quality_floor").length,
     repairs: actions.filter((item) => item.action === "repair").length,

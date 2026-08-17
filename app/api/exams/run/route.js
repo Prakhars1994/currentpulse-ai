@@ -21,8 +21,18 @@ export async function GET(request) {
 
   const searchParams = new URL(request.url).searchParams;
   const full = searchParams.get("full") === "1";
-  const runner = searchParams.get("runner")?.trim().toLowerCase() || "";
-  const notificationsEnabled = searchParams.get("notifications") !== "0";
+  const runner =
+    searchParams.get("runner")?.trim().toLowerCase() || "";
+  const notificationsEnabled =
+    searchParams.get("notifications") !== "0";
+  const examBatch = Math.max(
+    0,
+    Number(searchParams.get("examBatch")) || 0
+  );
+  const examBatchSize = Math.min(
+    6,
+    Math.max(2, Number(searchParams.get("examBatchSize")) || 6)
+  );
 
   if (!full && runner !== "github") {
     return NextResponse.json({
@@ -30,8 +40,16 @@ export async function GET(request) {
       message: "External ResultPulse heartbeat accepted; GitHub Actions owns scheduled scans.",
     }, { headers: { "Cache-Control": "no-store" } });
   }
+  const fullBatchCount = Math.max(
+    1,
+    Math.ceil(EXAM_OFFICIAL_SOURCES.length / examBatchSize)
+  );
+  const safeExamBatch = Math.min(fullBatchCount - 1, examBatch);
   const selectedSources = full
-    ? EXAM_OFFICIAL_SOURCES
+    ? EXAM_OFFICIAL_SOURCES.slice(
+        safeExamBatch * examBatchSize,
+        safeExamBatch * examBatchSize + examBatchSize
+      )
     : selectScheduledExamSources(EXAM_OFFICIAL_SOURCES);
   const supabase = createServerSupabase();
 
@@ -46,8 +64,16 @@ export async function GET(request) {
     return NextResponse.json(
       {
         success: true,
-        mode: full ? "full" : "scheduled",
+        mode: full ? "full-batch" : "scheduled",
         selectedSources: selectedSources.map((source) => source.id),
+        batch: full
+          ? {
+              index: safeExamBatch,
+              size: examBatchSize,
+              count: fullBatchCount,
+              hasMore: safeExamBatch + 1 < fullBatchCount,
+            }
+          : null,
         collection,
         notifications,
       },

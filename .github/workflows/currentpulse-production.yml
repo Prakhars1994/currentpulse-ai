@@ -57,10 +57,25 @@ jobs:
         run: npm run test:automation
 
       - name: Quality, map and architecture regression tests
-        run: node --test tests/article-quality.test.mjs tests/map-relevance.test.mjs tests/taxonomy-authority.test.mjs tests/taxonomy-regression.test.mjs tests/workflow-architecture.test.mjs tests/cloudflare-public-routes.test.mjs tests/static-reader-architecture.test.mjs
+        run: node --test tests/article-quality.test.mjs tests/map-relevance.test.mjs tests/taxonomy-authority.test.mjs tests/taxonomy-regression.test.mjs tests/workflow-architecture.test.mjs tests/cloudflare-public-routes.test.mjs tests/static-reader-architecture.test.mjs tests/timeout-architecture.test.mjs tests/source-policy-consistency.test.mjs
 
       - name: Build Cloudflare Worker
         run: npx opennextjs-cloudflare build
+
+      - name: Check Cloudflare deploy readiness
+        id: deploy-ready
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [[ -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+            echo "ready=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            echo "::warning title=Cloudflare deploy skipped::Build and regression tests passed, but CLOUDFLARE_API_TOKEN is not configured."
+          fi
 
       - name: Start production reader renderer
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
@@ -81,10 +96,10 @@ jobs:
 
       - name: Materialize static reader
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --out .open-next/assets --max-pages 3200 --concurrency 3
+        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --out .open-next/assets --max-pages 1200 --concurrency 3 --timeout-ms 10000 --budget-seconds 720
 
       - name: Stop production reader renderer
-        if: always()
+        if: always() && steps.deploy-ready.outputs.ready == 'true'
         shell: bash
         run: |
           if [[ -f /tmp/currentpulse-reader.pid ]]; then

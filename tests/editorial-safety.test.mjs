@@ -102,7 +102,7 @@ test("ForumIAS accepts only dated 9 PM digest sections", () => {
   );
 });
 
-test("trusted CA sources bypass eventness selection while untrusted coverage still requires a trigger", () => {
+test("only approved UPSC CA sources bypass eventness selection while unapproved coverage still requires a trigger", () => {
   assert.equal(
     assessCoverageEventness({
       title: "Constitutional Remedies",
@@ -125,12 +125,12 @@ test("trusted CA sources bypass eventness selection while untrusted coverage sti
   assert.equal(
     assessCoverageEventness({
       title: "Lake Mead",
-      summary: "Place-in-news notes selected by the Current Affairs publisher for competitive-exam preparation.",
+      summary: "Place-in-news notes selected by a general competitive-exam publisher.",
       publishedAt: "2026-08-10",
       url: "https://www.gktoday.in/lake-mead/",
       source: "GKToday",
     }).allowed,
-    true
+    false
   );
 });
 

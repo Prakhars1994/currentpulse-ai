@@ -1,4 +1,4 @@
-name: CurrentPulse Manual Catch-up Automation
+name: CurrentPulse Background Automation
 
 # GitHub Actions is the single heavy scheduler for News, Current Affairs,
 # ResultPulse, queue processing and the static-reader release. Existing external
@@ -70,7 +70,7 @@ env:
   # evening windows. The direct inline cap is NOT the total publish cap: the
   # queue is drained repeatedly immediately after collection.
   COVERAGE_SOURCES_PER_RUN: "4"
-  COVERAGE_IMMEDIATE_PUBLISH_BUDGET_MS: "210000"
+  COVERAGE_SOURCE_TIMEOUT_MS: "45000"
 
   AI_PROVIDER_ORDER: "mistral,cloudflare,groq,openrouter,cerebras,sambanova,githubmodels,huggingface"
   AI_ROUTER_DEADLINE_MS: "25000"
@@ -137,7 +137,7 @@ jobs:
             local path="$1"
             echo
             echo ">>> ${path}"
-            curl --silent --show-error --fail-with-body --max-time 300 \
+            curl --silent --show-error --fail-with-body --max-time 180 \
               -H "Authorization: Bearer ${CRON_SECRET}" \
               "http://127.0.0.1:3000${path}"
             echo
@@ -147,7 +147,7 @@ jobs:
             local path="$1"
             echo
             echo ">>> OPTIONAL ${path}"
-            if ! curl --silent --show-error --fail-with-body --max-time 300 \
+            if ! curl --silent --show-error --fail-with-body --max-time 180 \
               -H "Authorization: Bearer ${CRON_SECRET}" \
               "http://127.0.0.1:3000${path}"; then
               echo
@@ -158,7 +158,7 @@ jobs:
           }
 
           drain_queue() {
-            local max_seconds="${1:-900}"
+            local max_seconds="${1:-300}"
             local started batch tmp code curl_status processed outage
             started="$(date +%s)"
             echo
@@ -215,15 +215,13 @@ jobs:
 
               echo "QUEUE_BATCH=${batch} PROCESSED=${processed} PROVIDER_OUTAGE=${outage}"
 
-              if [[ "${processed}" != "0" ]]; then
-
-              fi
               if [[ "${processed}" == "0" ]]; then
                 echo "READY_QUEUE=EMPTY"
                 break
               fi
               if [[ "${outage}" == "true" ]]; then
-                echo "Provider outage reported for this batch; continuing so unrelated ready rows are not starved."
+                echo "Provider outage confirmed by multiple temporary AI failures; stop this drain and retry at the next scheduled window."
+                break
               fi
             done
           }
@@ -268,11 +266,14 @@ jobs:
               echo "===== FULL MANUAL CATCH-UP: CA FIRST ====="
               api_required "/api/coverage-import?source=all&limit=2000"
 
-              drain_queue 1500
+              drain_queue 420
 
-              api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
+              api_optional "/api/editorial-cleanup?apply=1&limit=300&days=365"
+              api_optional "/api/quality-repair?apply=1&limit=300"
 
-              api_optional "/api/exams/run?full=1&notifications=0&runner=github"
+              for exam_batch in 0 1; do
+                api_optional "/api/exams/run?full=1&examBatch=${exam_batch}&examBatchSize=6&notifications=0&runner=github"
+              done
 
               api_optional "/api/generate-quiz?wait=1&force=1"
 
@@ -280,7 +281,7 @@ jobs:
               # that timed out before CA could run.
               api_optional "/api/auto-publish?wait=1&scope=news&runner=github"
 
-              drain_queue 600
+              drain_queue 240
               ;;
             smart-hourly)
               india_hour="$(TZ=Asia/Kolkata date +%H)"
@@ -290,10 +291,10 @@ jobs:
               if [[ "${india_hour}" == "06" || "${india_hour}" == "12" || "${india_hour}" == "19" || "${india_hour}" == "22" ]]; then
                 api_required "/api/auto-publish?wait=1&scope=coverage"
 
-                drain_queue 1200
+                drain_queue 300
               else
                 # Pending CA/News AI fallbacks are checked every hour.
-                drain_queue 720
+                drain_queue 180
               fi
 
               # General News remains independent and lightweight.
@@ -324,8 +325,8 @@ jobs:
 
               # One daily archive cleanup after the collection windows.
               if [[ "${india_hour}" == "23" ]]; then
-                api_optional "/api/editorial-cleanup?apply=1&limit=3000&days=365"
-
+                api_optional "/api/editorial-cleanup?apply=1&limit=300&days=365"
+                api_optional "/api/quality-repair?apply=1&limit=300"
               fi
               ;;
             *)
@@ -347,10 +348,23 @@ jobs:
             kill "$(cat /tmp/currentpulse-next.pid)" 2>/dev/null || true
           fi
 
+      - name: Check static-reader deploy readiness
+        id: reader-deploy
+        shell: bash
+        run: |
+          if [[ -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+            echo "ready=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            echo "::warning title=Static reader deploy skipped::Content automation completed. Add CLOUDFLARE_API_TOKEN for unattended Cloudflare snapshot deployment."
+          fi
+
       - name: Build validated reader release
+        if: steps.reader-deploy.outputs.ready == 'true'
         run: npx opennextjs-cloudflare build
 
       - name: Start production reader renderer
+        if: steps.reader-deploy.outputs.ready == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -367,10 +381,11 @@ jobs:
           exit 1
 
       - name: Materialize public reader into Cloudflare Static Assets
-        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --out .open-next/assets --max-pages 3200 --concurrency 3
+        if: steps.reader-deploy.outputs.ready == 'true'
+        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --out .open-next/assets --max-pages 1200 --concurrency 3 --timeout-ms 10000 --budget-seconds 720
 
       - name: Stop production reader renderer
-        if: always()
+        if: always() && steps.reader-deploy.outputs.ready == 'true'
         shell: bash
         run: |
           if [[ -f /tmp/currentpulse-reader.pid ]]; then
@@ -378,6 +393,7 @@ jobs:
           fi
 
       - name: Validate static-reader deploy credentials
+        if: steps.reader-deploy.outputs.ready == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -385,9 +401,11 @@ jobs:
           [[ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]] || { echo "::error title=Cloudflare deploy blocked::Add repository secret CLOUDFLARE_ACCOUNT_ID."; exit 1; }
 
       - name: Deploy refreshed static reader
+        if: steps.reader-deploy.outputs.ready == 'true'
         run: npx wrangler deploy --config wrangler.jsonc
 
       - name: Verify refreshed reader
+        if: steps.reader-deploy.outputs.ready == 'true'
         shell: bash
         run: |
           set -euo pipefail

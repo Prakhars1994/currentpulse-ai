@@ -22,6 +22,9 @@ import {
 import { isSameEvent } from "@/lib/news/eventCluster";
 import { cleanTrustedCoverageText } from "@/lib/coverage/contentCleaner";
 import { inspectCoverageCandidate } from "@/lib/coverage/sourceSanitizer";
+import {
+  hasApprovedUpscCoverageSource,
+} from "@/lib/coverage/sourcePolicy";
 import { getConfiguredAiProviders } from "@/lib/ai/router";
 import {
   shouldAttemptDailyQuiz,
@@ -116,6 +119,57 @@ function isAuthorised(request) {
   }
 
   return authorization === `Bearer ${configuredSecret}`;
+}
+
+async function rejectDeprecatedCoverageQueueItems(supabase) {
+  const { data: rows, error: lookupError } = await supabase
+    .from("article_queue")
+    .select("id,source,coverage_sources")
+    .eq("status", "pending")
+    .in("pipeline_kind", ["coaching", "coaching_enrichment"])
+    .limit(1000);
+
+  if (lookupError) {
+    console.warn(
+      "[Queue processor] UPSC source-policy cleanup skipped:",
+      lookupError.message
+    );
+    return 0;
+  }
+
+  const rejectedIds = (rows || [])
+    .filter((row) => !hasApprovedUpscCoverageSource(row))
+    .map((row) => row.id)
+    .filter(Boolean);
+
+  if (!rejectedIds.length) return 0;
+
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("article_queue")
+    .update({
+      status: "rejected",
+      processing_started_at: null,
+      processed_at: now,
+      updated_at: now,
+      error:
+        "Rejected by UPSC source policy: Current Affairs accepts only configured UPSC coaching sources.",
+    })
+    .in("id", rejectedIds)
+    .select("id");
+
+  if (error) {
+    console.warn(
+      "[Queue processor] UPSC source-policy cleanup failed:",
+      error.message
+    );
+    return 0;
+  }
+
+  console.log(
+    `[Queue processor] Rejected ${data?.length || 0} queued non-UPSC coaching rows before AI processing.`
+  );
+  return data?.length || 0;
 }
 
 async function recoverStaleQueueItems(supabase) {
@@ -332,6 +386,8 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
   let claimedCount = 0;
 
   try {
+    const sourcePolicyRejected =
+      await rejectDeprecatedCoverageQueueItems(supabase);
     const recoveredStale = await recoverStaleQueueItems(supabase);
     const recoveredFailed = shouldRecoverFailedQueue()
       ? await recoverRecentFailedItems(supabase)
@@ -556,6 +612,7 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
           ? `Processed ${results.length} queued article candidates.`
           : "No pending article was ready for processing.",
       stats: {
+        sourcePolicyRejected,
         recovered,
         processed: results.length,
         published: publishedCount,

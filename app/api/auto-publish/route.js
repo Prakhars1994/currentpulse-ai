@@ -86,10 +86,29 @@ function activeNewsSources() {
   return NEWS_SOURCES.filter((source) => activeGroups.has(source.group));
 }
 
-async function collectNews({ full = false } = {}) {
+async function collectNews({
+  full = false,
+  newsBatch = 0,
+  newsBatchSize = 6,
+} = {}) {
   const configuredSources = activeNewsSources();
   const scheduled = selectScheduledNewsSources(NEWS_SOURCES);
-  const selectedSources = full ? configuredSources : scheduled.sources;
+  const safeBatchSize = Math.min(
+    8,
+    Math.max(2, Number(newsBatchSize) || 6)
+  );
+  const batchCount = Math.max(
+    1,
+    Math.ceil(configuredSources.length / safeBatchSize)
+  );
+  const safeBatch = Math.min(
+    batchCount - 1,
+    Math.max(0, Number(newsBatch) || 0)
+  );
+  const batchStart = safeBatch * safeBatchSize;
+  const selectedSources = full
+    ? configuredSources.slice(batchStart, batchStart + safeBatchSize)
+    : scheduled.sources;
   const sourceResults = await Promise.all(
     selectedSources.map(async (source) => {
       try {
@@ -150,12 +169,16 @@ async function collectNews({ full = false } = {}) {
   return {
     articles: newspaperAgenda,
     selection: {
-      mode: full ? "full" : "scheduled",
+      mode: full ? "full-batch" : "scheduled",
       configuredCount: configuredSources.length,
       selectedCount: selectedSources.length,
       selectedIds: selectedSources.map((source) => source.id),
       coreCount: full ? null : scheduled.coreCount,
       supplementalCount: full ? null : scheduled.supplementalCount,
+      batchIndex: full ? safeBatch : null,
+      batchSize: full ? safeBatchSize : null,
+      batchCount: full ? batchCount : null,
+      hasMore: full ? safeBatch + 1 < batchCount : false,
     },
     sources: sourceResults.map((result) => ({
       id: result.id,
@@ -351,12 +374,20 @@ async function writeCandidates(supabase, candidates, status) {
   );
 }
 
-async function executeAutoPublish({ full = false } = {}) {
+async function executeAutoPublish({
+  full = false,
+  newsBatch = 0,
+  newsBatchSize = 6,
+} = {}) {
   const startedAt = Date.now();
 
   try {
     const supabase = createServerSupabase();
-    const collection = await collectNews({ full });
+    const collection = await collectNews({
+      full,
+      newsBatch,
+      newsBatchSize,
+    });
     const evaluated = await evaluateCandidates(supabase, collection.articles);
     const recentQueueRows = evaluated.accepted.length
       ? await loadRecentQueueState(supabase)
@@ -448,7 +479,10 @@ async function collectCoverageSafely({ full = false } = {}) {
   }
 }
 
-async function executeUnifiedCollection(scope = "scheduled", { full = false } = {}) {
+async function executeUnifiedCollection(
+  scope = "scheduled",
+  { full = false, newsBatch = 0, newsBatchSize = 6 } = {}
+) {
   const runNews = ["scheduled", "all", "news"].includes(scope);
   const runCoverage = ["scheduled", "all", "coverage"].includes(scope);
   const fullRun = full || scope === "all";
@@ -458,11 +492,19 @@ async function executeUnifiedCollection(scope = "scheduled", { full = false } = 
 
   if (runNews && runCoverage) {
     [news, coverage] = await Promise.all([
-      collectNewsSafely({ full: fullRun }),
+      collectNewsSafely({
+        full: fullRun,
+        newsBatch,
+        newsBatchSize,
+      }),
       collectCoverageSafely({ full: fullRun }),
     ]);
   } else if (runNews) {
-    news = await collectNewsSafely({ full: fullRun });
+    news = await collectNewsSafely({
+        full: fullRun,
+        newsBatch,
+        newsBatchSize,
+      });
   } else {
     coverage = await collectCoverageSafely({ full: fullRun });
   }
@@ -501,7 +543,16 @@ export async function GET(request) {
   const waitForCompletion = searchParams.get("wait") === "1";
   const scope = searchParams.get("scope")?.trim().toLowerCase() || "scheduled";
   const full = searchParams.get("full") === "1";
-  const runner = searchParams.get("runner")?.trim().toLowerCase() || "";
+  const newsBatch = Math.max(
+    0,
+    Number(searchParams.get("newsBatch")) || 0
+  );
+  const newsBatchSize = Math.min(
+    8,
+    Math.max(2, Number(searchParams.get("newsBatchSize")) || 6)
+  );
+  const runner =
+    searchParams.get("runner")?.trim().toLowerCase() || "";
 
   // The user still has external cron-job.org heartbeats. GitHub Actions
   // owns expensive background processing now, so an old no-wait scheduled
@@ -523,13 +574,23 @@ export async function GET(request) {
     );
   }
 
-  if (waitForCompletion) return executeUnifiedCollection(scope, { full });
+  if (waitForCompletion) {
+    return executeUnifiedCollection(scope, {
+      full,
+      newsBatch,
+      newsBatchSize,
+    });
+  }
 
   after(async () => {
     const runId = await startAutomationRun("auto_publish");
 
     try {
-      const response = await executeUnifiedCollection(scope, { full });
+      const response = await executeUnifiedCollection(scope, {
+        full,
+        newsBatch,
+        newsBatchSize,
+      });
       const payload = await response.json();
       const coverage = payload.coverage || {};
       const news = payload.news || {};

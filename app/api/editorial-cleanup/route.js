@@ -155,19 +155,40 @@ export async function GET(request) {
 
   const params = new URL(request.url).searchParams;
   const apply = params.get("apply") === "1";
-  const requestedLimit = Number(params.get("limit") || 3000);
-  const limit = Math.max(1, Math.min(requestedLimit || 3000, 5000));
-  const lookbackDays = Math.max(1, Math.min(Number(params.get("days") || 120), 3650));
+  const requestedLimit = Number(params.get("limit") || 300);
+  const limit = Math.max(1, Math.min(requestedLimit || 300, 300));
+  const lookbackDays = Math.max(
+    1,
+    Math.min(Number(params.get("days") || 120), 3650)
+  );
+  const rawBefore = params.get("before") || "";
+  const parsedBefore = rawBefore ? new Date(rawBefore) : null;
+  const before =
+    parsedBefore && !Number.isNaN(parsedBefore.getTime())
+      ? parsedBefore.toISOString()
+      : null;
   const supabase = createServerSupabase();
-  const cutoff = new Date(Date.now() - lookbackDays * 86400000).toISOString();
+  const cutoff = new Date(
+    Date.now() - lookbackDays * 86400000
+  ).toISOString();
 
-  const { data, error } = await supabase
+  let scanQuery = supabase
     .from("articles")
     .select(ARTICLE_FIELDS)
     .eq("status", "published")
     .gte("created_at", cutoff)
     .order("created_at", { ascending: false })
     .limit(limit);
+
+  if (before) {
+    scanQuery = scanQuery.lt("created_at", before);
+  }
+
+  const { data, error } = await scanQuery;
+  const nextBefore =
+    data?.length ? data[data.length - 1]?.created_at || null : null;
+  const hasMore =
+    Boolean(nextBefore) && (data?.length || 0) === limit;
 
   if (error) {
     return NextResponse.json(
@@ -378,6 +399,12 @@ export async function GET(request) {
     mode: apply ? "apply" : "preview",
     scanned: data?.length || 0,
     lookbackDays,
+    pagination: {
+      limit,
+      before,
+      nextBefore,
+      hasMore,
+    },
     findings: {
       quarantine: quarantine.length,
       taxonomyCorrections: taxonomyCorrections.length,

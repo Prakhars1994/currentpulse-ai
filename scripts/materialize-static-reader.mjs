@@ -11,9 +11,38 @@ function arg(name, fallback = "") {
 const base = String(arg("--base", process.env.STATIC_READER_BASE || "http://127.0.0.1:3100"))
   .replace(/\/+$/, "");
 const outDir = path.resolve(arg("--out", ".open-next/assets"));
-const maxPages = Math.max(25, Math.min(5000, Number(arg("--max-pages", process.env.STATIC_READER_MAX_PAGES || 3200)) || 3200));
-const concurrency = Math.max(1, Math.min(6, Number(arg("--concurrency", "3")) || 3));
-const requestTimeoutMs = Math.max(4000, Math.min(30000, Number(arg("--timeout-ms", "15000")) || 15000));
+const maxPages = Math.max(
+  25,
+  Math.min(
+    2500,
+    Number(
+      arg(
+        "--max-pages",
+        process.env.STATIC_READER_MAX_PAGES || 1200
+      )
+    ) || 1200
+  )
+);
+const concurrency = Math.max(
+  1,
+  Math.min(4, Number(arg("--concurrency", "3")) || 3)
+);
+const requestTimeoutMs = Math.max(
+  4000,
+  Math.min(
+    15000,
+    Number(arg("--timeout-ms", "10000")) || 10000
+  )
+);
+const budgetSeconds = Math.max(
+  60,
+  Math.min(
+    1800,
+    Number(arg("--budget-seconds", "720")) || 720
+  )
+);
+const materializationBudgetMs = budgetSeconds * 1000;
+const materializationStartedAt = Date.now();
 const generatedAt = new Date().toISOString();
 
 const CORE_PATHS = [
@@ -163,7 +192,7 @@ async function collectPaths() {
 
   return [...paths]
     .filter(isReaderPath)
-    .sort((a, b) => priority(a) - priority(b) || a.localeCompare(b))
+    .sort((a, b) => priority(a) - priority(b))
     .slice(0, maxPages);
 }
 
@@ -199,25 +228,54 @@ async function renderOne(pathname) {
 async function mapWithConcurrency(items, limit, handler) {
   const results = new Array(items.length);
   let index = 0;
+  let budgetExhausted = false;
+
   async function worker() {
     while (true) {
+      if (budgetExhausted) break;
+      if (
+        Date.now() - materializationStartedAt >=
+        materializationBudgetMs
+      ) {
+        budgetExhausted = true;
+        break;
+      }
+
       const current = index++;
       if (current >= items.length) break;
       results[current] = await handler(items[current], current);
+
       if ((current + 1) % 50 === 0) {
-        console.log(`[static-reader] rendered ${current + 1}/${items.length}`);
+        console.log(
+          `[static-reader] rendered ${current + 1}/${items.length}`
+        );
       }
     }
   }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
-  return results;
+
+  await Promise.all(
+    Array.from(
+      { length: Math.min(limit, items.length) },
+      () => worker()
+    )
+  );
+
+  return { results, budgetExhausted };
 }
 
 await fs.mkdir(outDir, { recursive: true });
 const paths = await collectPaths();
 console.log(`[static-reader] candidate pages=${paths.length} max=${maxPages} concurrency=${concurrency}`);
 
-const results = await mapWithConcurrency(paths, concurrency, renderOne);
+const renderRun = await mapWithConcurrency(
+  paths,
+  concurrency,
+  renderOne
+);
+const results = renderRun.results;
+const skippedForBudget = paths.filter(
+  (_, index) => !results[index]
+);
 const succeeded = results.filter((item) => item?.ok);
 const failed = results.filter((item) => item && !item.ok);
 const requiredFailures = failed.filter((item) => CORE_PATHS.includes(item.pathname));
@@ -229,8 +287,12 @@ const manifest = {
   candidatePages: paths.length,
   generatedPages: succeeded.length,
   failedPages: failed.length,
+  skippedForBudget: skippedForBudget.length,
+  budgetExhausted: renderRun.budgetExhausted,
+  budgetSeconds,
   requiredFailures,
   failures: failed.slice(0, 100),
+  skippedSample: skippedForBudget.slice(0, 100),
   note:
     "Canonical reader HTML is materialized into Cloudflare Static Assets. API/admin requests remain Worker-backed.",
 };
