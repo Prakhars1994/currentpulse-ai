@@ -26,6 +26,11 @@ test("static reader materializer blocks Next RSC prefetch and emits an asset man
   assert.match(source, /_rsc/);
   assert.match(source, /Next-Router-Prefetch/);
   assert.match(source, /currentpulse-static-reader-manifest\.json/);
+  assert.match(source, /reuse-base/);
+  assert.match(source, /reusedArchivePages/);
+  assert.match(source, /materializeStaticFiles/);
+  assert.match(source, /requiredStaticFailures/);
+  assert.match(source, /name=\["'\]currentpulse-static-reader/);
 });
 
 test("trusted Current Affairs quality floor is materially higher than the old permissive threshold", () => {

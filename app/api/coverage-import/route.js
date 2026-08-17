@@ -3,6 +3,7 @@ import {
   COVERAGE_SOURCE_IDS,
   queueCoverageImport,
 } from "@/lib/coverage/queueCoverageImport";
+import { normalizeHistoryDate } from "@/lib/automation/history";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,6 +34,14 @@ export async function GET(request) {
 
   const { searchParams } = new URL(request.url);
   const requestedSource = (searchParams.get("source") || "all").toLowerCase();
+  const rawHistoryDate = searchParams.get("historyDate")?.trim() || "";
+  const historyDate = normalizeHistoryDate(rawHistoryDate);
+  if (rawHistoryDate && !historyDate) {
+    return NextResponse.json(
+      { success: false, message: "Invalid historyDate. Use a real YYYY-MM-DD date." },
+      { status: 400 }
+    );
+  }
   const rawLimit = searchParams.get("limit");
   const parsedLimit = Number.parseInt(rawLimit || "", 10);
   const maxCandidates = rawLimit && Number.isFinite(parsedLimit)
@@ -50,7 +59,11 @@ export async function GET(request) {
   }
 
   try {
-    const result = await queueCoverageImport({ requestedSource, maxCandidates });
+    const result = await queueCoverageImport({
+      requestedSource,
+      maxCandidates,
+      historyDate,
+    });
     return NextResponse.json(result, {
       status: 200,
       headers: { "Cache-Control": "no-store, max-age=0" },
@@ -63,6 +76,7 @@ export async function GET(request) {
         message: error?.message || "Coaching coverage collection failed.",
         requestedSource,
         maxCandidates,
+        historyDate: historyDate || null,
       },
       {
         status: 500,

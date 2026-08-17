@@ -104,18 +104,18 @@ jobs:
           # Code pushes repair existing public rows but do NOT consume AI quota
           # by forcing a new daily quiz on every commit.
           if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            api_optional "Editorial cleanup" "/api/editorial-cleanup?apply=1&limit=3000&days=365"
-            api_optional "Quality repair" "/api/quality-repair?apply=1&limit=2000"
+            api_optional "Editorial cleanup" "/api/editorial-cleanup?apply=1&limit=120&days=365"
+            api_optional "Quality repair" "/api/quality-repair?apply=1&limit=120"
           elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
             api_optional "Daily quiz" "/api/generate-quiz?wait=1&force=1"
-            api_optional "Editorial cleanup" "/api/editorial-cleanup?apply=1&limit=3000&days=365"
-            api_optional "Quality repair" "/api/quality-repair?apply=1&limit=2000"
+            api_optional "Editorial cleanup" "/api/editorial-cleanup?apply=1&limit=120&days=365"
+            api_optional "Quality repair" "/api/quality-repair?apply=1&limit=120"
           elif [[ "${india_hour}" == "06" ]]; then
             api_optional "Daily quiz" "/api/generate-quiz?wait=1"
           elif [[ "${india_hour}" == "22" ]]; then
             api_optional "Daily quiz" "/api/generate-quiz?wait=1&force=1"
-            api_optional "Editorial cleanup" "/api/editorial-cleanup?apply=1&limit=3000&days=365"
-            api_optional "Quality repair" "/api/quality-repair?apply=1&limit=2000"
+            api_optional "Editorial cleanup" "/api/editorial-cleanup?apply=1&limit=120&days=365"
+            api_optional "Quality repair" "/api/quality-repair?apply=1&limit=120"
           fi
 
       - name: Print server log on unexpected failure

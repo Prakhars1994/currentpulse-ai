@@ -26,6 +26,7 @@ import {
   hasApprovedUpscCoverageSource,
 } from "@/lib/coverage/sourcePolicy";
 import { getConfiguredAiProviders } from "@/lib/ai/router";
+import { assessCoverageEvidence } from "@/lib/coverage/evidence";
 import {
   shouldAttemptDailyQuiz,
   shouldRecoverFailedQueue,
@@ -43,6 +44,7 @@ const MAX_QUEUE_ITEMS_PER_RUN = 6;
 const MAX_TEMPORARY_AI_FAILURES_PER_RUN = 2;
 const RETRYABLE_FAILED_LOOKBACK_HOURS = 72;
 const AI_RETRY_COOLDOWN_MINUTES = 55;
+const QUEUE_LANES = new Set(["mixed", "news", "coverage"]);
 
 function isCoverageQueueItem(item = {}) {
   return ["coaching", "coaching_enrichment"].includes(item.pipeline_kind);
@@ -229,7 +231,16 @@ async function recoverRecentFailedItems(supabase) {
   return data?.length || 0;
 }
 
-async function getPendingQueueItem(supabase, attemptedIds) {
+function queueLane(item = {}) {
+  return isCoverageQueueItem(item) ? "coverage" : "news";
+}
+
+async function getPendingQueueItem(
+  supabase,
+  attemptedIds,
+  requestedLane = "mixed",
+  preferredMixedLane = "news"
+) {
   const { data, error } = await supabase
     .from("article_queue")
     .select("*")
@@ -241,21 +252,28 @@ async function getPendingQueueItem(supabase, attemptedIds) {
     .limit(200);
 
   if (error) throw new Error(`Queue fetch failed: ${error.message}`);
-  const priority = { coaching: -2, coaching_enrichment: -1, news: 0 };
   const retryCutoff = Date.now() - AI_RETRY_COOLDOWN_MINUTES * 60 * 1000;
-  return (data || [])
+  const ready = (data || [])
     .filter((item) => !attemptedIds.has(item.id))
     .filter((item) => {
       const waitingForAi = /^Waiting for AI availability:/i.test(String(item.error || ""));
       if (!waitingForAi) return true;
       const updatedAt = new Date(item.updated_at || 0).getTime();
       return !Number.isFinite(updatedAt) || updatedAt <= retryCutoff;
-    })
-    .sort(
-      (left, right) =>
-        (priority[left.pipeline_kind || "news"] ?? 1) -
-        (priority[right.pipeline_kind || "news"] ?? 1)
-    )[0] || null;
+    });
+
+  if (requestedLane !== "mixed") {
+    return ready.find((item) => queueLane(item) === requestedLane) || null;
+  }
+
+  // Mixed mode alternates independent News and CA lanes. A large or failing CA
+  // backlog can no longer starve fresh News, and a large News burst cannot hide
+  // newly collected coaching Current Affairs.
+  return (
+    ready.find((item) => queueLane(item) === preferredMixedLane) ||
+    ready.find((item) => queueLane(item) !== preferredMixedLane) ||
+    null
+  );
 }
 
 async function claimQueueItem(supabase, queueItem) {
@@ -372,7 +390,10 @@ async function markQueueFailed(supabase, originalQueueItem, errorMessage) {
   return { temporaryFailure, shouldRetry, attempts };
 }
 
-async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
+async function executeQueueProcessing(
+  maxItems = MAX_QUEUE_ITEMS_PER_RUN,
+  requestedLane = "mixed"
+) {
   const startedAt = Date.now();
 
   const supabase = createServerSupabase();
@@ -384,6 +405,7 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
   let stoppedForRuntimeBudget = false;
   let temporaryAiFailures = 0;
   let claimedCount = 0;
+  let nextMixedLane = "news";
 
   try {
     const sourcePolicyRejected =
@@ -414,7 +436,16 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
           break;
         }
 
-        const queueItem = await getPendingQueueItem(supabase, attemptedIds);
+        const preferredMixedLane = nextMixedLane;
+        if (requestedLane === "mixed") {
+          nextMixedLane = nextMixedLane === "news" ? "coverage" : "news";
+        }
+        const queueItem = await getPendingQueueItem(
+          supabase,
+          attemptedIds,
+          requestedLane,
+          preferredMixedLane
+        );
         if (!queueItem) break;
         if (claimedCount >= maxItems) break;
 
@@ -441,6 +472,7 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
           await deferConcurrentDuplicate(supabase, claimedItem, queueItem);
           results.push({
             status: "deferred_duplicate",
+            pipeline: claimedItem.pipeline_kind || "news",
             worker: workerNumber,
             queueId: claimedItem.id,
             title: claimedItem.title,
@@ -463,6 +495,9 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
           const newsSafety = !isCoverageQueueItem(claimedItem)
             ? assessNewsCandidate(claimedItem)
             : null;
+          const coverageEvidence = isCoverageQueueItem(claimedItem)
+            ? assessCoverageEvidence(claimedItem)
+            : null;
           if (
             (isCoverageQueueItem(claimedItem) &&
               (
@@ -480,11 +515,29 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
             await markQueueRejected(supabase, claimedItem.id, reason);
             results.push({
               status: "rejected",
-              pipeline: claimedItem.pipeline_kind,
+              pipeline: claimedItem.pipeline_kind || "news",
               worker: workerNumber,
               queueId: claimedItem.id,
               title: claimedItem.title,
               reason,
+            });
+            continue;
+          }
+
+          if (coverageEvidence && !coverageEvidence.accepted) {
+            await markQueueRejected(
+              supabase,
+              claimedItem.id,
+              coverageEvidence.reason
+            );
+            results.push({
+              status: "evidence_rejected",
+              pipeline: claimedItem.pipeline_kind,
+              worker: workerNumber,
+              queueId: claimedItem.id,
+              title: claimedItem.title,
+              reason: coverageEvidence.reason,
+              evidence: coverageEvidence.metrics,
             });
             continue;
           }
@@ -545,6 +598,7 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
             await markQueueRejected(supabase, claimedItem.id, errorMessage);
             results.push({
               status: "rejected",
+              pipeline: claimedItem.pipeline_kind || "news",
               worker: workerNumber,
               queueId: claimedItem.id,
               title: claimedItem.title,
@@ -556,6 +610,7 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
 
           results.push({
             status: failure.shouldRetry ? "retry_pending" : "failed",
+            pipeline: claimedItem.pipeline_kind || "news",
             worker: workerNumber,
             queueId: claimedItem.id,
             title: claimedItem.title,
@@ -563,7 +618,11 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
           });
 
           if (failure.temporaryFailure) {
-            temporaryAiFailures += 1;
+            temporaryAiFailures += /all configured ai providers are temporarily unavailable/i.test(
+              errorMessage
+            )
+              ? MAX_TEMPORARY_AI_FAILURES_PER_RUN
+              : 1;
             // One rate-limited/model-specific item must not block the whole
             // day's coaching queue. Continue with other candidates, but stop
             // after several temporary failures so a full provider outage does
@@ -601,6 +660,9 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
     const enrichedCount = results.filter((item) => item.status === "enriched").length;
     const sourceBriefCount = results.filter((item) => item.status === "published_source_brief").length;
     const rejectedCount = results.filter((item) => item.status === "rejected").length;
+    const evidenceRejectedCount = results.filter(
+      (item) => item.status === "evidence_rejected"
+    ).length;
     const duplicateCount = results.filter((item) => item.status === "duplicate").length;
     const failedCount = results.filter((item) => item.status === "failed").length;
     const retryPending = results.filter((item) => item.status === "retry_pending").length;
@@ -620,6 +682,7 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
         enriched: enrichedCount,
         sourceBriefs: sourceBriefCount,
         rejected: rejectedCount,
+        evidenceRejected: evidenceRejectedCount,
         duplicate: duplicateCount,
         failed: failedCount,
         retryPending,
@@ -634,6 +697,13 @@ async function executeQueueProcessing(maxItems = MAX_QUEUE_ITEMS_PER_RUN) {
         aiRetryCooldownMinutes: AI_RETRY_COOLDOWN_MINUTES,
         quizAttemptWindow: shouldAttemptDailyQuiz(),
         quizReady: Boolean(quiz && (quiz.generated || quiz.reason === "already_ready")),
+        requestedLane,
+        processedByLane: {
+          news: results.filter((item) => item.pipeline === "news").length,
+          coverage: results.filter((item) =>
+            ["coaching", "coaching_enrichment"].includes(item.pipeline)
+          ).length,
+        },
         durationMs: Date.now() - startedAt,
       },
       maintenance: { legacyQualityUpgrade: "disabled_in_cron", quiz },
@@ -666,6 +736,18 @@ export async function GET(request) {
   const waitForCompletion =
     requestUrl.searchParams.get("wait") === "1";
   const runner = requestUrl.searchParams.get("runner")?.trim().toLowerCase() || "";
+  const requestedLane =
+    requestUrl.searchParams.get("pipeline")?.trim().toLowerCase() || "mixed";
+
+  if (!QUEUE_LANES.has(requestedLane)) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid queue pipeline. Use mixed, news, or coverage.",
+      },
+      { status: 400 }
+    );
+  }
 
   if (!waitForCompletion && runner !== "github") {
     return NextResponse.json({
@@ -683,13 +765,18 @@ export async function GET(request) {
       ? Math.max(1, Math.min(MAX_QUEUE_ITEMS_PER_RUN, requestedLimit))
       : MAX_QUEUE_ITEMS_PER_RUN;
 
-  if (waitForCompletion) return executeQueueProcessing(runLimit);
+  if (waitForCompletion) {
+    return executeQueueProcessing(runLimit, requestedLane);
+  }
 
   after(async () => {
     const runId = await startAutomationRun("process_queue");
 
     try {
-      const response = await executeQueueProcessing();
+      const response = await executeQueueProcessing(
+        MAX_QUEUE_ITEMS_PER_RUN,
+        requestedLane
+      );
       const payload = await response.json();
 
       await finishAutomationRun(runId, {

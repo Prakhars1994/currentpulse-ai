@@ -11,6 +11,14 @@ function arg(name, fallback = "") {
 const base = String(arg("--base", process.env.STATIC_READER_BASE || "http://127.0.0.1:3100"))
   .replace(/\/+$/, "");
 const outDir = path.resolve(arg("--out", ".open-next/assets"));
+const reuseBase = String(
+  arg("--reuse-base", process.env.STATIC_READER_REUSE_BASE || "")
+).replace(/\/+$/, "");
+const freshDays = Math.max(
+  1,
+  Math.min(30, Number(arg("--fresh-days", "3")) || 3)
+);
+const reuseBefore = Date.now() - freshDays * 86_400_000;
 const maxPages = Math.max(
   25,
   Math.min(
@@ -64,6 +72,13 @@ const NON_HTML_PATHS = new Set([
   "/feed.xml",
   "/google3ff2ae106454c0cb.html",
 ]);
+const REQUIRED_STATIC_PATHS = new Set([
+  "/robots.txt",
+  "/sitemap.xml",
+  "/news-sitemap.xml",
+  "/feed.xml",
+]);
+const pathMetadata = new Map();
 
 function decodeXml(value = "") {
   return String(value)
@@ -78,6 +93,25 @@ function extractLocations(xml = "") {
   return [...String(xml).matchAll(/<loc>([\s\S]*?)<\/loc>/gi)]
     .map((match) => decodeXml(match[1]).trim())
     .filter(Boolean);
+}
+
+function extractSitemapEntries(xml = "") {
+  const entries = [];
+  for (const match of String(xml).matchAll(/<url>([\s\S]*?)<\/url>/gi)) {
+    const block = match[1];
+    const location = decodeXml(
+      block.match(/<loc>([\s\S]*?)<\/loc>/i)?.[1] || ""
+    ).trim();
+    const lastModified = decodeXml(
+      block.match(/<lastmod>([\s\S]*?)<\/lastmod>/i)?.[1] || ""
+    ).trim();
+    if (location) entries.push({ location, lastModified });
+  }
+  if (entries.length) return entries;
+  return extractLocations(xml).map((location) => ({
+    location,
+    lastModified: "",
+  }));
 }
 
 function isReaderPath(pathname) {
@@ -117,7 +151,7 @@ async function fetchText(url, timeoutMs = requestTimeoutMs) {
   }
 }
 
-function injectStaticGuard(html, pathname) {
+function injectStaticGuard(html) {
   const marker = `<meta name="currentpulse-static-reader" content="1">`;
   const guard = `<script id="currentpulse-static-reader-guard">
 (()=>{try{
@@ -152,6 +186,9 @@ document.addEventListener("click",function(event){
   let output = String(html)
     .replace(/<link\b[^>]*\brel=["']prefetch["'][^>]*>/gi, "")
     .replace(/<link\b[^>]*\bas=["']fetch["'][^>]*>/gi, "");
+  if (/name=["']currentpulse-static-reader["']/i.test(output)) {
+    return output;
+  }
   const injection = `${marker}${guard}`;
   if (/<head\b[^>]*>/i.test(output)) {
     output = output.replace(/<head\b[^>]*>/i, (match) => `${match}${injection}`);
@@ -176,11 +213,16 @@ async function collectPaths() {
         console.warn(`[static-reader] ${sitemapPath} returned ${response.status}`);
         continue;
       }
-      for (const location of extractLocations(text)) {
+      for (const entry of extractSitemapEntries(text)) {
         try {
-          const url = new URL(location);
+          const url = new URL(entry.location);
           const pathname = url.pathname.replace(/\/+$/, "") || "/";
-          if (isReaderPath(pathname)) paths.add(pathname);
+          if (isReaderPath(pathname)) {
+            paths.add(pathname);
+            if (entry.lastModified) {
+              pathMetadata.set(pathname, { lastModified: entry.lastModified });
+            }
+          }
         } catch {
           // Ignore malformed sitemap items rather than failing the whole reader release.
         }
@@ -197,9 +239,25 @@ async function collectPaths() {
 }
 
 async function renderOne(pathname) {
-  const url = `${base}${pathname}`;
+  const lastModified = new Date(
+    pathMetadata.get(pathname)?.lastModified || 0
+  ).getTime();
+  const reuseExisting = Boolean(
+    reuseBase &&
+      !CORE_PATHS.includes(pathname) &&
+      Number.isFinite(lastModified) &&
+      lastModified > 0 &&
+      lastModified < reuseBefore
+  );
+  const selectedBase = reuseExisting ? reuseBase : base;
+  const url = `${selectedBase}${pathname}`;
   try {
-    const { response, text } = await fetchText(url);
+    let { response, text } = await fetchText(url);
+    let reused = reuseExisting;
+    if (reused && (!response.ok || !/<html\b/i.test(text) || text.length < 500)) {
+      ({ response, text } = await fetchText(`${base}${pathname}`));
+      reused = false;
+    }
     const contentType = String(response.headers.get("content-type") || "");
     if (!response.ok) {
       return { pathname, ok: false, status: response.status, reason: `HTTP ${response.status}` };
@@ -213,8 +271,14 @@ async function renderOne(pathname) {
 
     const destination = destinationFor(pathname);
     await fs.mkdir(path.dirname(destination), { recursive: true });
-    await fs.writeFile(destination, injectStaticGuard(text, pathname), "utf8");
-    return { pathname, ok: true, status: 200, bytes: Buffer.byteLength(text) };
+    await fs.writeFile(destination, injectStaticGuard(text), "utf8");
+    return {
+      pathname,
+      ok: true,
+      status: 200,
+      bytes: Buffer.byteLength(text),
+      reused,
+    };
   } catch (error) {
     return {
       pathname,
@@ -223,6 +287,36 @@ async function renderOne(pathname) {
       reason: error?.name === "AbortError" ? "Timed out" : (error?.message || String(error)),
     };
   }
+}
+
+async function materializeStaticFiles() {
+  const results = [];
+  for (const pathname of NON_HTML_PATHS) {
+    try {
+      const { response, text } = await fetchText(`${base}${pathname}`, 30000);
+      if (!response.ok || !text) {
+        results.push({ pathname, ok: false, status: response.status });
+        continue;
+      }
+      const destination = path.join(outDir, pathname.replace(/^\/+/, ""));
+      await fs.mkdir(path.dirname(destination), { recursive: true });
+      await fs.writeFile(destination, text, "utf8");
+      results.push({
+        pathname,
+        ok: true,
+        status: response.status,
+        bytes: Buffer.byteLength(text),
+      });
+    } catch (error) {
+      results.push({
+        pathname,
+        ok: false,
+        status: 0,
+        reason: error?.message || String(error),
+      });
+    }
+  }
+  return results;
 }
 
 async function mapWithConcurrency(items, limit, handler) {
@@ -264,6 +358,10 @@ async function mapWithConcurrency(items, limit, handler) {
 }
 
 await fs.mkdir(outDir, { recursive: true });
+const staticFiles = await materializeStaticFiles();
+const requiredStaticFailures = staticFiles.filter(
+  (item) => REQUIRED_STATIC_PATHS.has(item.pathname) && !item.ok
+);
 const paths = await collectPaths();
 console.log(`[static-reader] candidate pages=${paths.length} max=${maxPages} concurrency=${concurrency}`);
 
@@ -277,8 +375,19 @@ const skippedForBudget = paths.filter(
   (_, index) => !results[index]
 );
 const succeeded = results.filter((item) => item?.ok);
+const reused = succeeded.filter((item) => item.reused);
 const failed = results.filter((item) => item && !item.ok);
-const requiredFailures = failed.filter((item) => CORE_PATHS.includes(item.pathname));
+const requiredFailures = [
+  ...failed.filter((item) => CORE_PATHS.includes(item.pathname)),
+  ...skippedForBudget
+    .filter((pathname) => CORE_PATHS.includes(pathname))
+    .map((pathname) => ({
+      pathname,
+      ok: false,
+      status: 0,
+      reason: "Skipped after the global materialization budget was exhausted.",
+    })),
+];
 
 const manifest = {
   generatedAt,
@@ -286,11 +395,17 @@ const manifest = {
   mode: "asset-first-static-reader",
   candidatePages: paths.length,
   generatedPages: succeeded.length,
+  freshlyRenderedPages: succeeded.length - reused.length,
+  reusedArchivePages: reused.length,
   failedPages: failed.length,
   skippedForBudget: skippedForBudget.length,
   budgetExhausted: renderRun.budgetExhausted,
   budgetSeconds,
   requiredFailures,
+  requiredStaticFailures,
+  staticFiles,
+  reuseBase: reuseBase || null,
+  freshDays,
   failures: failed.slice(0, 100),
   skippedSample: skippedForBudget.slice(0, 100),
   note:
@@ -310,6 +425,10 @@ console.log(
 if (requiredFailures.length) {
   console.error(JSON.stringify(requiredFailures, null, 2));
   process.exit(2);
+}
+if (requiredStaticFailures.length) {
+  console.error(JSON.stringify(requiredStaticFailures, null, 2));
+  process.exit(4);
 }
 if (paths.length >= 25 && succeeded.length < Math.min(25, paths.length)) {
   console.error("Static reader produced too few pages to be considered healthy.");

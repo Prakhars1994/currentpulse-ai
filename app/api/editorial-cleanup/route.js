@@ -10,13 +10,17 @@ import {
   hasClearlyStaleSource,
   isObviousLowValueNews,
 } from "@/lib/news/newsQuality";
-import { isSameEvent } from "@/lib/news/eventCluster";
+import { isSafeDestructiveDuplicate } from "@/lib/news/eventCluster";
 import { assessNewsOutputQuality } from "@/lib/news/newsOutputQuality";
 import { inspectCoverageCandidate } from "@/lib/coverage/sourceSanitizer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const maxDuration = 150;
+
+const MAX_MAINTENANCE_ROWS = 120;
+const MAINTENANCE_WRITE_CONCURRENCY = 4;
+const MAINTENANCE_DEADLINE_MS = 110000;
 
 const ARTICLE_FIELDS = `
   id,title,slug,category,paper,why_news,syllabus_linkage,india_relevance,
@@ -121,8 +125,9 @@ function findDuplicateGroups(articles = []) {
   const clusters = [];
   for (const article of articles) {
     const cluster = clusters.find((candidate) =>
-      candidate.some((existing) =>
-        sharesStream(article, existing) && isSameEvent(eventInput(article), eventInput(existing))
+      candidate.every((existing) =>
+        sharesStream(article, existing) &&
+        isSafeDestructiveDuplicate(eventInput(article), eventInput(existing))
       )
     );
     if (cluster) cluster.push(article);
@@ -145,6 +150,21 @@ function chunks(items, size) {
   return groups;
 }
 
+async function mapWithConcurrency(items, limit, handler) {
+  const results = new Array(items.length);
+  let index = 0;
+  async function worker() {
+    while (index < items.length) {
+      const current = index++;
+      results[current] = await handler(items[current], current);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker())
+  );
+  return results;
+}
+
 export async function GET(request) {
   if (!isAuthorised(request)) {
     return NextResponse.json(
@@ -153,10 +173,16 @@ export async function GET(request) {
     );
   }
 
+  const maintenanceDeadline = Date.now() + MAINTENANCE_DEADLINE_MS;
+  let deadlineExhausted = false;
+
   const params = new URL(request.url).searchParams;
   const apply = params.get("apply") === "1";
-  const requestedLimit = Number(params.get("limit") || 300);
-  const limit = Math.max(1, Math.min(requestedLimit || 300, 300));
+  const requestedLimit = Number(params.get("limit") || MAX_MAINTENANCE_ROWS);
+  const limit = Math.max(
+    1,
+    Math.min(requestedLimit || MAX_MAINTENANCE_ROWS, MAX_MAINTENANCE_ROWS)
+  );
   const lookbackDays = Math.max(
     1,
     Math.min(Number(params.get("days") || 120), 3650)
@@ -330,21 +356,36 @@ export async function GET(request) {
     }
     for (const repair of knownRepairs) updatesById.set(repair.id,{...(updatesById.get(repair.id)||{}),...repair.values});
 
-    for (const [articleId, values] of updatesById) {
+    await mapWithConcurrency(
+      [...updatesById.entries()],
+      MAINTENANCE_WRITE_CONCURRENCY,
+      async ([articleId, values]) => {
+      if (Date.now() >= maintenanceDeadline) {
+        deadlineExhausted = true;
+        return;
+      }
       const { error: updateError } = await supabase
         .from("articles")
         .update({ ...values, updated_at: now })
         .eq("id", articleId);
       if (updateError) {
         applyWarnings.push(`Article ${articleId} editorial update failed: ${updateError.message}`);
-        continue;
+        return;
       }
       if (sanitizationUpdates.some((item) => item.id === articleId)) sanitized += 1;
       if (taxonomyCorrections.some((item) => item.id === articleId)) taxonomyUpdated += 1;
-    }
+      }
+    );
 
     const deduplicatedIds = [];
-    for (const finding of duplicateFindings) {
+    await mapWithConcurrency(
+      duplicateFindings,
+      Math.min(2, MAINTENANCE_WRITE_CONCURRENCY),
+      async (finding) => {
+      if (Date.now() >= maintenanceDeadline) {
+        deadlineExhausted = true;
+        return;
+      }
       const keeperId = finding.keeper.id;
       const duplicateId = finding.duplicate.id;
       const { data: movedSources, error: sourceMoveError } = await supabase
@@ -354,7 +395,7 @@ export async function GET(request) {
         .select("id");
       if (sourceMoveError) {
         applyWarnings.push(`Duplicate ${duplicateId} source merge failed: ${sourceMoveError.message}`);
-        continue;
+        return;
       }
       sourcesMerged += movedSources?.length || 0;
 
@@ -373,10 +414,15 @@ export async function GET(request) {
         applyWarnings.push(`Duplicate ${duplicateId} queue target update failed: ${queueTargetUpdate.error.message}`);
       }
       deduplicatedIds.push(duplicateId);
-    }
+      }
+    );
 
     const quarantineIds = [...new Set(quarantine.map((item) => item.id))];
     for (const idGroup of chunks([...new Set([...quarantineIds, ...deduplicatedIds])], 100)) {
+      if (Date.now() >= maintenanceDeadline) {
+        deadlineExhausted = true;
+        break;
+      }
       const { data: updated, error: updateError } = await supabase
         .from("articles")
         .update({ status: "draft", updated_at: now })
@@ -402,8 +448,9 @@ export async function GET(request) {
     pagination: {
       limit,
       before,
-      nextBefore,
-      hasMore,
+      nextBefore: deadlineExhausted ? before : nextBefore,
+      hasMore: deadlineExhausted || hasMore,
+      deadlineExhausted,
     },
     findings: {
       quarantine: quarantine.length,

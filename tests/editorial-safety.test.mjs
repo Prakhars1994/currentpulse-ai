@@ -9,7 +9,10 @@ import {
 import { classifyNewsCategory, correctTaxonomy } from "../lib/contentTaxonomy.js";
 import { assessNewsOutputQuality } from "../lib/news/newsOutputQuality.js";
 import { inspectCoverageCandidate } from "../lib/coverage/sourceSanitizer.js";
-import { isSameEvent } from "../lib/news/eventCluster.js";
+import {
+  isSafeDestructiveDuplicate,
+  isSameEvent,
+} from "../lib/news/eventCluster.js";
 
 test("rejects the audited non-event Current Affairs pages", () => {
   const titles = [
@@ -196,6 +199,24 @@ test("clusters the audited rewritten headlines but keeps later/opposite developm
     isSameEvent(
       { title: "Supreme Court Rules on Bail Conditions", publishedAt: "2026-08-01" },
       { title: "Supreme Court Rules on Bail Conditions", publishedAt: date }
+    ),
+    false
+  );
+});
+
+test("destructive dedupe requires strong pairwise headline evidence", () => {
+  const date = "2026-08-10";
+  assert.equal(
+    isSafeDestructiveDuplicate(
+      { title: "Status and Growth of Organ Donation in India", publishedAt: date },
+      { title: "Organ Donation in India", publishedAt: date }
+    ),
+    true
+  );
+  assert.equal(
+    isSafeDestructiveDuplicate(
+      { title: "Cabinet Approves World Bank Health Programme", publishedAt: date },
+      { title: "World Bank Publishes Global Health Governance Report", publishedAt: date }
     ),
     false
   );

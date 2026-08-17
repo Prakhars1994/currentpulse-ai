@@ -6,7 +6,11 @@ import { assessArticleQuality } from "@/lib/ai/articleQuality";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 300;
+export const maxDuration = 150;
+
+const MAX_MAINTENANCE_ROWS = 120;
+const MAINTENANCE_WRITE_CONCURRENCY = 4;
+const MAINTENANCE_DEADLINE_MS = 110000;
 
 function authorised(request) {
   const secret = process.env.CRON_SECRET?.trim() || "";
@@ -31,18 +35,36 @@ function flagsWith(existing, flag) {
 }
 function hasLowValueEvidence(article = {}) { const value = String(article.data_examples || ""); return /\bpotentially bring economic benefits\b/i.test(value) || /\bdata\s*:\s*(?:institution|year|economic_benefit)\b/i.test(value) || /\binstitution\s*:\s*Indian government\b/i.test(value) || /\beconomic_benefit\s*:\s*potential/i.test(value); }
 
+async function mapWithConcurrency(items, limit, handler) {
+  const results = new Array(items.length);
+  let index = 0;
+  async function worker() {
+    while (index < items.length) {
+      const current = index++;
+      results[current] = await handler(items[current], current);
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, () => worker())
+  );
+  return results;
+}
+
 export async function GET(request) {
   if (!authorised(request)) {
     return NextResponse.json({ success: false, message: "Unauthorised quality repair request." }, { status: 401 });
   }
+
+  const maintenanceDeadline = Date.now() + MAINTENANCE_DEADLINE_MS;
+  let deadlineExhausted = false;
 
   const { searchParams } = new URL(request.url);
   const apply = ["1", "true", "yes"].includes(
     (searchParams.get("apply") || "").toLowerCase()
   );
   const limit = Math.min(
-    Math.max(Number(searchParams.get("limit")) || 300, 1),
-    300
+    Math.max(Number(searchParams.get("limit")) || MAX_MAINTENANCE_ROWS, 1),
+    MAX_MAINTENANCE_ROWS
   );
   const rawBefore = searchParams.get("before") || "";
   const parsedBefore = rawBefore ? new Date(rawBefore) : null;
@@ -75,6 +97,7 @@ export async function GET(request) {
   }
 
   const actions = [];
+  const pendingWrites = [];
   for (const article of data || []) {
     const source = article.article_sources?.[0] || {};
     const combined = text(article);
@@ -95,13 +118,12 @@ export async function GET(request) {
       };
       actions.push(action);
       if (apply) {
-        const { error: updateError } = await supabase.from("articles").update({
+        pendingWrites.push({ action, id: article.id, values: {
           status: "draft",
           quality_score: Math.min(Number(article.quality_score || 0), 25),
           quality_flags: flagsWith(article.quality_flags, "quarantined_source_noise"),
           updated_at: new Date().toISOString(),
-        }).eq("id", article.id);
-        if (updateError) action.error = updateError.message;
+        } });
       }
       continue;
     }
@@ -126,14 +148,13 @@ export async function GET(request) {
       };
       actions.push(action);
       if (apply) {
-        const { error: updateError } = await supabase.from("articles").update({
+        pendingWrites.push({ action, id: article.id, values: {
           status: "draft",
           quality_score: quality.score,
           quality_flags: [...new Set([...(article.quality_flags || []), ...quality.flags, "quarantined_quality_floor_v4"])],
           quality_version: 4,
           updated_at: new Date().toISOString(),
-        }).eq("id", article.id);
-        if (updateError) action.error = updateError.message;
+        } });
       }
       continue;
     }
@@ -174,9 +195,26 @@ export async function GET(request) {
         quality_version: Math.max(Number(article.quality_version || 0), 4),
       };
       if (mapChanged) values.map_locations = cleanedMaps;
-      const { error: updateError } = await supabase.from("articles").update(values).eq("id", article.id);
-      if (updateError) action.error = updateError.message;
+      pendingWrites.push({ action, id: article.id, values });
     }
+  }
+
+  if (apply) {
+    await mapWithConcurrency(
+      pendingWrites,
+      MAINTENANCE_WRITE_CONCURRENCY,
+      async ({ action, id, values }) => {
+        if (Date.now() >= maintenanceDeadline) {
+          deadlineExhausted = true;
+          return;
+        }
+        const { error: updateError } = await supabase
+          .from("articles")
+          .update(values)
+          .eq("id", id);
+        if (updateError) action.error = updateError.message;
+      }
+    );
   }
 
   return NextResponse.json({
@@ -186,8 +224,9 @@ export async function GET(request) {
     pagination: {
       limit,
       before,
-      nextBefore,
-      hasMore,
+      nextBefore: deadlineExhausted ? before : nextBefore,
+      hasMore: deadlineExhausted || hasMore,
+      deadlineExhausted,
     },
     sourceQuarantines: actions.filter((item) => item.action === "quarantine_source_noise").length,
     qualityQuarantines: actions.filter((item) => item.action === "quarantine_quality_floor").length,

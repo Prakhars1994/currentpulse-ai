@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:editorial": "node --test tests/editorial-safety.test.mjs",
     "test:automation": "node --test tests/automation-schedule.test.mjs",
+    "test:regression": "node --test tests/*.test.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",

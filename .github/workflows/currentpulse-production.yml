@@ -50,14 +50,8 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund
 
-      - name: Editorial regression tests
-        run: npm run test:editorial
-
-      - name: Automation regression tests
-        run: npm run test:automation
-
-      - name: Quality, map and architecture regression tests
-        run: node --test tests/article-quality.test.mjs tests/map-relevance.test.mjs tests/taxonomy-authority.test.mjs tests/taxonomy-regression.test.mjs tests/workflow-architecture.test.mjs tests/cloudflare-public-routes.test.mjs tests/static-reader-architecture.test.mjs tests/timeout-architecture.test.mjs tests/source-policy-consistency.test.mjs
+      - name: Full regression suite
+        run: npm run test:regression
 
       - name: Build Cloudflare Worker
         run: npx opennextjs-cloudflare build
@@ -96,7 +90,7 @@ jobs:
 
       - name: Materialize static reader
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --out .open-next/assets --max-pages 1200 --concurrency 3 --timeout-ms 10000 --budget-seconds 720
+        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --reuse-base https://cp.vliab.workers.dev --fresh-days 3 --out .open-next/assets --max-pages 1200 --concurrency 3 --timeout-ms 10000 --budget-seconds 720
 
       - name: Stop production reader renderer
         if: always() && steps.deploy-ready.outputs.ready == 'true'

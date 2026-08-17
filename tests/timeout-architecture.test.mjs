@@ -42,8 +42,12 @@ test("maintenance endpoints use bounded cursor pages", () => {
     assert.match(source, /hasMore/);
     assert.match(source, /\.lt\("created_at", before\)/);
   }
-  assert.match(editorial, /Math\.min\(requestedLimit \|\| 300, 300\)/);
-  assert.match(quality, /Number\(searchParams\.get\("limit"\)\) \|\| 300/);
+  for (const source of [editorial, quality]) {
+    assert.match(source, /MAX_MAINTENANCE_ROWS = 120/);
+    assert.match(source, /MAINTENANCE_WRITE_CONCURRENCY = 4/);
+    assert.match(source, /MAINTENANCE_DEADLINE_MS = 110000/);
+    assert.match(source, /deadlineExhausted/);
+  }
 });
 
 test("static reader has a global release deadline and keeps sitemap recency", () => {

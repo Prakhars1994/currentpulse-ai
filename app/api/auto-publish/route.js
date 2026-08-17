@@ -23,6 +23,7 @@ import {
   startAutomationRun,
 } from "@/lib/automation/runLog";
 import { assessNewsCandidate } from "@/lib/editorial/publicationSafety";
+import { normalizeHistoryDate } from "@/lib/automation/history";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -90,6 +91,7 @@ async function collectNews({
   full = false,
   newsBatch = 0,
   newsBatchSize = 6,
+  historyDate = "",
 } = {}) {
   const configuredSources = activeNewsSources();
   const scheduled = selectScheduledNewsSources(NEWS_SOURCES);
@@ -106,13 +108,16 @@ async function collectNews({
     Math.max(0, Number(newsBatch) || 0)
   );
   const batchStart = safeBatch * safeBatchSize;
-  const selectedSources = full
+  const historical = Boolean(historyDate);
+  const selectedSources = full || historical
     ? configuredSources.slice(batchStart, batchStart + safeBatchSize)
     : scheduled.sources;
   const sourceResults = await Promise.all(
     selectedSources.map(async (source) => {
       try {
-        const result = await fetchSourceRss(source, GENERAL_NEWS_QUERY_TERMS);
+        const result = await fetchSourceRss(source, GENERAL_NEWS_QUERY_TERMS, {
+          historyDate,
+        });
         const articleLikeItems = result.articles.filter(
           (article) => assessNewsCandidate(article).allowed
         );
@@ -169,16 +174,17 @@ async function collectNews({
   return {
     articles: newspaperAgenda,
     selection: {
-      mode: full ? "full-batch" : "scheduled",
+      mode: historical ? "history-batch" : full ? "full-batch" : "scheduled",
+      historyDate: historyDate || null,
       configuredCount: configuredSources.length,
       selectedCount: selectedSources.length,
       selectedIds: selectedSources.map((source) => source.id),
-      coreCount: full ? null : scheduled.coreCount,
-      supplementalCount: full ? null : scheduled.supplementalCount,
-      batchIndex: full ? safeBatch : null,
-      batchSize: full ? safeBatchSize : null,
-      batchCount: full ? batchCount : null,
-      hasMore: full ? safeBatch + 1 < batchCount : false,
+      coreCount: full || historical ? null : scheduled.coreCount,
+      supplementalCount: full || historical ? null : scheduled.supplementalCount,
+      batchIndex: full || historical ? safeBatch : null,
+      batchSize: full || historical ? safeBatchSize : null,
+      batchCount: full || historical ? batchCount : null,
+      hasMore: full || historical ? safeBatch + 1 < batchCount : false,
     },
     sources: sourceResults.map((result) => ({
       id: result.id,
@@ -208,10 +214,10 @@ function localEvaluation(article) {
   };
 }
 
-async function evaluateCandidates(supabase, articles) {
+async function evaluateCandidates(supabase, articles, { historyDate = "" } = {}) {
   const recentArticles = await loadRecentArticles(supabase, {
-    lookbackDays: 14,
-    limit: 450,
+    lookbackDays: historyDate ? 62 : 14,
+    limit: historyDate ? 1200 : 450,
   });
 
   const eligible = [];
@@ -378,6 +384,7 @@ async function executeAutoPublish({
   full = false,
   newsBatch = 0,
   newsBatchSize = 6,
+  historyDate = "",
 } = {}) {
   const startedAt = Date.now();
 
@@ -387,8 +394,11 @@ async function executeAutoPublish({
       full,
       newsBatch,
       newsBatchSize,
+      historyDate,
     });
-    const evaluated = await evaluateCandidates(supabase, collection.articles);
+    const evaluated = await evaluateCandidates(supabase, collection.articles, {
+      historyDate,
+    });
     const recentQueueRows = evaluated.accepted.length
       ? await loadRecentQueueState(supabase)
       : [];
@@ -431,6 +441,7 @@ async function executeAutoPublish({
         queued,
         failed,
         evaluationProvider: evaluated.evaluationProvider,
+        historyDate: historyDate || null,
         durationMs: Date.now() - startedAt,
       },
       selection: collection.selection,
@@ -465,12 +476,12 @@ async function collectNewsSafely(options = {}) {
   }
 }
 
-async function collectCoverageSafely({ full = false } = {}) {
+async function collectCoverageSafely({ full = false, historyDate = "" } = {}) {
   try {
     const requestedSources = full
       ? [...COVERAGE_SOURCE_IDS]
       : selectScheduledCoverageSourceIds(COVERAGE_SOURCE_IDS);
-    return await queueCoverageImport({ requestedSources });
+    return await queueCoverageImport({ requestedSources, historyDate });
   } catch (error) {
     return {
       success: false,
@@ -481,11 +492,11 @@ async function collectCoverageSafely({ full = false } = {}) {
 
 async function executeUnifiedCollection(
   scope = "scheduled",
-  { full = false, newsBatch = 0, newsBatchSize = 6 } = {}
+  { full = false, newsBatch = 0, newsBatchSize = 6, historyDate = "" } = {}
 ) {
   const runNews = ["scheduled", "all", "news"].includes(scope);
   const runCoverage = ["scheduled", "all", "coverage"].includes(scope);
-  const fullRun = full || scope === "all";
+  const fullRun = full || scope === "all" || Boolean(historyDate);
 
   let news = { success: true, skipped: true };
   let coverage = { success: true, skipped: true };
@@ -496,17 +507,19 @@ async function executeUnifiedCollection(
         full: fullRun,
         newsBatch,
         newsBatchSize,
+        historyDate,
       }),
-      collectCoverageSafely({ full: fullRun }),
+      collectCoverageSafely({ full: fullRun, historyDate }),
     ]);
   } else if (runNews) {
     news = await collectNewsSafely({
         full: fullRun,
         newsBatch,
         newsBatchSize,
+        historyDate,
       });
   } else {
-    coverage = await collectCoverageSafely({ full: fullRun });
+    coverage = await collectCoverageSafely({ full: fullRun, historyDate });
   }
 
   const requestedResults = [
@@ -518,6 +531,7 @@ async function executeUnifiedCollection(
     success: requestedResults.some((result) => result.success),
     scope,
     full: fullRun,
+    historyDate: historyDate || null,
     message:
       scope === "news"
         ? "News collection completed."
@@ -543,6 +557,17 @@ export async function GET(request) {
   const waitForCompletion = searchParams.get("wait") === "1";
   const scope = searchParams.get("scope")?.trim().toLowerCase() || "scheduled";
   const full = searchParams.get("full") === "1";
+  const rawHistoryDate = searchParams.get("historyDate")?.trim() || "";
+  const historyDate = normalizeHistoryDate(rawHistoryDate);
+  if (rawHistoryDate && !historyDate) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Invalid historyDate. Use a real YYYY-MM-DD date.",
+      },
+      { status: 400 }
+    );
+  }
   const newsBatch = Math.max(
     0,
     Number(searchParams.get("newsBatch")) || 0
@@ -579,6 +604,7 @@ export async function GET(request) {
       full,
       newsBatch,
       newsBatchSize,
+      historyDate,
     });
   }
 
@@ -590,6 +616,7 @@ export async function GET(request) {
         full,
         newsBatch,
         newsBatchSize,
+        historyDate,
       });
       const payload = await response.json();
       const coverage = payload.coverage || {};
@@ -647,7 +674,8 @@ export async function GET(request) {
       success: true,
       accepted: true,
       scope,
-      full: full || scope === "all",
+      full: full || scope === "all" || Boolean(historyDate),
+      historyDate: historyDate || null,
       message:
         scope === "scheduled"
           ? "Scheduled low-CPU News and Current Affairs collection was accepted for background processing."
