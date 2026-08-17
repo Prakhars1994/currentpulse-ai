@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>CurrentPulse AI — News &amp; Current Affairs</title>
+    <link>https://cp.vliab.workers.dev/</link>
+    <description>CurrentPulse AI provides source-backed news, UPSC current affairs, ResultPulse exam updates, quizzes and study resources.</description>
+    <language>en-IN</language>
+    <item>
+      <title>UPSC Current Affairs</title>
+      <link>https://cp.vliab.workers.dev/current-affairs</link>
+      <guid isPermaLink="true">https://cp.vliab.workers.dev/current-affairs</guid>
+      <description>Current affairs compiled for UPSC and PCS preparation.</description>
+    </item>
+    <item>
+      <title>CurrentPulse News</title>
+      <link>https://cp.vliab.workers.dev/news</link>
+      <guid isPermaLink="true">https://cp.vliab.workers.dev/news</guid>
+      <description>General national, state and international news coverage.</description>
+    </item>
+    <item>
+      <title>ResultPulse Exam Updates</title>
+      <link>https://cp.vliab.workers.dev/exams</link>
+      <guid isPermaLink="true">https://cp.vliab.workers.dev/exams</guid>
+      <description>Notifications, results, admit cards, answer keys and examination updates.</description>
+    </item>
+    <item>
+      <title>Daily UPSC Quiz</title>
+      <link>https://cp.vliab.workers.dev/quiz</link>
+      <guid isPermaLink="true">https://cp.vliab.workers.dev/quiz</guid>
+      <description>Daily current-affairs and UPSC foundation practice questions.</description>
+    </item>
+  </channel>
+</rss>

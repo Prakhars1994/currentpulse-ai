@@ -19,9 +19,13 @@ test("quiz has a bounded database wait and foundation fallback", () => {
   assert.match(source, /UPSC_FOUNDATION_FALLBACK/);
 });
 
-test("RSS route has a bounded database wait and HTTP 200 fallback", () => {
-  const source = read("app/feed.xml/route.js");
-  assert.match(source, /RSS_QUERY_TIMEOUT_MS/);
-  assert.match(source, /Promise\.race/);
-  assert.match(source, /status:\s*200/);
+test("RSS is a zero-runtime static asset", () => {
+  assert.equal(fs.existsSync(new URL("../app/feed.xml/route.js", import.meta.url)), false);
+  assert.equal(fs.existsSync(new URL("../public/feed.xml", import.meta.url)), true);
+
+  const xml = read("public/feed.xml");
+  assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
+  assert.match(xml, /<rss version="2\.0">/);
+  assert.match(xml, /https:\/\/cp\.vliab\.workers\.dev\/current-affairs/);
+  assert.match(xml, /https:\/\/cp\.vliab\.workers\.dev\/news/);
 });
