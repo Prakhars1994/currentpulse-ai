@@ -265,6 +265,7 @@ jobs:
               ;;
             smart-full)
               echo "===== FULL MANUAL CATCH-UP: CA FIRST ====="
+              api_optional "/api/pipeline-recovery?apply=1"
               api_required "/api/coverage-import?source=all&limit=2000"
 
               drain_queue 420 coverage
@@ -287,6 +288,11 @@ jobs:
             smart-hourly)
               india_hour="$(TZ=Asia/Kolkata date +%H)"
               echo "INDIA_HOUR=${india_hour}"
+
+              # Cheap self-heal for rows stranded by known historical pipeline regressions.
+              if [[ "${india_hour}" == "06" || "${india_hour}" == "22" ]]; then
+                api_optional "/api/pipeline-recovery?apply=1"
+              fi
 
               # Coaching CA is first in the two evening publication windows.
               if [[ "${india_hour}" == "06" || "${india_hour}" == "12" || "${india_hour}" == "19" || "${india_hour}" == "22" ]]; then

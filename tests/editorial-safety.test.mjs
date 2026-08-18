@@ -6,6 +6,7 @@ import {
   assessNewsCandidate,
   sanitizeEditorialText,
 } from "../lib/editorial/publicationSafety.js";
+import { assessSourceEntailment } from "../lib/editorial/sourceEntailmentGuard.js";
 import { classifyNewsCategory, correctTaxonomy } from "../lib/contentTaxonomy.js";
 import { assessNewsOutputQuality } from "../lib/news/newsOutputQuality.js";
 import { inspectCoverageCandidate } from "../lib/coverage/sourceSanitizer.js";
@@ -138,6 +139,7 @@ test("only approved UPSC CA sources bypass eventness selection while unapproved 
 });
 
 test("rejects audited routine and stale News inputs", () => {
+  const freshDate = new Date().toISOString();
   const rejected = [
     "ISRO procurement tender for Low Noise Frequency Distribution Units",
     "Oil India quarterly net profit rises",
@@ -146,10 +148,10 @@ test("rejects audited routine and stale News inputs", () => {
     "India and Malta hold Foreign Office Consultations in 2024",
   ];
   for (const title of rejected) {
-    assert.equal(assessNewsCandidate({ title, publishedAt: "2026-08-10" }).allowed, false, title);
+    assert.equal(assessNewsCandidate({ title, publishedAt: freshDate }).allowed, false, title);
   }
   assert.equal(
-    assessNewsCandidate({ title: "Supreme Court delivers privacy judgment", publishedAt: "2026-08-10" }).allowed,
+    assessNewsCandidate({ title: "Supreme Court delivers privacy judgment", publishedAt: freshDate }).allowed,
     true
   );
 });
@@ -279,4 +281,37 @@ test("rejects audited multi-topic Current Affairs wrappers", () => {
     assert.equal(result.accepted, false, title);
     assert.ok(result.flags.includes("multi_topic_bundle"), title);
   }
+});
+
+test("News entailment keeps field boundaries separate from publisher names", () => {
+  const source = {
+    title: "Storm Lala damages bridges and more than 100 homes on Hawaii's Big Island",
+    description: "Reuters reported that Storm Lala damaged bridges and more than 100 homes on Hawaii's Big Island.",
+    source: "Reuters",
+  };
+  const article = {
+    title: source.title,
+    why_news: "Reuters reported that Storm Lala damaged bridges and more than 100 homes on Hawaii's Big Island.",
+    data_examples: "### Verified facts from the source\n- More than 100 homes were damaged on Hawaii's Big Island.",
+    static_foundation: "### Essential context\n- Storm Lala damaged bridges on Hawaii's Big Island.",
+  };
+  const result = assessSourceEntailment(source, article);
+  assert.equal(result.allowed, true, result.reason);
+});
+
+test("News entailment still rejects genuinely invented named entities", () => {
+  const source = {
+    title: "Storm update",
+    description: "Reuters reported storm damage in Hawaii.",
+    source: "Reuters",
+  };
+  const article = {
+    title: source.title,
+    why_news: "Reuters reported storm damage in Hawaii. Imaginary Agency coordinated with Fake Ministry.",
+    data_examples: "### Verified facts from the source\n- Storm damage was reported in Hawaii.",
+    static_foundation: "### Essential context\n- Reuters reported the storm damage.",
+  };
+  const result = assessSourceEntailment(source, article);
+  assert.equal(result.allowed, false);
+  assert.equal(result.code, "unsupported_named_entities");
 });

@@ -39,3 +39,12 @@ test("copy-pasted study sections are detected", () => {
   assert.equal(result.passed, false);
   assert.ok(result.flags.includes("repetitive_sections"));
 });
+
+test("source-grounded CA fallbacks are not failed for intentional section reuse alone", () => {
+  const article = baseArticle();
+  article.prelims = article.static_foundation;
+  article.data_examples = article.static_foundation;
+  article.quality_flags = ["source_grounded_fallback"];
+  const result = assessArticleQuality(article);
+  assert.equal(result.flags.includes("repetitive_sections"), false);
+});
