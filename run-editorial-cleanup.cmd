@@ -3,7 +3,7 @@ setlocal EnableExtensions DisableDelayedExpansion
 
 cd /d "%~dp0"
 set "CP_SECRET="
-set "CP_SITE=https://currentpulse-ai.vercel.app"
+set "CP_SITE=https://cp.vliab.workers.dev"
 set "CP_APPLY=0"
 
 if /I "%~1"=="apply" set "CP_APPLY=1"
