@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { MapPin, Mountain, Map as MapIcon, Trees, Waves, LocateFixed } from "lucide-react";
-import { filterRelevantMapLocations, isMapRelevantArticle } from "@/lib/study/mapRelevance";
+import { filterRelevantMapLocations, isMapRelevantArticle, normaliseMapLocations } from "@/lib/study/mapRelevance";
 
 const INDIA_BOUNDS = { north: 37.5, south: 5.0, west: 67.0, east: 99.0 };
 const WORLD_BOUNDS = { north: 90, south: -90, west: -180, east: 180 };
@@ -381,14 +381,35 @@ function inferLocations(title = "", articleText = "") {
 }
 
 function articleLocations(mapLocations, title, articleText, category = "") {
-  if (!isMapRelevantArticle({ title, category, text: articleText, mapLocations })) return [];
   const combinedText = `${title} ${articleText}`;
-  if (/\b(?:hallaniyat|khuriya muriya|kuria muria)\b/i.test(combinedText)) return ["Hallaniyat Islands", "Dhofar", "Oman"];
-  const stored = filterRelevantMapLocations({ title, category, text: articleText, mapLocations });
-  const resolvedStored = stored.filter((location) => resolveLocation(location).point);
+  if (/\b(?:hallaniyat|khuriya muriya|kuria muria)\b/i.test(combinedText)) {
+    return ["Hallaniyat Islands", "Dhofar", "Oman"];
+  }
+
+  // Infer known places before the relevance gate. Previously the gate ran
+  // first, so articles with a mappable title but an empty DB map_locations
+  // field could never reach the inference code.
   const inferred = inferLocations(title, articleText);
+  const supplied = normaliseMapLocations(mapLocations);
+  const candidates = [...supplied, ...inferred];
+
+  if (!isMapRelevantArticle({
+    title,
+    category,
+    text: articleText,
+    mapLocations: candidates,
+  })) return [];
+
+  const stored = filterRelevantMapLocations({
+    title,
+    category,
+    text: articleText,
+    mapLocations: candidates,
+  });
+  const resolvedStored = stored.filter((location) => resolveLocation(location).point);
   const combined = [...resolvedStored, ...inferred];
   const seen = new Set();
+
   return combined.filter((location) => {
     const meta = resolveLocation(location);
     const identity = `${meta.mapType}:${meta.label}`;

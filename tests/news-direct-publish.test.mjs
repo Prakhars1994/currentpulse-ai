@@ -44,7 +44,7 @@ test("normal News automation no longer drains a News queue", () => {
 
   assert.match(background, /news-catchup\)/);
   assert.match(background, /newsBatch=\$\{news_batch\}/);
-  assert.match(background, /for news_batch in 0 1 2 3; do/);
+  assert.match(background, /for news_batch in 0 1 2 3 4 5 6; do/);
 
   // Current Affairs must retain its retry queue.
   assert.match(background, /drain_queue 300 coverage/);

@@ -11,7 +11,7 @@ import { SITE_URL } from "@/lib/siteUrl";
 export async function generateMetadata({ searchParams }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params?.page) || 1);
-  const canonical = page <= 1 ? `${SITE_URL}/news` : `${SITE_URL}/news?page=${page}`;
+  const canonical = page <= 1 ? `${SITE_URL}/news` : `${SITE_URL}/news/page/${page}`;
   const title = page <= 1 ? "Latest India & World News" : `Latest India & World News - Page ${page}`;
   const description = "Read concise, source-backed India and world news with key facts, context and why each development matters.";
 
@@ -44,7 +44,7 @@ function formatDate(value) {
 }
 
 function pageHref(page) {
-  return page <= 1 ? "/news" : `/news?page=${page}`;
+  return page <= 1 ? "/news" : `/news/page/${page}`;
 }
 
 export default async function NewsPage({ searchParams }) {
@@ -75,7 +75,7 @@ export default async function NewsPage({ searchParams }) {
         </header>
 
         <div className="newsroom-meta-row">
-          <strong>{total ?? "Full"}</strong> news archive
+          <strong>{total ?? (hasMore ? "Growing" : articles.length)}</strong> news archive
           <span>•</span>
           <span>Page {currentPage}{totalPages ? ` of ${totalPages}` : ""}</span>
           <span>•</span>

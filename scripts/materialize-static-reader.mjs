@@ -125,6 +125,7 @@ function isReaderPath(pathname) {
 
 function priority(pathname) {
   if (CORE_PATHS.includes(pathname)) return 0;
+  if (pathname.startsWith("/news/page/")) return 1;
   if (pathname.startsWith("/current-affairs/")) return 1;
   if (pathname.startsWith("/news/")) return 2;
   if (pathname.startsWith("/exams/")) return 3;
@@ -206,6 +207,19 @@ function destinationFor(pathname) {
 
 async function collectPaths() {
   const paths = new Set(CORE_PATHS);
+
+  // Query-string pagination cannot be materialized as distinct Cloudflare
+  // static files. Pre-render a bounded path-based News archive instead.
+  const staticNewsArchivePages = Math.max(
+    2,
+    Math.min(
+      30,
+      Number(process.env.STATIC_NEWS_ARCHIVE_PAGES || 20)
+    )
+  );
+  for (let page = 2; page <= staticNewsArchivePages; page += 1) {
+    paths.add(`/news/page/${page}`);
+  }
   for (const sitemapPath of ["/sitemap.xml", "/news-sitemap.xml"]) {
     try {
       const { response, text } = await fetchText(`${base}${sitemapPath}`, 30000);

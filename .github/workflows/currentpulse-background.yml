@@ -20,6 +20,7 @@ on:
           - collect
           - news
           - news-catchup
+          - news-repair
           - coverage
           - queue
           - exams
@@ -63,9 +64,10 @@ env:
 
   NEWS_CORE_SOURCES_PER_RUN: "4"
   NEWS_SUPPLEMENTAL_SOURCES_PER_RUN: "2"
-  NEWS_FETCH_TIMEOUT_MS: "8000"
-  NEWS_PUBLISH_CONCURRENCY: "12"
-  NEWS_ENRICHMENT_DEADLINE_MS: "3000"
+  NEWS_FETCH_TIMEOUT_MS: "15000"
+  NEWS_SOURCE_FETCH_CONCURRENCY: "2"
+  NEWS_PUBLISH_CONCURRENCY: "6"
+  NEWS_ENRICHMENT_DEADLINE_MS: "12000"
   AI_AUTOMATION_SOURCE_CHAR_LIMIT: "14000"
 
   # The 7 approved coaching sources are covered by two complementary 4-source
@@ -249,10 +251,18 @@ jobs:
               ;;
             news-catchup)
               echo "===== NEWS BACKLOG CATCH-UP ====="
-              for news_batch in 0 1 2 3; do
+              for news_batch in 0 1 2 3 4 5 6; do
                 echo "NEWS_FULL_BATCH=${news_batch}"
-                api_required "/api/auto-publish?wait=1&scope=news&full=1&newsBatch=${news_batch}&newsBatchSize=8&runner=github"
+                api_required "/api/auto-publish?wait=1&scope=news&full=1&newsBatch=${news_batch}&newsBatchSize=4&runner=github"
+                if [[ "${news_batch}" -lt 6 ]]; then
+                  echo "Cooling down before the next News source batch..."
+                  sleep 12
+                fi
               done
+              api_optional "/api/news-quality-repair?apply=1&limit=30"
+              ;;
+            news-repair)
+              api_required "/api/news-quality-repair?apply=1&limit=30"
               ;;
             collect)
               # CA first: News can never prevent Current Affairs processing.

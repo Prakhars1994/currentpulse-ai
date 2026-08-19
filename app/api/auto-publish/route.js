@@ -31,7 +31,12 @@ export const maxDuration = 900;
 
 const NEWS_PUBLISH_CONCURRENCY = Math.max(
   1,
-  Math.min(12, Number(process.env.NEWS_PUBLISH_CONCURRENCY || 8))
+  Math.min(12, Number(process.env.NEWS_PUBLISH_CONCURRENCY || 6))
+);
+
+const NEWS_SOURCE_FETCH_CONCURRENCY = Math.max(
+  1,
+  Math.min(4, Number(process.env.NEWS_SOURCE_FETCH_CONCURRENCY || 2))
 );
 
 function cleanText(value) {
@@ -109,8 +114,10 @@ async function collectNews({
   const selectedSources = full || historical
     ? configuredSources.slice(batchStart, batchStart + safeBatchSize)
     : scheduled.sources;
-  const sourceResults = await Promise.all(
-    selectedSources.map(async (source) => {
+  const sourceResults = await mapWithConcurrency(
+    selectedSources,
+    NEWS_SOURCE_FETCH_CONCURRENCY,
+    async (source) => {
       try {
         const result = await fetchSourceRss(source, GENERAL_NEWS_QUERY_TERMS, {
           historyDate,
@@ -147,7 +154,7 @@ async function collectNews({
           articles: [],
         };
       }
-    })
+    }
   );
 
   const newspaperAgenda = deduplicateArticles(
