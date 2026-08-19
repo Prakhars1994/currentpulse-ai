@@ -1,14 +1,15 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
-import { evaluateNews } from "@/lib/ai/evaluateNews";
+import { classifyNewsCategory, resolvePaper } from "@/lib/contentTaxonomy";
+import { assessNewsCandidate } from "@/lib/editorial/publicationSafety";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const PIB_HOME_URL =
-  "https://www.pib.gov.in/indexd.aspx?lang=1&reg=3";const MAX_COLLECTED_ARTICLES = 25;
-const MAX_AI_EVALUATIONS = 12;
-const AI_CONCURRENCY = 2;
+  "https://www.pib.gov.in/indexd.aspx?lang=1&reg=3";
+const MAX_COLLECTED_ARTICLES = 25;
+const MAX_SELECTED_ARTICLES = 12;
 const CONTENT_FETCH_CONCURRENCY = 3;
 const MINIMUM_IMPORTANCE = 5;
 const MAX_DESCRIPTION_LENGTH = 6000;
@@ -861,56 +862,76 @@ async function collectLatestPibNews() {
     );
 }
 
-async function evaluateSingleArticle(
+function evaluateSingleArticle(
   article
 ) {
-  try {
-    const evaluation =
-      await evaluateNews(
-        article.title,
-        article.description ||
-          ""
-      );
-
-    return {
+  const text =
+    `${article.title || ""} ${article.description || ""}`;
+  const safety =
+    assessNewsCandidate({
       ...article,
-
-      evaluation,
-
-      evaluatedAt:
-        new Date()
-          .toISOString(),
-
-      evaluationError:
-        null,
-    };
-  } catch (error) {
-    console.error(
-      `AI evaluation failed for "${article.title}":`,
-      error?.message ||
-        error
+      source:
+        article.source ||
+        "PIB",
+      region:
+        article.region ||
+        "IN",
+    });
+  const priorityScore =
+    Math.max(
+      Number(article.priorityScore) || 0,
+      getPriorityScore(text)
     );
+  const category =
+    classifyNewsCategory(text);
+  const relevant =
+    safety.allowed === true;
+  const importance =
+    relevant
+      ? Math.min(
+          10,
+          MINIMUM_IMPORTANCE +
+            Math.min(
+              5,
+              priorityScore
+            )
+        )
+      : 1;
+  const lowerText =
+    text.toLowerCase();
+  const keywords =
+    UPSC_PRIORITY_WORDS
+      .filter((word) =>
+        lowerText.includes(word)
+      )
+      .slice(0, 8);
 
-    return {
-      ...article,
-
-      evaluation: null,
-
-      evaluatedAt:
-        new Date()
-          .toISOString(),
-
-      evaluationError:
-        error?.message ||
-        "AI evaluation failed.",
-    };
-  }
+  return {
+    ...article,
+    priorityScore,
+    evaluation: {
+      relevant,
+      scope: "India",
+      importance,
+      category,
+      paper:
+        resolvePaper(category),
+      reason:
+        relevant
+          ? "Official PIB release passed deterministic publication-safety rules; no AI relevance selection applied."
+          : safety.reason ||
+            "Rejected by deterministic publication-safety rules.",
+      keywords,
+    },
+    evaluatedAt:
+      new Date()
+        .toISOString(),
+    evaluationError: null,
+  };
 }
 
-async function evaluateArticlesWithLimit(
-  articles,
-  concurrency =
-    AI_CONCURRENCY
+function evaluateArticlesDeterministically(
+  articles
 ) {
   if (
     !Array.isArray(articles) ||
@@ -919,51 +940,9 @@ async function evaluateArticlesWithLimit(
     return [];
   }
 
-  const results =
-    new Array(articles.length);
-
-  let nextIndex = 0;
-
-  async function worker() {
-    while (true) {
-      const currentIndex =
-        nextIndex;
-
-      nextIndex += 1;
-
-      if (
-        currentIndex >=
-        articles.length
-      ) {
-        return;
-      }
-
-      results[currentIndex] =
-        await evaluateSingleArticle(
-          articles[
-            currentIndex
-          ]
-        );
-    }
-  }
-
-  const workerCount =
-    Math.min(
-      concurrency,
-      articles.length
-    );
-
-  await Promise.all(
-    Array.from(
-      {
-        length:
-          workerCount,
-      },
-      () => worker()
-    )
+  return articles.map(
+    evaluateSingleArticle
   );
-
-  return results;
 }
 
 function isRelevantArticle(
@@ -986,7 +965,7 @@ export async function GET() {
     const selectedForEvaluation =
       collectedArticles.slice(
         0,
-        MAX_AI_EVALUATIONS
+        MAX_SELECTED_ARTICLES
       );
 
     const enrichedArticles =
@@ -995,7 +974,7 @@ export async function GET() {
       );
 
     const evaluatedArticles =
-      await evaluateArticlesWithLimit(
+      evaluateArticlesDeterministically(
         enrichedArticles
       );
 
@@ -1084,13 +1063,16 @@ export async function GET() {
           MAX_COLLECTED_ARTICLES,
 
         maximumEvaluated:
-          MAX_AI_EVALUATIONS,
+          MAX_SELECTED_ARTICLES,
 
         minimumImportance:
           MINIMUM_IMPORTANCE,
 
         aiConcurrency:
-          AI_CONCURRENCY,
+          0,
+
+        evaluationMode:
+          "deterministic",
 
         contentFetchConcurrency:
           CONTENT_FETCH_CONCURRENCY,
