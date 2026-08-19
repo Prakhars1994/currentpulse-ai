@@ -54,13 +54,22 @@ test("News publishing is zero-AI while coverage retains synthesis", () => {
   assert.match(publisher, /NEWS_ENRICHMENT_DEADLINE_MS/);
 });
 
-test("queue lanes prevent Current Affairs from starving News", () => {
+test("Current Affairs keeps its retry queue while News publishes directly", () => {
   const processor = read("app/api/process-queue/route.js");
   const workflow = read(".github/workflows/currentpulse-background.yml");
+  const autoPublish = read("app/api/auto-publish/route.js");
+
+  // Legacy News rows remain processable, but new News bypasses article_queue.
   assert.match(processor, /new Set\(\["mixed", "news", "coverage"\]\)/);
   assert.match(processor, /preferredMixedLane/);
+
+  // Current Affairs keeps its durable AI retry queue.
   assert.match(workflow, /drain_queue 300 coverage/);
-  assert.match(workflow, /drain_queue 300 news/);
+
+  // Normal News no longer waits in that queue.
+  assert.doesNotMatch(workflow, /drain_queue\s+\d+\s+news/);
+  assert.match(autoPublish, /publishCandidatesDirectly/);
+  assert.doesNotMatch(autoPublish, /queueCandidate/);
 });
 
 test("historical repair is bounded, resumable and auditable", () => {

@@ -3,7 +3,7 @@ import { GENERAL_NEWS_QUERY_TERMS, NEWS_SOURCES } from "@/lib/news/sourceCatalog
 import { fetchSourceRss } from "@/lib/news/rss";
 import { deduplicateArticles } from "@/lib/news/filter";
 import { createServerSupabase } from "@/lib/supabase-server";
-import { queueCandidate } from "@/lib/queue/queueCandidate";
+import { publishArticle } from "@/lib/publisher/publishArticle";
 import {
   findDuplicateInArticles,
   loadRecentArticles,
@@ -27,14 +27,11 @@ import { normalizeHistoryDate } from "@/lib/automation/history";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 150;
+export const maxDuration = 900;
 
-const QUEUE_WRITE_CONCURRENCY = 3;
-const QUEUE_DUPLICATE_LOOKBACK_DAYS = 10;
-const QUEUE_DUPLICATE_LIMIT = 450;
-const NEWS_MAX_QUEUE_WRITES_PER_RUN = Math.max(
+const NEWS_PUBLISH_CONCURRENCY = Math.max(
   1,
-  Number(process.env.NEWS_MAX_QUEUE_WRITES_PER_RUN || 24)
+  Math.min(12, Number(process.env.NEWS_PUBLISH_CONCURRENCY || 8))
 );
 
 function cleanText(value) {
@@ -271,109 +268,65 @@ async function evaluateCandidates(supabase, articles, { historyDate = "" } = {})
   };
 }
 
-async function loadRecentQueueState(supabase) {
-  const cutoff = new Date(
-    Date.now() - QUEUE_DUPLICATE_LOOKBACK_DAYS * 86_400_000
-  ).toISOString();
-  const { data, error } = await supabase
-    .from("article_queue")
-    .select("id,url,title,description,published_at,status")
-    .in("status", ["pending", "processing", "published", "duplicate"])
-    .gte("created_at", cutoff)
-    .order("created_at", { ascending: false })
-    .limit(QUEUE_DUPLICATE_LIMIT);
-
-  if (error) throw new Error(`Recent queue duplicate check failed: ${error.message}`);
-  return data || [];
-}
-
-function filterQueueDuplicates(candidates, recentQueueRows) {
-  const queueRows = [...recentQueueRows];
-  const urls = new Set(
-    queueRows.map((row) => cleanText(row.url)).filter(Boolean)
-  );
-  const accepted = [];
-  const skipped = [];
-
-  for (const candidate of candidates) {
-    const article = candidate.article;
-    const sourceUrl = cleanText(article.url || article.link || article.sourceUrl);
-    if (sourceUrl && urls.has(sourceUrl)) {
-      skipped.push({ title: article.title, reason: "already_in_queue_url" });
-      continue;
-    }
-
-    const existing = queueRows.find((row) =>
-      isSameEvent(
-        {
-          title: article.title,
-          description: article.description,
-          publishedAt: article.publishedAt,
-        },
-        {
-          title: row.title,
-          description: row.description,
-          publishedAt: row.published_at,
-        }
-      )
-    );
-    if (existing) {
-      skipped.push({
-        title: article.title,
-        reason: `already_in_queue_${existing.status}`,
-        queueId: existing.id,
-      });
-      continue;
-    }
-
-    accepted.push(candidate);
-    if (sourceUrl) urls.add(sourceUrl);
-    queueRows.push({
-      id: null,
-      url: sourceUrl,
-      title: article.title,
-      description: article.description,
-      published_at: article.publishedAt,
-      status: "pending",
-    });
-  }
-
-  return { accepted, skipped };
-}
-
-async function writeCandidates(supabase, candidates, status) {
+async function publishCandidatesDirectly(supabase, candidates) {
   return mapWithConcurrency(
     candidates,
-    QUEUE_WRITE_CONCURRENCY,
+    NEWS_PUBLISH_CONCURRENCY,
     async (candidate) => {
+      const sourceItem = {
+        ...candidate.article,
+        category:
+          candidate.evaluation?.category ||
+          candidate.article.category,
+        paper:
+          candidate.evaluation?.paper ||
+          candidate.article.paper ||
+          "Prelims",
+        keywords: Array.isArray(candidate.evaluation?.keywords)
+          ? candidate.evaluation.keywords
+          : Array.isArray(candidate.article.keywords)
+            ? candidate.article.keywords
+            : [],
+        generationMode: "news",
+        trustedCoverage: false,
+      };
+
       try {
-        const result = await queueCandidate(candidate.article, candidate.evaluation, {
-          supabase,
-          status,
-          skipEventLookup: status === "pending",
-        });
+        const result = await publishArticle(supabase, sourceItem);
 
         return {
           status:
-            status === "rejected"
-              ? result.preserved
-                ? "rejected_preserved"
-                : "skipped"
-              : result.queued
-                ? "queued"
-                : "skipped",
-          title: candidate.article.title,
-          ...result,
+            result.status === "duplicate"
+              ? "duplicate"
+              : "published",
+          newsStatus: result.status,
+          articleId: result.articleId,
+          title: result.title || candidate.article.title,
+          slug: result.slug,
+          category: result.category,
+          paper: result.paper,
         };
       } catch (error) {
+        const message =
+          error?.message || "Direct News publication failed.";
+
+        if (message.startsWith("PUBLICATION_BLOCKED:")) {
+          return {
+            status: "rejected",
+            title: candidate.article.title,
+            reason: message,
+          };
+        }
+
         console.error(
-          `[Auto publish] ${status} queue write failed for "${candidate.article.title}":`,
-          error?.message || error
+          `[Auto publish] Direct publication failed for "${candidate.article.title}":`,
+          message
         );
+
         return {
           status: "failed",
           title: candidate.article.title,
-          error: error?.message || "Queue write failed",
+          error: message,
         };
       }
     }
@@ -399,54 +352,53 @@ async function executeAutoPublish({
     const evaluated = await evaluateCandidates(supabase, collection.articles, {
       historyDate,
     });
-    const recentQueueRows = evaluated.accepted.length
-      ? await loadRecentQueueState(supabase)
-      : [];
-    const queueFiltered = filterQueueDuplicates(evaluated.accepted, recentQueueRows);
-    const queueBatch = queueFiltered.accepted.slice(0, NEWS_MAX_QUEUE_WRITES_PER_RUN);
-    const deferredForNextRun = Math.max(
-      0,
-      queueFiltered.accepted.length - queueBatch.length
+    const directResults = await publishCandidatesDirectly(
+      supabase,
+      evaluated.accepted
     );
 
-    const [acceptedResults, rejectedResults] = await Promise.all([
-      writeCandidates(supabase, queueBatch, "pending"),
-      writeCandidates(supabase, evaluated.rejected, "rejected"),
-    ]);
-
-    const queued = acceptedResults.filter((result) => result.status === "queued").length;
-    const rejectedPreserved = rejectedResults.filter(
-      (result) => result.status === "rejected_preserved"
+    const published = directResults.filter(
+      (result) => result.status === "published"
     ).length;
-    const failed = [...acceptedResults, ...rejectedResults].filter(
+
+    const duplicates = directResults.filter(
+      (result) => result.status === "duplicate"
+    ).length;
+
+    const rejectedAfterValidation = directResults.filter(
+      (result) => result.status === "rejected"
+    ).length;
+
+    const failed = directResults.filter(
       (result) => result.status === "failed"
     ).length;
 
     return NextResponse.json({
       success: true,
       message:
-        queued > 0
-          ? `${queued} fresh unique newspaper articles added to the publishing queue.`
-          : "No new newspaper articles were queued.",
+        published > 0
+          ? `${published} fresh unique newspaper articles published directly.`
+          : "No new newspaper articles required publication.",
       stats: {
         collected: collection.articles.length,
         evaluated: evaluated.accepted.length + evaluated.rejected.length,
         relevantCandidates: evaluated.accepted.length,
         rejectedCandidates: evaluated.rejected.length,
-        rejectedPreserved,
+        rejectedAfterValidation,
         duplicatesOrInvalidSkipped: evaluated.skipped.length,
-        queueDuplicatesSkipped: queueFiltered.skipped.length,
-        queueWriteLimit: NEWS_MAX_QUEUE_WRITES_PER_RUN,
-        deferredForNextRun,
-        queued,
+        deferredForNextRun: 0,
+        queued: 0,
+        published,
+        duplicates,
         failed,
+        directPublishConcurrency: NEWS_PUBLISH_CONCURRENCY,
         evaluationProvider: evaluated.evaluationProvider,
         historyDate: historyDate || null,
         durationMs: Date.now() - startedAt,
       },
       selection: collection.selection,
       sources: collection.sources,
-      results: [...acceptedResults, ...rejectedResults],
+      results: directResults,
     });
   } catch (error) {
     console.error("[Auto publish] Unexpected failure:", error);
@@ -632,7 +584,9 @@ export async function GET(request) {
             skipped: Boolean(news.skipped),
             selectedSources: news.selection?.selectedIds || [],
             collected: news.stats?.collected || 0,
-            queued: news.stats?.queued || 0,
+            published: news.stats?.published || 0,
+            duplicates: news.stats?.duplicates || 0,
+            rejected: news.stats?.rejectedAfterValidation || 0,
             failed: news.stats?.failed || 0,
           },
           coverage: {
