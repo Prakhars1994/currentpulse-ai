@@ -2,6 +2,7 @@ import Link from "next/link";
 import ExamSubscriptionForm from "@/components/ExamSubscriptionForm";
 import { loadExamUpdates } from "@/lib/exams/repository";
 import { EXAM_TYPE_META } from "@/lib/exams/constants";
+import { EXAM_FILTER_GROUPS, EXAM_FILTER_SOURCES, normalizeExamFilters } from "@/lib/exams/filters";
 import { getExamUpdateDisplayType } from "@/lib/exams/displayType";
 
 const TYPE_ROUTE = {
@@ -15,6 +16,12 @@ const TYPE_ROUTE = {
   "cut-off": "cut-offs",
   counselling: "counselling",
 };
+
+function filterClass(active) {
+  return active
+    ? "rounded-full bg-violet-400 px-4 py-2 text-sm font-black text-slate-950"
+    : "rounded-full border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 hover:border-violet-400";
+}
 
 function dateText(value) {
   if (!value) return "Official update";
@@ -30,19 +37,23 @@ function dateText(value) {
 
 export default async function ExamUpdatesPage({
   type = "",
+  filters = {},
   title = "ResultPulse AI",
   description = "Official-source exam results, admit cards, answer keys, applications and deadlines - tracked in one place.",
 }) {
+  const activeFilters = normalizeExamFilters({ ...filters, type: type || filters?.type || "" });
   let updates = [];
   let error = null;
   try {
-    const result = await loadExamUpdates({ type, limit: 30 });
+    const result = await loadExamUpdates({ ...activeFilters, limit: 30 });
     updates = result.updates || [];
     error = result.error || null;
   } catch (loadError) {
     console.error("ResultPulse page load failed:", loadError?.message || loadError);
     error = loadError instanceof Error ? loadError : new Error("ResultPulse is temporarily unavailable.");
   }
+
+  const hasFilters = Boolean(activeFilters.type || activeFilters.group || activeFilters.source || activeFilters.q);
 
   return (
     <main className="min-h-screen bg-slate-950 py-10 text-white sm:py-14">
@@ -52,13 +63,48 @@ export default async function ExamUpdatesPage({
           <h1 className="mt-3 text-4xl font-black sm:text-5xl">{title}</h1>
           <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">{description}</p>
           <div className="mt-6 flex flex-wrap gap-2">
-            <Link href="/exams" className="rounded-full bg-violet-400 px-4 py-2 text-sm font-black text-slate-950">All updates</Link>
+            <Link href="/exams" className={filterClass(!activeFilters.type)}>All updates</Link>
             {Object.entries(EXAM_TYPE_META).map(([key, meta]) => (
-              <Link key={key} href={`/exams/${TYPE_ROUTE[key] || "notifications"}`} className="rounded-full border border-slate-700 px-4 py-2 text-sm font-bold text-slate-300 hover:border-violet-400">
+              <Link key={key} href={`/exams/${TYPE_ROUTE[key] || "notifications"}`} className={filterClass(activeFilters.type === key)}>
                 {meta.icon} {meta.label}
               </Link>
             ))}
           </div>
+
+          <form method="get" action="/exams" className="mt-7 rounded-2xl border border-slate-700/80 bg-slate-950/55 p-4">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <label className="text-xs font-black uppercase tracking-wide text-slate-400">
+                Exam group
+                <select name="group" defaultValue={activeFilters.group} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-sm font-bold text-white">
+                  <option value="">All exam groups</option>
+                  {EXAM_FILTER_GROUPS.map((group) => <option key={group} value={group}>{group}</option>)}
+                </select>
+              </label>
+              <label className="text-xs font-black uppercase tracking-wide text-slate-400">
+                Authority
+                <select name="source" defaultValue={activeFilters.source} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-sm font-bold text-white">
+                  <option value="">All authorities</option>
+                  {EXAM_FILTER_SOURCES.map((source) => <option key={source.id} value={source.id}>{source.label}</option>)}
+                </select>
+              </label>
+              <label className="text-xs font-black uppercase tracking-wide text-slate-400">
+                Update type
+                <select name="type" defaultValue={activeFilters.type} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-sm font-bold text-white">
+                  <option value="">All update types</option>
+                  {Object.entries(EXAM_TYPE_META).map(([key, meta]) => <option key={key} value={key}>{meta.label}</option>)}
+                </select>
+              </label>
+              <label className="text-xs font-black uppercase tracking-wide text-slate-400 xl:col-span-2">
+                Search exam
+                <input type="search" name="q" defaultValue={activeFilters.q} placeholder="CSE, NDA, CDS, CGL, CHSL, NTPC..." maxLength={60} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-3 text-sm font-bold text-white placeholder:text-slate-600" />
+              </label>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button type="submit" className="rounded-xl bg-violet-400 px-5 py-3 text-sm font-black text-slate-950">Apply filters</button>
+              {hasFilters && <Link href="/exams" className="rounded-xl border border-slate-700 px-5 py-3 text-sm font-black text-slate-300">Clear</Link>}
+              <span className="text-xs font-bold text-slate-500">Server-side filters: no AI call and no client-side polling.</span>
+            </div>
+          </form>
         </header>
 
         {error && (
