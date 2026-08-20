@@ -195,6 +195,7 @@ jobs:
             local max_seconds="${1:-300}"
             local pipeline="${2:-mixed}"
             local max_batches="${3:-60}"
+            local strict_errors="${4:-false}"
             local started batch tmp code curl_status processed outage
             started="$(date +%s)"
             echo
@@ -224,12 +225,18 @@ jobs:
               if [[ "${curl_status}" -ne 0 ]]; then
                 rm -f "${tmp}"
                 echo "Queue processor request timed out/failed; rows remain durable for the next hourly retry."
+                if [[ "${strict_errors}" == "true" ]]; then
+                  return 1
+                fi
                 break
               fi
 
               if [[ "${code}" -lt 200 || "${code}" -ge 300 ]]; then
                 rm -f "${tmp}"
                 echo "Queue processor HTTP ${code}; rows remain durable for the next hourly retry."
+                if [[ "${strict_errors}" == "true" ]]; then
+                  return 1
+                fi
                 break
               fi
 
@@ -297,10 +304,11 @@ jobs:
               ;;
             news-release)
               echo "===== RELEASE ALL VALID NEWS ALREADY IN SUPABASE ====="
-              node scripts/news-backlog-status.mjs || true
+              node scripts/news-backlog-status.mjs
 
               # Legacy News queue only. New News continues to bypass article_queue.
-              drain_queue 2700 news 220
+              # This maintenance path is strict: runtime errors must make the run fail.
+              drain_queue 2700 news 220 true
 
               # Walk the whole published News archive once and rebuild every
               # thin row that has enough retained source evidence.
@@ -326,7 +334,7 @@ jobs:
                 if [[ "${curl_status}" -ne 0 || "${code}" -lt 200 || "${code}" -ge 300 ]]; then
                   rm -f "${tmp}"
                   echo "Published News repair request failed; retained rows remain safe for a future retry."
-                  break
+                  false
                 fi
                 next_cursor="$(node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(p?.nextCursor?String(p.nextCursor):"")' "${tmp}")"
                 rm -f "${tmp}"
@@ -339,7 +347,7 @@ jobs:
 
               echo "NEWS_REPAIR_COMPLETE=${repair_complete}"
               echo "===== NEWS SUPABASE STATUS AFTER RELEASE ====="
-              node scripts/news-backlog-status.mjs || true
+              node scripts/news-backlog-status.mjs
               ;;
             collect)
               # CA first: News can never prevent Current Affairs processing.

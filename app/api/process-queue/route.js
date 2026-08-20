@@ -246,7 +246,7 @@ async function recoverLegacyNewsQueue(supabase) {
   const recoverablePattern = /waiting for ai|gemini|openrouter|invalid json|quality validation|incomplete|quota|rate limit|timeout|timed out|fetch failed|network error|provider/i;
   const blockedPattern = /PUBLICATION_BLOCKED|Publication safety rejected/i;
   const ids = (data || [])
-    .filter((row) => !COACHING_PIPELINES.includes(row.pipeline_kind))
+    .filter((row) => !isCoverageQueueItem(row))
     .filter((row) => {
       if (row.status === "pending" && Number(row.attempts || 0) >= 3) return true;
       if (row.status !== "failed") return false;
