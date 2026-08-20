@@ -23,6 +23,7 @@ import {
   startAutomationRun,
 } from "@/lib/automation/runLog";
 import { assessNewsCandidate } from "@/lib/editorial/publicationSafety";
+import { assessNewsEditorialValue } from "@/lib/news/newsEditorialGate";
 import { normalizeHistoryDate } from "@/lib/automation/history";
 
 export const runtime = "nodejs";
@@ -122,8 +123,11 @@ async function collectNews({
         const result = await fetchSourceRss(source, GENERAL_NEWS_QUERY_TERMS, {
           historyDate,
         });
-        const articleLikeItems = result.articles.filter(
+        const structurallyValidItems = result.articles.filter(
           (article) => assessNewsCandidate(article).allowed
+        );
+        const articleLikeItems = structurallyValidItems.filter(
+          (article) => assessNewsEditorialValue(article).allowed
         );
         const uniqueForSource = deduplicateArticles(articleLikeItems);
 
@@ -133,7 +137,8 @@ async function collectNews({
           group: source.group,
           fetched: result.articles.length,
           selected: uniqueForSource.length,
-          nonArticlesRejected: result.articles.length - articleLikeItems.length,
+          nonArticlesRejected: result.articles.length - structurallyValidItems.length,
+          editorialNoiseRejected: structurallyValidItems.length - articleLikeItems.length,
           errors: result.errors,
           articles: uniqueForSource,
         };
@@ -150,6 +155,7 @@ async function collectNews({
           fetched: 0,
           selected: 0,
           nonArticlesRejected: 0,
+          editorialNoiseRejected: 0,
           errors: [error?.message || "Source collection failed"],
           articles: [],
         };
@@ -196,6 +202,7 @@ async function collectNews({
       fetched: result.fetched,
       selected: result.selected,
       nonArticlesRejected: result.nonArticlesRejected,
+      editorialNoiseRejected: result.editorialNoiseRejected || 0,
       errors: result.errors,
     })),
   };
@@ -213,7 +220,7 @@ function localEvaluation(article) {
     importance,
     category,
     paper: resolvePaper(category),
-    reason: `Collected from the fresh feed of ${independentCoverage} publisher${independentCoverage === 1 ? "" : "s"}; no importance selection applied.`,
+    reason: `Passed the deterministic public-news gate and came from ${independentCoverage} fresh publisher${independentCoverage === 1 ? "" : "s"}; no AI importance ranking applied.`,
     keywords: [],
   };
 }
@@ -231,6 +238,12 @@ async function evaluateCandidates(supabase, articles, { historyDate = "" } = {})
     const safety = assessNewsCandidate(article);
     if (!safety.allowed) {
       skipped.push({ title: article.title, reason: safety.code });
+      continue;
+    }
+
+    const editorial = assessNewsEditorialValue(article);
+    if (!editorial.allowed) {
+      skipped.push({ title: article.title, reason: editorial.code });
       continue;
     }
 
@@ -356,6 +369,10 @@ async function executeAutoPublish({
       newsBatchSize,
       historyDate,
     });
+    const editorialNoiseRejected = collection.sources.reduce(
+      (total, source) => total + Number(source.editorialNoiseRejected || 0),
+      0
+    );
     const evaluated = await evaluateCandidates(supabase, collection.articles, {
       historyDate,
     });
@@ -391,6 +408,7 @@ async function executeAutoPublish({
         evaluated: evaluated.accepted.length + evaluated.rejected.length,
         relevantCandidates: evaluated.accepted.length,
         rejectedCandidates: evaluated.rejected.length,
+        editorialNoiseRejected,
         rejectedAfterValidation,
         duplicatesOrInvalidSkipped: evaluated.skipped.length,
         deferredForNextRun: 0,
