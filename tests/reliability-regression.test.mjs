@@ -66,8 +66,12 @@ test("Current Affairs keeps its retry queue while News publishes directly", () =
   // Current Affairs keeps its durable AI retry queue.
   assert.match(workflow, /drain_queue 300 coverage/);
 
-  // Normal News no longer waits in that queue.
-  assert.doesNotMatch(workflow, /drain_queue\s+\d+\s+news/);
+  // Normal News still bypasses the queue. A dedicated one-time news-release
+  // mode is allowed to drain legacy Supabase News rows.
+  const normalNewsBlock = workflow.match(/\n\s+news\)\n([\s\S]*?)\n\s+;;/)?.[1] || "";
+  assert.doesNotMatch(normalNewsBlock, /drain_queue\s+\d+\s+news/);
+  assert.match(workflow, /news-release\)/);
+  assert.match(workflow, /drain_queue 2700 news 220/);
   assert.match(autoPublish, /publishCandidatesDirectly/);
   assert.doesNotMatch(autoPublish, /queueCandidate/);
 });

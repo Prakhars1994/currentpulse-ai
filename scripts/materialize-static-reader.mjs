@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { createClient } from "@supabase/supabase-js";
 
 function arg(name, fallback = "") {
   const index = process.argv.indexOf(name);
@@ -19,6 +20,11 @@ const freshDays = Math.max(
   Math.min(30, Number(arg("--fresh-days", "3")) || 3)
 );
 const reuseBefore = Date.now() - freshDays * 86_400_000;
+const reuseLocal = ["1", "true", "yes"].includes(
+  String(arg("--reuse-local", process.env.STATIC_READER_REUSE_LOCAL || "0")).toLowerCase()
+);
+const supabaseUrl = String(process.env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
+const supabaseServiceKey = String(process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
 const maxPages = Math.max(
   25,
   Math.min(
@@ -205,6 +211,67 @@ function destinationFor(pathname) {
   return path.join(outDir, safe, "index.html");
 }
 
+async function addRecentlyChangedDatabasePaths(paths) {
+  if (!supabaseUrl || !supabaseServiceKey) return;
+  try {
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const since = new Date(reuseBefore).toISOString();
+    const [articleResult, examResult] = await Promise.all([
+      supabase
+        .from("articles")
+        .select("slug,created_at,updated_at,article_sources(source_kind)")
+        .eq("status", "published")
+        .gte("updated_at", since)
+        .order("updated_at", { ascending: false })
+        .limit(1200),
+      supabase
+        .from("exam_updates")
+        .select("slug,created_at,updated_at")
+        .eq("status", "published")
+        .gte("updated_at", since)
+        .order("updated_at", { ascending: false })
+        .limit(800),
+    ]);
+
+    if (articleResult.error) {
+      console.warn(`[static-reader] Recent article refresh query failed: ${articleResult.error.message}`);
+    } else {
+      for (const article of articleResult.data || []) {
+        if (!article?.slug) continue;
+        const kinds = new Set((article.article_sources || []).map((source) => source?.source_kind));
+        const lastModified = article.updated_at || article.created_at || new Date().toISOString();
+        if (kinds.has("news")) {
+          const route = `/news/${article.slug}`;
+          paths.add(route);
+          pathMetadata.set(route, { lastModified });
+        }
+        if (kinds.has("coaching")) {
+          const route = `/current-affairs/${article.slug}`;
+          paths.add(route);
+          pathMetadata.set(route, { lastModified });
+        }
+      }
+    }
+
+    if (examResult.error) {
+      console.warn(`[static-reader] Recent exam refresh query failed: ${examResult.error.message}`);
+    } else {
+      for (const exam of examResult.data || []) {
+        if (!exam?.slug) continue;
+        const route = `/exams/${exam.slug}`;
+        paths.add(route);
+        pathMetadata.set(route, {
+          lastModified: exam.updated_at || exam.created_at || new Date().toISOString(),
+        });
+      }
+    }
+  } catch (error) {
+    console.warn(`[static-reader] Recent database refresh lookup failed: ${error?.message || error}`);
+  }
+}
+
 async function collectPaths() {
   const paths = new Set(CORE_PATHS);
 
@@ -246,6 +313,8 @@ async function collectPaths() {
     }
   }
 
+  await addRecentlyChangedDatabasePaths(paths);
+
   return [...paths]
     .filter(isReaderPath)
     .sort((a, b) => priority(a) - priority(b))
@@ -263,6 +332,24 @@ async function renderOne(pathname) {
       lastModified > 0 &&
       lastModified < reuseBefore
   );
+  const destination = destinationFor(pathname);
+  if (reuseLocal && reuseExisting) {
+    try {
+      const stat = await fs.stat(destination);
+      if (stat.isFile() && stat.size >= 500) {
+        return {
+          pathname,
+          ok: true,
+          status: 200,
+          bytes: stat.size,
+          reused: true,
+          reusedLocal: true,
+        };
+      }
+    } catch {
+      // Cache miss: fall through to live/base rendering.
+    }
+  }
   const selectedBase = reuseExisting ? reuseBase : base;
   const url = `${selectedBase}${pathname}`;
   try {
@@ -283,7 +370,6 @@ async function renderOne(pathname) {
       return { pathname, ok: false, status: response.status, reason: "HTML response was unexpectedly small." };
     }
 
-    const destination = destinationFor(pathname);
     await fs.mkdir(path.dirname(destination), { recursive: true });
     await fs.writeFile(destination, injectStaticGuard(text), "utf8");
     return {
@@ -390,6 +476,7 @@ const skippedForBudget = paths.filter(
 );
 const succeeded = results.filter((item) => item?.ok);
 const reused = succeeded.filter((item) => item.reused);
+const reusedLocal = succeeded.filter((item) => item.reusedLocal);
 const failed = results.filter((item) => item && !item.ok);
 const requiredFailures = [
   ...failed.filter((item) => CORE_PATHS.includes(item.pathname)),
@@ -411,6 +498,8 @@ const manifest = {
   generatedPages: succeeded.length,
   freshlyRenderedPages: succeeded.length - reused.length,
   reusedArchivePages: reused.length,
+  reusedLocalArchivePages: reusedLocal.length,
+  localReuseEnabled: reuseLocal,
   failedPages: failed.length,
   skippedForBudget: skippedForBudget.length,
   budgetExhausted: renderRun.budgetExhausted,

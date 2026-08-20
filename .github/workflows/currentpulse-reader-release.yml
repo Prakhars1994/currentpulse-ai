@@ -1,0 +1,167 @@
+name: CurrentPulse Incremental Reader Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Why the public reader needs refreshing"
+        required: false
+        default: "content-change"
+        type: string
+      expected_sha:
+        description: "Commit that produced the content mutation"
+        required: false
+        default: ""
+        type: string
+      full:
+        description: "Force full reader regeneration"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: currentpulse-reader-release
+  cancel-in-progress: true
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_BASE_URL: https://cp.vliab.workers.dev
+  NEXT_PUBLIC_SITE_URL: https://cp.vliab.workers.dev
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Use Node 24 with npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Validate release secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" ]] || { echo "Missing NEXT_PUBLIC_SUPABASE_URL"; exit 1; }
+          [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] || { echo "Missing SUPABASE_SERVICE_ROLE_KEY"; exit 1; }
+          [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]] || { echo "Missing CLOUDFLARE_API_TOKEN"; exit 1; }
+          [[ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]] || { echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+          if [[ -n "${{ inputs.expected_sha }}" && "${{ inputs.expected_sha }}" != "${GITHUB_SHA}" ]]; then
+            echo "Requested commit ${{ inputs.expected_sha }} is no longer current; releasing current main ${GITHUB_SHA} instead."
+          fi
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Restore validated release snapshot
+        id: release-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .next
+            .open-next
+          key: currentpulse-release-${{ github.sha }}-${{ github.run_id }}
+          restore-keys: |
+            currentpulse-release-${{ github.sha }}-
+
+      - name: Inspect restored release
+        id: restored
+        shell: bash
+        run: |
+          if [[ -f .next/BUILD_ID && -f .open-next/worker.js ]]; then
+            echo "ready=true" >> "${GITHUB_OUTPUT}"
+            echo "Validated build snapshot restored; skipping OpenNext rebuild."
+          else
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            echo "No validated snapshot for this commit; one fallback build is required."
+          fi
+
+      - name: Fallback build only when cache is missing
+        if: steps.restored.outputs.ready != 'true'
+        run: npx opennextjs-cloudflare build
+
+      - name: Start reader renderer
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx next start --hostname 127.0.0.1 --port 3100 > /tmp/currentpulse-reader.log 2>&1 &
+          echo $! > /tmp/currentpulse-reader.pid
+          for attempt in {1..60}; do
+            if curl --silent --fail --max-time 3 http://127.0.0.1:3100/icon.svg >/dev/null; then
+              echo "Reader renderer ready."
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/currentpulse-reader.log || true
+          exit 1
+
+      - name: Refresh only changed and recent reader pages
+        shell: bash
+        env:
+          FULL_RELEASE: ${{ inputs.full }}
+        run: |
+          set -euo pipefail
+          reuse_local=1
+          if [[ "${FULL_RELEASE}" == "true" ]]; then
+            reuse_local=0
+          fi
+          node scripts/materialize-static-reader.mjs \
+            --base http://127.0.0.1:3100 \
+            --reuse-base https://cp.vliab.workers.dev \
+            --reuse-local "${reuse_local}" \
+            --fresh-days 3 \
+            --out .open-next/assets \
+            --max-pages 1200 \
+            --concurrency 3 \
+            --timeout-ms 10000 \
+            --budget-seconds 720
+
+      - name: Stop reader renderer
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f /tmp/currentpulse-reader.pid ]]; then
+            kill "$(cat /tmp/currentpulse-reader.pid)" 2>/dev/null || true
+          fi
+
+      - name: Deploy refreshed reader
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy --config wrangler.jsonc
+
+      - name: Verify refreshed reader
+        shell: bash
+        run: |
+          set -euo pipefail
+          base="https://cp.vliab.workers.dev"
+          for path in / /current-affairs /news /exams /quiz /feed.xml /currentpulse-static-reader-manifest.json; do
+            echo "Checking ${base}${path}"
+            curl --silent --show-error --fail --location --retry 3 --retry-delay 2 --max-time 60 "${base}${path}" >/dev/null
+          done
+          echo "Incremental public reader release passed."
+
+      - name: Save refreshed release snapshot
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            .next
+            .open-next
+          key: currentpulse-release-${{ github.sha }}-${{ github.run_id }}

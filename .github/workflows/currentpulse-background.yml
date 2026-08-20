@@ -21,12 +21,14 @@ on:
           - news
           - news-catchup
           - news-repair
+          - news-release
           - coverage
           - queue
           - exams
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: currentpulse-background-automation
@@ -111,11 +113,39 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund
 
+      - name: Restore validated runtime snapshot
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .next
+            .open-next
+          key: currentpulse-runtime-${{ github.sha }}-${{ github.run_id }}
+          restore-keys: |
+            currentpulse-release-${{ github.sha }}-
+
+      - name: Capture public release state
+        id: release-before
+        shell: bash
+        run: |
+          set +e
+          fingerprint="$(node scripts/public-release-state.mjs --fingerprint-only 2>/tmp/currentpulse-release-before.err)"
+          status=$?
+          set -e
+          if [[ "${status}" -ne 0 || -z "${fingerprint}" ]]; then
+            cat /tmp/currentpulse-release-before.err || true
+            fingerprint="unknown-before-${GITHUB_RUN_ID}"
+          fi
+          echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
+
       - name: Start private local Next server
         shell: bash
         run: |
           set -euo pipefail
-          npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/currentpulse-next.log 2>&1 &
+          if [[ -f .next/BUILD_ID ]]; then
+            npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/currentpulse-next.log 2>&1 &
+          else
+            npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/currentpulse-next.log 2>&1 &
+          fi
           echo $! > /tmp/currentpulse-next.pid
 
           for attempt in {1..45}; do
@@ -164,12 +194,13 @@ jobs:
           drain_queue() {
             local max_seconds="${1:-300}"
             local pipeline="${2:-mixed}"
+            local max_batches="${3:-60}"
             local started batch tmp code curl_status processed outage
             started="$(date +%s)"
             echo
             echo "===== DRAIN READY QUEUE (${max_seconds}s budget) ====="
 
-            for batch in $(seq 1 60); do
+            for batch in $(seq 1 "${max_batches}"); do
               if (( $(date +%s) - started >= max_seconds )); then
                 echo "Queue drain reached its safety budget."
                 break
@@ -262,7 +293,53 @@ jobs:
               api_optional "/api/news-quality-repair?apply=1&limit=30"
               ;;
             news-repair)
-              api_required "/api/news-quality-repair?apply=1&limit=30"
+              api_required "/api/news-quality-repair?apply=1&limit=20"
+              ;;
+            news-release)
+              echo "===== RELEASE ALL VALID NEWS ALREADY IN SUPABASE ====="
+              node scripts/news-backlog-status.mjs || true
+
+              # Legacy News queue only. New News continues to bypass article_queue.
+              drain_queue 2700 news 220
+
+              # Walk the whole published News archive once and rebuild every
+              # thin row that has enough retained source evidence.
+              repair_started="$(date +%s)"
+              repair_cursor=""
+              repair_complete="false"
+              for repair_batch in $(seq 1 180); do
+                if (( $(date +%s) - repair_started >= 1500 )); then
+                  echo "Published News repair reached its 25-minute safety budget."
+                  break
+                fi
+                repair_path="/api/news-quality-repair?apply=1&limit=20"
+                if [[ -n "${repair_cursor}" ]]; then
+                  repair_path="${repair_path}&cursor=${repair_cursor}"
+                fi
+                tmp="$(mktemp)"
+                set +e
+                code="$(curl --silent --show-error --max-time 155 --output "${tmp}" --write-out "%{http_code}" -H "Authorization: Bearer ${CRON_SECRET}" "http://127.0.0.1:3000${repair_path}")"
+                curl_status=$?
+                set -e
+                cat "${tmp}" || true
+                echo
+                if [[ "${curl_status}" -ne 0 || "${code}" -lt 200 || "${code}" -ge 300 ]]; then
+                  rm -f "${tmp}"
+                  echo "Published News repair request failed; retained rows remain safe for a future retry."
+                  break
+                fi
+                next_cursor="$(node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(p?.nextCursor?String(p.nextCursor):"")' "${tmp}")"
+                rm -f "${tmp}"
+                if [[ -z "${next_cursor}" ]]; then
+                  repair_complete="true"
+                  break
+                fi
+                repair_cursor="${next_cursor}"
+              done
+
+              echo "NEWS_REPAIR_COMPLETE=${repair_complete}"
+              echo "===== NEWS SUPABASE STATUS AFTER RELEASE ====="
+              node scripts/news-backlog-status.mjs || true
               ;;
             collect)
               # CA first: News can never prevent Current Affairs processing.
@@ -372,69 +449,36 @@ jobs:
             kill "$(cat /tmp/currentpulse-next.pid)" 2>/dev/null || true
           fi
 
-      - name: Check static-reader deploy readiness
-        id: reader-deploy
+      - name: Detect public content changes
+        id: release-change
+        if: always()
         shell: bash
         run: |
-          if [[ -n "${CLOUDFLARE_API_TOKEN:-}" && -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
-            echo "ready=true" >> "${GITHUB_OUTPUT}"
+          set +e
+          after="$(node scripts/public-release-state.mjs --fingerprint-only 2>/tmp/currentpulse-release-after.err)"
+          status=$?
+          set -e
+          before="${{ steps.release-before.outputs.fingerprint }}"
+          if [[ "${status}" -ne 0 || -z "${after}" ]]; then
+            cat /tmp/currentpulse-release-after.err || true
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+            echo "Release-state check failed; fail-safe reader refresh requested."
+          elif [[ "${before}" != "${after}" ]]; then
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+            echo "Public content changed: ${before} -> ${after}"
           else
-            echo "ready=false" >> "${GITHUB_OUTPUT}"
-            echo "::warning title=Static reader deploy skipped::Content automation completed. Add CLOUDFLARE_API_TOKEN for unattended Cloudflare snapshot deployment."
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            echo "No public content changed; no Cloudflare rebuild/deploy is required."
           fi
 
-      - name: Build validated reader release
-        if: steps.reader-deploy.outputs.ready == 'true'
-        run: npx opennextjs-cloudflare build
-
-      - name: Start production reader renderer
-        if: steps.reader-deploy.outputs.ready == 'true'
+      - name: Request incremental reader release
+        if: always() && steps.release-change.outputs.changed == 'true'
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          npx next start --hostname 127.0.0.1 --port 3100 > /tmp/currentpulse-reader.log 2>&1 &
-          echo $! > /tmp/currentpulse-reader.pid
-          for attempt in {1..60}; do
-            if curl --silent --fail --max-time 3 http://127.0.0.1:3100/icon.svg >/dev/null; then
-              echo "Production reader renderer ready."
-              exit 0
-            fi
-            sleep 2
-          done
-          cat /tmp/currentpulse-reader.log || true
-          exit 1
-
-      - name: Materialize public reader into Cloudflare Static Assets
-        if: steps.reader-deploy.outputs.ready == 'true'
-        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --reuse-base https://cp.vliab.workers.dev --fresh-days 3 --out .open-next/assets --max-pages 1200 --concurrency 3 --timeout-ms 10000 --budget-seconds 720
-
-      - name: Stop production reader renderer
-        if: always() && steps.reader-deploy.outputs.ready == 'true'
-        shell: bash
-        run: |
-          if [[ -f /tmp/currentpulse-reader.pid ]]; then
-            kill "$(cat /tmp/currentpulse-reader.pid)" 2>/dev/null || true
-          fi
-
-      - name: Validate static-reader deploy credentials
-        if: steps.reader-deploy.outputs.ready == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]] || { echo "::error title=Cloudflare deploy blocked::Add repository secret CLOUDFLARE_API_TOKEN."; exit 1; }
-          [[ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]] || { echo "::error title=Cloudflare deploy blocked::Add repository secret CLOUDFLARE_ACCOUNT_ID."; exit 1; }
-
-      - name: Deploy refreshed static reader
-        if: steps.reader-deploy.outputs.ready == 'true'
-        run: npx wrangler deploy --config wrangler.jsonc
-
-      - name: Verify refreshed reader
-        if: steps.reader-deploy.outputs.ready == 'true'
-        shell: bash
-        run: |
-          set -euo pipefail
-          base="https://cp.vliab.workers.dev"
-          for path in / /current-affairs /news /exams /quiz /feed.xml /currentpulse-static-reader-manifest.json; do
-            echo "Checking ${base}${path}"
-            curl --silent --show-error --fail --location --retry 3 --retry-delay 2 --max-time 60 "${base}${path}" >/dev/null
-          done
+          gh workflow run "currentpulse-reader-release.yml" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f reason="content-${GITHUB_WORKFLOW}-${GITHUB_RUN_ID}" \
+            -f expected_sha="${GITHUB_SHA}"

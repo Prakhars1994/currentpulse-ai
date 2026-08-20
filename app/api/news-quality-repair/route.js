@@ -9,8 +9,8 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 150;
 
 const MAX_SCAN = 120;
-const MAX_REPAIR = 30;
-const CONCURRENCY = 2;
+const MAX_REPAIR = 20;
+const CONCURRENCY = 3;
 
 function authorised(request) {
   const secret = process.env.CRON_SECRET?.trim() || "";
@@ -76,17 +76,20 @@ export async function GET(request) {
     Math.max(1, Number(searchParams.get("limit")) || MAX_REPAIR)
   );
 
+  const cursor = Math.max(0, Number(searchParams.get("cursor")) || 0);
   const supabase = createServerSupabase();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("articles")
     .select(
       "id,title,slug,category,content,why_news,static_foundation,data_examples,india_relevance,quality_flags,created_at,article_sources!inner(source_kind,source_name,source_title,source_url,source_published_at)"
     )
     .eq("status", "published")
     .eq("article_sources.source_kind", "news")
-    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(MAX_SCAN);
+  if (cursor > 0) query = query.lt("id", cursor);
+  const { data, error } = await query;
 
   if (error) {
     return NextResponse.json(
@@ -95,9 +98,14 @@ export async function GET(request) {
     );
   }
 
-  const candidates = (data || [])
-    .filter(needsRepair)
-    .slice(0, repairLimit);
+  const allCandidates = (data || []).filter(needsRepair);
+  const candidates = allCandidates.slice(0, repairLimit);
+  let nextCursor = null;
+  if (allCandidates.length > candidates.length && candidates.length) {
+    nextCursor = Number(candidates.at(-1)?.id || 0) || null;
+  } else if ((data || []).length === MAX_SCAN) {
+    nextCursor = Number((data || []).at(-1)?.id || 0) || null;
+  }
 
   if (!apply) {
     return NextResponse.json({
@@ -105,6 +113,8 @@ export async function GET(request) {
       mode: "dry_run",
       scanned: data?.length || 0,
       candidates: candidates.length,
+      cursor: cursor || null,
+      nextCursor,
       articles: candidates.map((article) => ({
         id: article.id,
         slug: article.slug,
@@ -159,6 +169,8 @@ export async function GET(request) {
     mode: "applied",
     scanned: data?.length || 0,
     candidates: candidates.length,
+    cursor: cursor || null,
+    nextCursor,
     rebuilt: results.filter((item) => item.status === "rebuilt").length,
     skipped: results.filter((item) => item.status === "skipped").length,
     failed: results.filter((item) => item.status === "failed").length,

@@ -28,6 +28,9 @@ test("static reader materializer blocks Next RSC prefetch and emits an asset man
   assert.match(source, /currentpulse-static-reader-manifest\.json/);
   assert.match(source, /reuse-base/);
   assert.match(source, /reusedArchivePages/);
+  assert.match(source, /reusedLocalArchivePages/);
+  assert.match(source, /reuse-local/);
+  assert.match(source, /addRecentlyChangedDatabasePaths/);
   assert.match(source, /materializeStaticFiles/);
   assert.match(source, /requiredStaticFailures/);
   assert.match(source, /name=\["'\]currentpulse-static-reader/);

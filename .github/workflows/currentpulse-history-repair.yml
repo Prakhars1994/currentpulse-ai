@@ -14,6 +14,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 concurrency:
   group: currentpulse-history-repair
@@ -78,11 +79,39 @@ jobs:
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund
 
+      - name: Restore validated runtime snapshot
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .next
+            .open-next
+          key: currentpulse-runtime-${{ github.sha }}-${{ github.run_id }}
+          restore-keys: |
+            currentpulse-release-${{ github.sha }}-
+
+      - name: Capture public release state
+        id: release-before
+        shell: bash
+        run: |
+          set +e
+          fingerprint="$(node scripts/public-release-state.mjs --fingerprint-only 2>/tmp/currentpulse-release-before.err)"
+          status=$?
+          set -e
+          if [[ "${status}" -ne 0 || -z "${fingerprint}" ]]; then
+            cat /tmp/currentpulse-release-before.err || true
+            fingerprint="unknown-before-${GITHUB_RUN_ID}"
+          fi
+          echo "fingerprint=${fingerprint}" >> "${GITHUB_OUTPUT}"
+
       - name: Start private local Next server
         shell: bash
         run: |
           set -euo pipefail
-          npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/currentpulse-next.log 2>&1 &
+          if [[ -f .next/BUILD_ID ]]; then
+            npm run start -- --hostname 127.0.0.1 --port 3000 > /tmp/currentpulse-next.log 2>&1 &
+          else
+            npm run dev -- --hostname 127.0.0.1 --port 3000 > /tmp/currentpulse-next.log 2>&1 &
+          fi
           echo $! > /tmp/currentpulse-next.pid
           for attempt in {1..45}; do
             if curl --silent --fail --max-time 3 http://127.0.0.1:3000/icon.svg >/dev/null; then
@@ -169,3 +198,37 @@ jobs:
           if [[ -f /tmp/currentpulse-next.pid ]]; then
             kill "$(cat /tmp/currentpulse-next.pid)" 2>/dev/null || true
           fi
+
+      - name: Detect public content changes
+        id: release-change
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          after="$(node scripts/public-release-state.mjs --fingerprint-only 2>/tmp/currentpulse-release-after.err)"
+          status=$?
+          set -e
+          before="${{ steps.release-before.outputs.fingerprint }}"
+          if [[ "${status}" -ne 0 || -z "${after}" ]]; then
+            cat /tmp/currentpulse-release-after.err || true
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+            echo "Release-state check failed; fail-safe reader refresh requested."
+          elif [[ "${before}" != "${after}" ]]; then
+            echo "changed=true" >> "${GITHUB_OUTPUT}"
+            echo "Public content changed: ${before} -> ${after}"
+          else
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
+            echo "No public content changed; no Cloudflare rebuild/deploy is required."
+          fi
+
+      - name: Request incremental reader release
+        if: always() && steps.release-change.outputs.changed == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run "currentpulse-reader-release.yml" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --ref main \
+            -f reason="content-${GITHUB_WORKFLOW}-${GITHUB_RUN_ID}" \
+            -f expected_sha="${GITHUB_SHA}"

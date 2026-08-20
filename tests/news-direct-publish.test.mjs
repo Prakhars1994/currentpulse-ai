@@ -37,10 +37,18 @@ test("accepted News publishes directly without article_queue", () => {
 test("normal News automation no longer drains a News queue", () => {
   assert.match(background, /NEWS_PUBLISH_CONCURRENCY/);
   assert.match(background, /NEWS_ENRICHMENT_DEADLINE_MS/);
+
+  // The ordinary News mode must stay direct-publish and queue-free.
+  // A separate one-time news-release maintenance mode is allowed to drain
+  // legacy Supabase News rows created by the old architecture.
+  const normalNewsBlock =
+    background.match(/\n\s+news\)\n([\s\S]*?)\n\s+;;/)?.[1] || "";
   assert.doesNotMatch(
-    background,
+    normalNewsBlock,
     /drain_queue\s+\d+\s+news/
   );
+  assert.match(background, /news-release\)/);
+  assert.match(background, /drain_queue 2700 news 220/);
 
   assert.match(background, /news-catchup\)/);
   assert.match(background, /newsBatch=\$\{news_batch\}/);

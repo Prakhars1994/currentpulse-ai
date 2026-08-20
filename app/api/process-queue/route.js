@@ -19,6 +19,7 @@ import { isCoverageNoiseTitle } from "@/lib/coverage/noiseFilter";
 import {
   assessNewsCandidate,
 } from "@/lib/editorial/publicationSafety";
+import { assessNewsEditorialValue } from "@/lib/news/newsEditorialGate";
 import { isSameEvent } from "@/lib/news/eventCluster";
 import { cleanTrustedCoverageText } from "@/lib/coverage/contentCleaner";
 import { inspectCoverageCandidate } from "@/lib/coverage/sourceSanitizer";
@@ -231,6 +232,51 @@ async function recoverRecentFailedItems(supabase) {
   return data?.length || 0;
 }
 
+async function recoverLegacyNewsQueue(supabase) {
+  const { data, error } = await supabase
+    .from("article_queue")
+    .select("id,status,attempts,error,pipeline_kind")
+    .in("status", ["pending", "failed"])
+    .limit(2000);
+  if (error) {
+    console.warn("[Queue processor] Legacy News recovery skipped:", error.message);
+    return 0;
+  }
+
+  const recoverablePattern = /waiting for ai|gemini|openrouter|invalid json|quality validation|incomplete|quota|rate limit|timeout|timed out|fetch failed|network error|provider/i;
+  const blockedPattern = /PUBLICATION_BLOCKED|Publication safety rejected/i;
+  const ids = (data || [])
+    .filter((row) => !COACHING_PIPELINES.includes(row.pipeline_kind))
+    .filter((row) => {
+      if (row.status === "pending" && Number(row.attempts || 0) >= 3) return true;
+      if (row.status !== "failed") return false;
+      const message = String(row.error || "");
+      return recoverablePattern.test(message) && !blockedPattern.test(message);
+    })
+    .map((row) => row.id)
+    .filter(Boolean);
+  if (!ids.length) return 0;
+
+  const now = new Date().toISOString();
+  const { data: recovered, error: updateError } = await supabase
+    .from("article_queue")
+    .update({
+      status: "pending",
+      attempts: 0,
+      processing_started_at: null,
+      processed_at: null,
+      updated_at: now,
+      error: "Recovered for deterministic zero-AI News release.",
+    })
+    .in("id", ids)
+    .select("id");
+  if (updateError) {
+    console.warn("[Queue processor] Legacy News recovery failed:", updateError.message);
+    return 0;
+  }
+  return recovered?.length || 0;
+}
+
 function queueLane(item = {}) {
   return isCoverageQueueItem(item) ? "coverage" : "news";
 }
@@ -414,7 +460,10 @@ async function executeQueueProcessing(
     const recoveredFailed = shouldRecoverFailedQueue()
       ? await recoverRecentFailedItems(supabase)
       : 0;
-    const recovered = recoveredStale + recoveredFailed;
+    const recoveredLegacyNews = requestedLane === "news"
+      ? await recoverLegacyNewsQueue(supabase)
+      : 0;
+    const recovered = recoveredStale + recoveredFailed + recoveredLegacyNews;
 
     async function worker(workerNumber) {
       while (!stopRequested) {
@@ -495,6 +544,9 @@ async function executeQueueProcessing(
           const newsSafety = !isCoverageQueueItem(claimedItem)
             ? assessNewsCandidate(claimedItem)
             : null;
+          const newsEditorial = !isCoverageQueueItem(claimedItem)
+            ? assessNewsEditorialValue(claimedItem)
+            : null;
           const coverageEvidence = isCoverageQueueItem(claimedItem)
             ? assessCoverageEvidence(claimedItem)
             : null;
@@ -504,13 +556,15 @@ async function executeQueueProcessing(
                 isCoverageNoiseTitle(claimedItem.title) ||
                 !coverageSourceSafety?.accepted
               )) ||
-            (!isCoverageQueueItem(claimedItem) && !newsSafety.allowed)
+            (!isCoverageQueueItem(claimedItem) && (!newsSafety.allowed || !newsEditorial?.allowed))
           ) {
             const assessment = newsSafety;
             const reason = `Publication safety rejected this queue item: ${
               coverageSourceSafety && !coverageSourceSafety.accepted
                 ? coverageSourceSafety.reason
-                : assessment?.reason || "non-article page"
+                : !assessment?.allowed
+                  ? assessment?.reason || "non-article page"
+                  : newsEditorial?.reason || "low-value News item"
             }`;
             await markQueueRejected(supabase, claimedItem.id, reason);
             results.push({
@@ -676,6 +730,7 @@ async function executeQueueProcessing(
       stats: {
         sourcePolicyRejected,
         recovered,
+        recoveredLegacyNews,
         processed: results.length,
         published: publishedCount,
         dualStream: dualStreamCount,
