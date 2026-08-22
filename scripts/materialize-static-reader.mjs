@@ -12,6 +12,9 @@ function arg(name, fallback = "") {
 const base = String(arg("--base", process.env.STATIC_READER_BASE || "http://127.0.0.1:3100"))
   .replace(/\/+$/, "");
 const outDir = path.resolve(arg("--out", ".open-next/assets"));
+const changedFile = String(
+  arg("--changed-file", process.env.STATIC_READER_CHANGED_FILE || "")
+).trim();
 const reuseBase = String(
   arg("--reuse-base", process.env.STATIC_READER_REUSE_BASE || "")
 ).replace(/\/+$/, "");
@@ -296,7 +299,62 @@ async function addRecentlyChangedDatabasePaths(paths) {
   }
 }
 
+async function collectExplicitChangedPaths() {
+  if (!changedFile) return [];
+
+  const source = path.resolve(changedFile);
+  const raw = await fs.readFile(source, "utf8");
+  const paths = [
+    ...new Set(
+      raw
+        .split(/\r?\n/)
+        .map((value) => String(value || "").trim())
+        .filter(Boolean)
+        .map((value) => {
+          try {
+            if (/^https?:\/\//i.test(value)) {
+              return new URL(value).pathname.replace(/\/+$/, "") || "/";
+            }
+          } catch {
+            return "";
+          }
+          return value.startsWith("/")
+            ? (value.replace(/\/+$/, "") || "/")
+            : "";
+        })
+        .filter(isReaderPath)
+    ),
+  ];
+
+  if (!paths.length) {
+    throw new Error(
+      `Changed-path file ${source} contained no valid reader paths.`
+    );
+  }
+
+  return paths;
+}
+
 async function collectPaths() {
+  if (changedFile) {
+    const explicitPaths = await collectExplicitChangedPaths();
+
+    // Core landing pages are intentionally tiny and may contain aggregate
+    // counts/cards affected by any public mutation. Refreshing these alongside
+    // the exact changed details keeps the incremental release safe without
+    // walking the historical sitemap/archive.
+    const paths = new Set([...CORE_PATHS, ...explicitPaths]);
+
+    return [...paths]
+      .filter(isReaderPath)
+      .sort((a, b) => {
+        const priorityDelta = priority(a) - priority(b);
+        if (priorityDelta) return priorityDelta;
+        return a.localeCompare(b);
+      })
+      .slice(0, maxPages);
+  }
+
   const paths = new Set(CORE_PATHS);
 
   // Query-string pagination cannot be materialized as distinct Cloudflare
@@ -550,7 +608,10 @@ const requiredFailures = [
 const manifest = {
   generatedAt,
   base,
-  mode: "asset-first-static-reader",
+  mode: changedFile
+    ? "asset-first-static-reader-incremental"
+    : "asset-first-static-reader",
+  changedFile: changedFile || null,
   candidatePages: paths.length,
   generatedPages: succeeded.length,
   freshlyRenderedPages: succeeded.length - reused.length,

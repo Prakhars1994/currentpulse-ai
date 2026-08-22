@@ -37,6 +37,10 @@ test("static reader materializer blocks Next RSC prefetch and emits an asset man
   assert.match(source, /STATIC_NEWS_ARCHIVE_PAGES \|\| 48/);
   assert.match(source, /materializeStaticFiles/);
   assert.match(source, /requiredStaticFailures/);
+  assert.match(source, /--changed-file/);
+  assert.match(source, /collectExplicitChangedPaths/);
+  assert.match(source, /asset-first-static-reader-incremental/);
+  assert.match(source, /contained no valid reader paths/);
   assert.match(source, /name=\["'\]currentpulse-static-reader/);
 });
 
