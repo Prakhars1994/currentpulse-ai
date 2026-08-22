@@ -38,3 +38,37 @@ test("legacy queue processor carries its original collection timestamp into publ
   assert.match(processor, /freshnessReferenceDate/);
   assert.match(processor, /claimedItem\.created_at \|\| claimedItem\.updated_at/);
 });
+
+test("published News archive does not reapply current output-depth requirements", () => {
+  const streams = read("lib/articleStreams.js");
+  const quality = read("lib/news/newsQuality.js");
+
+  assert.match(streams, /isArchiveWorthyNews\(article\)/);
+
+  const archiveStart = quality.indexOf(
+    "export function isArchiveWorthyNews"
+  );
+  const displayStart = quality.indexOf(
+    "export function isDisplayWorthyNews"
+  );
+
+  assert.ok(archiveStart >= 0, "archive visibility gate must exist");
+  assert.ok(
+    displayStart > archiveStart,
+    "publication-quality gate must remain separate from archive visibility"
+  );
+
+  const archiveGate = quality.slice(archiveStart, displayStart);
+
+  assert.doesNotMatch(
+    archiveGate,
+    /assessNewsOutputQuality/,
+    "historical archive must not inherit today's output-depth requirements"
+  );
+
+  assert.match(
+    quality.slice(displayStart),
+    /assessNewsOutputQuality/,
+    "publication/display quality validation must remain available for new News"
+  );
+});
