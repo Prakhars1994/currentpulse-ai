@@ -111,16 +111,78 @@ jobs:
           cat /tmp/currentpulse-reader.log || true
           exit 1
 
-      - name: Refresh only changed and recent reader pages
+      - name: Plan exact incremental reader paths
+        id: release-plan
         shell: bash
         env:
           FULL_RELEASE: ${{ inputs.full }}
         run: |
           set -euo pipefail
-          reuse_local=1
+
           if [[ "${FULL_RELEASE}" == "true" ]]; then
-            reuse_local=0
+            echo "mode=full" >> "${GITHUB_OUTPUT}"
+            echo "Manual full reader release requested."
+            exit 0
           fi
+
+          manifest="/tmp/currentpulse-live-reader-manifest.json"
+
+          if ! curl --silent --show-error --fail --location \
+            --retry 2 --retry-delay 2 --max-time 30 \
+            "https://cp.vliab.workers.dev/currentpulse-static-reader-manifest.json" \
+            --output "${manifest}"; then
+            echo "::warning title=Incremental reader fallback::Could not load the last deployed reader manifest; using a full release."
+            echo "mode=full" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          since="$(
+            node -e '
+              const fs=require("fs");
+              try {
+                const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));
+                process.stdout.write(String(p?.generatedAt || ""));
+              } catch {}
+            ' "${manifest}"
+          )"
+
+          if [[ -z "${since}" ]]; then
+            echo "::warning title=Incremental reader fallback::Deployed reader manifest has no valid watermark; using a full release."
+            echo "mode=full" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          if node scripts/public-release-paths.mjs \
+            --since "${since}" \
+            --out /tmp/currentpulse-reader-paths.txt; then
+
+            count="$(grep -cve '^[[:space:]]*$' /tmp/currentpulse-reader-paths.txt || true)"
+            echo "mode=incremental" >> "${GITHUB_OUTPUT}"
+            echo "Incremental reader plan contains ${count} explicit paths."
+            sed 's/^/  /' /tmp/currentpulse-reader-paths.txt
+          else
+            echo "::warning title=Incremental reader fallback::Changed-path planning could not prove a bounded safe release; using a full release."
+            rm -f /tmp/currentpulse-reader-paths.txt
+            echo "mode=full" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Refresh reader pages
+        shell: bash
+        env:
+          RELEASE_MODE: ${{ steps.release-plan.outputs.mode }}
+        run: |
+          set -euo pipefail
+
+          reuse_local=0
+          changed_args=()
+
+          if [[ "${RELEASE_MODE}" == "incremental" ]]; then
+            reuse_local=1
+            changed_args=(--changed-file /tmp/currentpulse-reader-paths.txt)
+          fi
+
+          echo "READER_RELEASE_MODE=${RELEASE_MODE}"
+
           node scripts/materialize-static-reader.mjs \
             --base http://127.0.0.1:3100 \
             --reuse-base https://cp.vliab.workers.dev \
@@ -130,7 +192,8 @@ jobs:
             --max-pages 1200 \
             --concurrency 3 \
             --timeout-ms 10000 \
-            --budget-seconds 720
+            --budget-seconds 720 \
+            "${changed_args[@]}"
 
       - name: Stop reader renderer
         if: always()

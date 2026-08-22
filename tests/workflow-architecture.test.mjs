@@ -11,6 +11,7 @@ const maintenance = load(".github/workflows/currentpulse-quality-maintenance.yml
 const production = load(".github/workflows/currentpulse-production.yml");
 const readerRelease = load(".github/workflows/currentpulse-reader-release.yml");
 const history = load(".github/workflows/currentpulse-history-repair.yml");
+const releasePaths = load("scripts/public-release-paths.mjs");
 
 test("GitHub background workflow is the single scheduled heavy automation owner", () => {
   assert.match(background, /workflow_dispatch:/);
@@ -32,9 +33,26 @@ test("content workflows dispatch one incremental reader release only after data 
     assert.doesNotMatch(workflow, /opennextjs-cloudflare build/);
   }
   assert.match(readerRelease, /materialize-static-reader\.mjs/);
+  assert.match(readerRelease, /public-release-paths\.mjs/);
+  assert.match(readerRelease, /currentpulse-static-reader-manifest\.json/);
+  assert.match(readerRelease, /--changed-file/);
+  assert.match(readerRelease, /mode=incremental/);
+  assert.match(readerRelease, /mode=full/);
   assert.match(readerRelease, /wrangler deploy/);
   assert.match(readerRelease, /actions\/cache\/restore@v4/);
   assert.match(readerRelease, /reuse-local/);
+});
+
+test("incremental reader planning is bounded and refreshes stream-specific public paths", () => {
+  assert.match(releasePaths, /article_sources/);
+  assert.match(releasePaths, /source_kind/);
+  assert.match(releasePaths, /NEWS_ARCHIVE_PAGES/);
+  assert.match(releasePaths, /\/news\/page\/\$\{page\}/);
+  assert.match(releasePaths, /\/current-affairs\/\$\{article\.slug\}/);
+  assert.match(releasePaths, /\/exams\/\$\{exam\.slug\}/);
+  assert.match(releasePaths, /\/quiz/);
+  assert.match(releasePaths, /FULL_RELEASE_REQUIRED/);
+  assert.match(releasePaths, /changed-row count exceeded safe incremental limit/);
 });
 
 test("production workflow validates code then materializes the same static reader architecture", () => {
