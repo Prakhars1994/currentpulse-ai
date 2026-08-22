@@ -503,6 +503,14 @@ async function executeQueueProcessing(
         const claimedItem = await claimQueueItem(supabase, queueItem);
         if (!claimedItem) continue;
 
+        if (!isCoverageQueueItem(claimedItem)) {
+          // New News bypasses article_queue. Therefore a News row reaching this
+          // processor is legacy backlog and must be judged against when it was
+          // collected, not against the day the repair job finally reaches it.
+          claimedItem.freshnessReferenceDate =
+            claimedItem.created_at || claimedItem.updated_at || null;
+        }
+
         const concurrentDuplicate = [...activeEventItems.values()].find((activeItem) =>
           isSameEvent(
             {

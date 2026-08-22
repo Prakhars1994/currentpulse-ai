@@ -66,3 +66,11 @@ test("ResultPulse User-Agent uses canonical host", () => {
   assert.match(collector, /\+https:\/\/cp\.vliab\.workers\.dev\/exams/);
   assert.doesNotMatch(collector, /currentpulse-ai\.vercel\.app/);
 });
+test("sitemaps only expose rows that pass the same public stream gates", () => {
+  const sitemap = read("app/sitemap.ts");
+  const newsSitemap = read("app/news-sitemap.xml/route.js");
+  assert.match(sitemap, /isPublicNewsArticle/);
+  assert.match(sitemap, /isCurrentAffairsReady/);
+  assert.match(newsSitemap, /isPublicNewsArticle/);
+  assert.match(newsSitemap, /if \(!isPublicNewsArticle\(article\)\) continue/);
+});

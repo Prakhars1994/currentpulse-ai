@@ -31,6 +31,10 @@ test("static reader materializer blocks Next RSC prefetch and emits an asset man
   assert.match(source, /reusedLocalArchivePages/);
   assert.match(source, /reuse-local/);
   assert.match(source, /addRecentlyChangedDatabasePaths/);
+  assert.match(source, /recentlyChangedPaths/);
+  assert.match(source, /looksLikeNoindexPlaceholder/);
+  assert.match(source, /stale static asset removed/);
+  assert.match(source, /STATIC_NEWS_ARCHIVE_PAGES \|\| 48/);
   assert.match(source, /materializeStaticFiles/);
   assert.match(source, /requiredStaticFailures/);
   assert.match(source, /name=\["'\]currentpulse-static-reader/);
@@ -47,6 +51,10 @@ test("GitHub is the single scheduled heavy automation owner", () => {
   const background = read(".github/workflows/currentpulse-background.yml");
   const maintenance = read(".github/workflows/currentpulse-quality-maintenance.yml");
   assert.match(background, /schedule:/);
-  assert.match(background, /0 1,4,7,10,14,17,18 \* \* \*/);
+  for (const utcHour of [1, 4, 7, 10, 14, 17, 18]) {
+    assert.match(background, new RegExp(`0 ${utcHour} \\* \\* \\*`));
+  }
+  assert.match(background, /"0 17 \* \* \*"\)\s+india_hour="22"/);
+  assert.match(background, /EVENT_SCHEDULE/);
   assert.doesNotMatch(maintenance, /\n\s+schedule:/);
 });

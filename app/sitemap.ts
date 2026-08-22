@@ -3,6 +3,10 @@ import { unstable_cache } from "next/cache";
 import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
 import { createServerSupabase } from "@/lib/supabase-server";
+import {
+  isCurrentAffairsReady,
+  isPublicNewsArticle,
+} from "@/lib/articleStreams";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -57,7 +61,12 @@ const loadSitemapDatabaseRows = unstable_cache(
     const [articleResult, examResult] = await Promise.all([
       supabase
         .from("articles")
-        .select("slug,created_at,updated_at,article_sources(source_kind)")
+        .select(`
+          title,slug,created_at,updated_at,why_news,syllabus_linkage,india_relevance,
+          static_foundation,data_examples,prelims,mains,answer_framework,question,
+          visual_summary,memory_trick,content,seo_description,quality_score,quality_version,
+          article_sources(source_kind,source_url,source_published_at)
+        `)
         .eq("status", "published")
         .order("created_at", { ascending: false })
         .limit(2500),
@@ -101,7 +110,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       const kinds = new Set((article.article_sources || []).map((s) => s?.source_kind));
       const lastModified = article.updated_at || article.created_at || undefined;
 
-      if (kinds.has("coaching")) {
+      if (kinds.has("coaching") && isCurrentAffairsReady(article)) {
         const key = `ca:${article.slug}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -114,7 +123,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
       }
 
-      if (kinds.has("news")) {
+      if (kinds.has("news") && isPublicNewsArticle(article)) {
         const key = `news:${article.slug}`;
         if (!seen.has(key)) {
           seen.add(key);

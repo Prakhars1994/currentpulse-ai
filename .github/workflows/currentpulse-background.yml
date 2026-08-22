@@ -6,8 +6,15 @@ name: CurrentPulse Background Automation
 # skipped by the production APIs so expensive work cannot run twice.
 on:
   schedule:
-    # 06:30, 09:30, 12:30, 15:30, 19:30, 22:30 and 23:30 IST.
-    - cron: "0 1,4,7,10,14,17,18 * * *"
+    # Separate cron expressions preserve the intended slot in github.event.schedule
+    # even when GitHub starts a scheduled run late.
+    - cron: "0 1 * * *"   # 06:30 IST
+    - cron: "0 4 * * *"   # 09:30 IST
+    - cron: "0 7 * * *"   # 12:30 IST
+    - cron: "0 10 * * *"  # 15:30 IST
+    - cron: "0 14 * * *"  # 19:30 IST
+    - cron: "0 17 * * *"  # 22:30 IST
+    - cron: "0 18 * * *"  # 23:30 IST
   workflow_dispatch:
     inputs:
       mode:
@@ -388,8 +395,20 @@ jobs:
 
               ;;
             smart-hourly)
-              india_hour="$(TZ=Asia/Kolkata date +%H)"
-              echo "INDIA_HOUR=${india_hour}"
+              # GitHub scheduled runs can start late. Use the intended cron slot
+              # rather than the runner wall clock so a 22:30 News run cannot
+              # silently become a 23:xx non-News slot.
+              case "${EVENT_SCHEDULE:-}" in
+                "0 1 * * *") india_hour="06" ;;
+                "0 4 * * *") india_hour="09" ;;
+                "0 7 * * *") india_hour="12" ;;
+                "0 10 * * *") india_hour="15" ;;
+                "0 14 * * *") india_hour="19" ;;
+                "0 17 * * *") india_hour="22" ;;
+                "0 18 * * *") india_hour="23" ;;
+                *) india_hour="$(TZ=Asia/Kolkata date +%H)" ;;
+              esac
+              echo "INDIA_HOUR=${india_hour} EVENT_SCHEDULE=${EVENT_SCHEDULE:-manual}"
 
               # Cheap self-heal for rows stranded by known historical pipeline regressions.
               if [[ "${india_hour}" == "06" || "${india_hour}" == "22" ]]; then

@@ -85,6 +85,7 @@ const REQUIRED_STATIC_PATHS = new Set([
   "/feed.xml",
 ]);
 const pathMetadata = new Map();
+const recentlyChangedPaths = new Set();
 
 function decodeXml(value = "") {
   return String(value)
@@ -211,6 +212,26 @@ function destinationFor(pathname) {
   return path.join(outDir, safe, "index.html");
 }
 
+function isPublicArticleDetailPath(pathname) {
+  if (pathname.startsWith("/news/")) {
+    return !pathname.startsWith("/news/page/");
+  }
+  if (pathname.startsWith("/current-affairs/")) {
+    return !pathname.startsWith("/current-affairs/category/");
+  }
+  return pathname.startsWith("/exams/");
+}
+
+function looksLikeNoindexPlaceholder(html = "") {
+  const head = String(html).slice(0, 40000);
+  const robotsTags =
+    head.match(/<meta\b[^>]*\bname=["']robots["'][^>]*>/gi) || [];
+  return (
+    robotsTags.some((tag) => /\bnoindex\b/i.test(tag)) ||
+    /<title>\s*(?:News\s+)?Not Found\b/i.test(head)
+  );
+}
+
 async function addRecentlyChangedDatabasePaths(paths) {
   if (!supabaseUrl || !supabaseServiceKey) return;
   try {
@@ -245,11 +266,13 @@ async function addRecentlyChangedDatabasePaths(paths) {
         if (kinds.has("news")) {
           const route = `/news/${article.slug}`;
           paths.add(route);
+          recentlyChangedPaths.add(route);
           pathMetadata.set(route, { lastModified });
         }
         if (kinds.has("coaching")) {
           const route = `/current-affairs/${article.slug}`;
           paths.add(route);
+          recentlyChangedPaths.add(route);
           pathMetadata.set(route, { lastModified });
         }
       }
@@ -262,6 +285,7 @@ async function addRecentlyChangedDatabasePaths(paths) {
         if (!exam?.slug) continue;
         const route = `/exams/${exam.slug}`;
         paths.add(route);
+        recentlyChangedPaths.add(route);
         pathMetadata.set(route, {
           lastModified: exam.updated_at || exam.created_at || new Date().toISOString(),
         });
@@ -280,8 +304,8 @@ async function collectPaths() {
   const staticNewsArchivePages = Math.max(
     2,
     Math.min(
-      30,
-      Number(process.env.STATIC_NEWS_ARCHIVE_PAGES || 20)
+      60,
+      Number(process.env.STATIC_NEWS_ARCHIVE_PAGES || 48)
     )
   );
   for (let page = 2; page <= staticNewsArchivePages; page += 1) {
@@ -317,7 +341,29 @@ async function collectPaths() {
 
   return [...paths]
     .filter(isReaderPath)
-    .sort((a, b) => priority(a) - priority(b))
+    .sort((a, b) => {
+      const coreDelta =
+        Number(!CORE_PATHS.includes(a)) - Number(!CORE_PATHS.includes(b));
+      if (coreDelta) return coreDelta;
+
+      // Recent DB changes must never be crowded out by old sitemap archive
+      // entries when the global static-reader page cap is reached.
+      const recentDelta =
+        Number(!recentlyChangedPaths.has(a)) -
+        Number(!recentlyChangedPaths.has(b));
+      if (recentDelta) return recentDelta;
+
+      const priorityDelta = priority(a) - priority(b);
+      if (priorityDelta) return priorityDelta;
+
+      const aModified =
+        new Date(pathMetadata.get(a)?.lastModified || 0).getTime() || 0;
+      const bModified =
+        new Date(pathMetadata.get(b)?.lastModified || 0).getTime() || 0;
+      if (aModified !== bModified) return bModified - aModified;
+
+      return a.localeCompare(b);
+    })
     .slice(0, maxPages);
 }
 
@@ -368,6 +414,17 @@ async function renderOne(pathname) {
     }
     if (!/<html\b/i.test(text) || text.length < 500) {
       return { pathname, ok: false, status: response.status, reason: "HTML response was unexpectedly small." };
+    }
+    if (isPublicArticleDetailPath(pathname) && looksLikeNoindexPlaceholder(text)) {
+      // Do not publish a successful-looking static asset for a page whose
+      // reader itself says "not found" / noindex. Remove an old cached copy too.
+      await fs.rm(destination, { force: true });
+      return {
+        pathname,
+        ok: false,
+        status: response.status,
+        reason: "Article detail rendered as noindex/not-found; stale static asset removed.",
+      };
     }
 
     await fs.mkdir(path.dirname(destination), { recursive: true });

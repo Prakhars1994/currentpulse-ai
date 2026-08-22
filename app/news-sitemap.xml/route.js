@@ -1,5 +1,6 @@
 import { createServerSupabase } from "@/lib/supabase-server";
 import { SITE_URL } from "@/lib/siteUrl";
+import { isPublicNewsArticle } from "@/lib/articleStreams";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,9 +46,12 @@ export async function GET() {
      */
     const { data, error } = await createServerSupabase()
       .from("articles")
-      .select(
-        "title,slug,created_at,article_sources!inner(source_kind)"
-      )
+      .select(`
+        title,slug,created_at,updated_at,why_news,syllabus_linkage,india_relevance,
+        static_foundation,data_examples,prelims,mains,answer_framework,question,
+        visual_summary,memory_trick,content,seo_description,quality_score,quality_version,
+        article_sources!inner(source_kind,source_url,source_published_at)
+      `)
       .eq("status", "published")
       .eq("article_sources.source_kind", "news")
       .gte("created_at", cutoff)
@@ -63,6 +67,8 @@ export async function GET() {
     const urls = [];
 
     for (const article of data || []) {
+      if (!isPublicNewsArticle(article)) continue;
+
       const slug = String(article?.slug || "").trim();
       const title = String(article?.title || "").trim();
       const createdAt = article?.created_at;

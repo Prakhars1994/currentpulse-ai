@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import Link from "next/link";
+import { Fragment } from "react";
 import { loadNewsArticles } from "@/lib/articleStreams";
 import { createCategorySlug } from "@/lib/categoryRouting";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
@@ -50,7 +51,7 @@ function pageHref(page) {
 export default async function NewsPage({ searchParams }) {
   const params = await searchParams;
   const requestedPage = Math.max(1, Number(params?.page) || 1);
-  const pageSize = 24;
+  const pageSize = 48;
   const offset = (requestedPage - 1) * pageSize;
   const { articles, total, hasMore, error } = await loadNewsArticles({ limit: pageSize, offset });
   if (error) console.error("News stream error:", error);
@@ -104,12 +105,23 @@ export default async function NewsPage({ searchParams }) {
 
         {articles.length ? (
           <section className="newsroom-grid" aria-label="Latest news">
-            {articles.map((article) => {
+            {articles.map((article, index) => {
               const image = resolveDisplayImage(article);
               const categorySlug = createCategorySlug(article.category);
               const description = stripHtml(article.why_news).slice(0, 220) || "Open the story for the latest verified details.";
+              const dateLabel = formatDate(article.created_at) || "Undated";
+              const previousDateLabel = index > 0
+                ? (formatDate(articles[index - 1]?.created_at) || "Undated")
+                : "";
+              const showDateHeading = index === 0 || dateLabel !== previousDateLabel;
               return (
-                <article key={article.id} className="newsroom-card">
+                <Fragment key={article.id}>
+                  {showDateHeading && (
+                    <div className="col-span-full mt-3 border-b border-stone-300 pb-2 pt-4">
+                      <h2 className="text-xl font-black text-stone-950">{dateLabel}</h2>
+                    </div>
+                  )}
+                  <article className="newsroom-card">
                   {image ? (
                     <Link href={`/news/${article.slug}`} className="newsroom-card-image-wrap">
                       <img src={image} alt={article.image_alt || article.title} loading="lazy" decoding="async" className="newsroom-card-image" />
@@ -126,7 +138,8 @@ export default async function NewsPage({ searchParams }) {
                     <p>{description}</p>
                     <Link href={`/news/${article.slug}`} className="newsroom-read-link">Read story →</Link>
                   </div>
-                </article>
+                  </article>
+                </Fragment>
               );
             })}
           </section>
