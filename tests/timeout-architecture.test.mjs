@@ -55,7 +55,8 @@ test("static reader has a global release deadline and keeps sitemap recency", ()
   assert.match(source, /budget-seconds/);
   assert.match(source, /materializationBudgetMs/);
   assert.match(source, /budgetExhausted/);
-  assert.doesNotMatch(source, /localeCompare/);
+  assert.match(source, /recentlyChangedPaths/);
+  assert.match(source, /lastModified/);
 });
 
 test("automation stops queue drain after provider outage", () => {

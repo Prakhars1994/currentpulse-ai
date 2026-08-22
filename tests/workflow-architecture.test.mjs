@@ -15,7 +15,11 @@ const history = load(".github/workflows/currentpulse-history-repair.yml");
 test("GitHub background workflow is the single scheduled heavy automation owner", () => {
   assert.match(background, /workflow_dispatch:/);
   assert.match(background, /\n\s+schedule:/);
-  assert.match(background, /0 1,4,7,10,14,17,18 \* \* \*/);
+  for (const utcHour of [1, 4, 7, 10, 14, 17, 18]) {
+    assert.match(background, new RegExp(`0 ${utcHour} \\* \\* \\*`));
+  }
+  assert.match(background, /EVENT_SCHEDULE/);
+  assert.match(background, /"0 17 \* \* \*"\)\s+india_hour="22"/);
   assert.doesNotMatch(background, /AUTOMATION_ENABLED/);
   assert.doesNotMatch(maintenance, /\n\s+schedule:/);
 });
