@@ -8,6 +8,7 @@ import Link from "next/link";
 import ArticleContent from "@/components/ArticleContent";
 import ArticleStudyVisuals from "@/components/ArticleStudyVisuals";
 import EvidenceHighlights from "@/components/EvidenceHighlights";
+import LicensedNewsArticle from "@/components/LicensedNewsArticle";
 import ArticleViewTracker from "@/components/ArticleViewTracker";
 import { resolveDisplayImage, isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
@@ -72,11 +73,26 @@ export async function generateMetadata({ params }) {
   if (!article) return { title: "News Not Found | CurrentPulse AI", robots: { index: false, follow: false } };
   const image = resolveDisplayImage(article);
   const newsPresentation = parseNewsPresentation(article.content);
+  const licensedConversation =
+    Array.isArray(article.quality_flags) &&
+    article.quality_flags.includes("licensed_republish_the_conversation");
+  const originalConversationUrl = licensedConversation
+    ? article.article_sources?.find(
+        (source) =>
+          source.source_kind === "news" &&
+          source.source_name === "The Conversation"
+      )?.source_url
+    : "";
   const description = stripHtml(newsPresentation?.lead || article.seo_description || article.why_news).slice(0, 160);
   return {
     title: newsPresentation?.title || article.seo_title || article.title,
     description,
-    alternates: { canonical: `${SITE_URL}/news/${slug}` },
+    alternates: {
+      canonical:
+        licensedConversation && originalConversationUrl
+          ? originalConversationUrl
+          : `${SITE_URL}/news/${slug}`,
+    },
     openGraph: {
       title: newsPresentation?.title || article.title, description, url: `${SITE_URL}/news/${slug}`, type: "article",
       publishedTime: article.created_at, modifiedTime: article.updated_at || article.created_at,
@@ -113,6 +129,14 @@ export default async function NewsArticlePage({ params }) {
   const image = resolveDisplayImage(article);
   const verifiedReusableImage = isVerifiedReusableArticleImage(article);
   const canonical = `${SITE_URL}/news/${slug}`;
+  const licensedConversation =
+    Array.isArray(article.quality_flags) &&
+    article.quality_flags.includes("licensed_republish_the_conversation");
+
+  if (licensedConversation) {
+    return <LicensedNewsArticle article={article} sources={sources} />;
+  }
+
   const structuredData = {
     "@context": "https://schema.org", "@type": "NewsArticle", headline: newsPresentation?.title || article.title,
     description: stripHtml(newsLead), datePublished: article.created_at,

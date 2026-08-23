@@ -2,12 +2,13 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FileText, PlusCircle, LogOut } from 'lucide-react'
+import { LayoutDashboard, FileText, PlusCircle, LogOut, Newspaper } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+  { name: 'News Review', href: '/admin/news', icon: Newspaper },
   { name: 'All Articles', href: '/admin/articles', icon: FileText },
   { name: 'Create Article', href: '/admin/articles/create', icon: PlusCircle },
 ]

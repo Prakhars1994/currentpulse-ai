@@ -87,7 +87,9 @@ async function mapWithConcurrency(items, concurrency, handler) {
 
 function activeNewsSources() {
   const activeGroups = new Set(["indian-news", "state-news", "global-news", "official"]);
-  return NEWS_SOURCES.filter((source) => activeGroups.has(source.group));
+  return NEWS_SOURCES.filter(
+    (source) => activeGroups.has(source.group) && !source.reviewOnly
+  );
 }
 
 async function collectNews({
