@@ -73,6 +73,54 @@ export async function GET(request) {
 
   const id = new URL(request.url).searchParams.get("id");
 
+
+  if (!id && new URL(request.url).searchParams.get("mode") === "dashboard") {
+    const [totalResult, publishedResult, draftsResult, recentResult] =
+      await Promise.all([
+        auth.supabase.from("articles").select("id", { count: "exact", head: true }),
+        auth.supabase
+          .from("articles")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "published"),
+        auth.supabase
+          .from("articles")
+          .select("id", { count: "exact", head: true })
+          .neq("status", "published"),
+        auth.supabase
+          .from("articles")
+          .select("id,title,category,status,created_at")
+          .order("created_at", { ascending: false })
+          .limit(5),
+      ]);
+
+    const error =
+      totalResult.error ||
+      publishedResult.error ||
+      draftsResult.error ||
+      recentResult.error;
+
+    if (error) {
+      console.error("Admin dashboard fetch error:", error);
+      return NextResponse.json(
+        { success: false, message: "Unable to load dashboard data." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        stats: {
+          totalArticles: totalResult.count || 0,
+          published: publishedResult.count || 0,
+          drafts: draftsResult.count || 0,
+        },
+        recentArticles: recentResult.data || [],
+      },
+      { headers: { "Cache-Control": "private, max-age=30" } }
+    );
+  }
+
   if (id) {
     const numericId = Number(id);
     if (!Number.isInteger(numericId) || numericId <= 0) {

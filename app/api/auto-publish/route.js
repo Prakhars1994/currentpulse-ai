@@ -32,7 +32,12 @@ export const maxDuration = 900;
 
 const NEWS_PUBLISH_CONCURRENCY = Math.max(
   1,
-  Math.min(12, Number(process.env.NEWS_PUBLISH_CONCURRENCY || 6))
+  Math.min(6, Number(process.env.NEWS_PUBLISH_CONCURRENCY || 3))
+);
+
+const NEWS_MAX_PUBLISH_PER_RUN = Math.max(
+  1,
+  Math.min(30, Number(process.env.NEWS_MAX_PUBLISH_PER_RUN || 12))
 );
 
 const NEWS_SOURCE_FETCH_CONCURRENCY = Math.max(
@@ -269,7 +274,13 @@ async function evaluateCandidates(supabase, articles, { historyDate = "" } = {})
   }
 
   if (eligible.length === 0) {
-    return { accepted: [], rejected: [], skipped, evaluationProvider: "none" };
+    return {
+      accepted: [],
+      rejected: [],
+      skipped,
+      recentArticles,
+      evaluationProvider: "none",
+    };
   }
 
   const evaluations = eligible.map(localEvaluation);
@@ -286,11 +297,16 @@ async function evaluateCandidates(supabase, articles, { historyDate = "" } = {})
     accepted,
     rejected: [],
     skipped,
+    recentArticles,
     evaluationProvider: "general_news_agenda_v2",
   };
 }
 
-async function publishCandidatesDirectly(supabase, candidates) {
+async function publishCandidatesDirectly(
+  supabase,
+  candidates,
+  recentArticles = []
+) {
   return mapWithConcurrency(
     candidates,
     NEWS_PUBLISH_CONCURRENCY,
@@ -311,6 +327,7 @@ async function publishCandidatesDirectly(supabase, candidates) {
             : [],
         generationMode: "news",
         trustedCoverage: false,
+        duplicateSnapshot: recentArticles,
       };
 
       try {
@@ -378,9 +395,18 @@ async function executeAutoPublish({
     const evaluated = await evaluateCandidates(supabase, collection.articles, {
       historyDate,
     });
+    const publishableCandidates = evaluated.accepted.slice(
+      0,
+      NEWS_MAX_PUBLISH_PER_RUN
+    );
+    const deferredForNextRun = Math.max(
+      0,
+      evaluated.accepted.length - publishableCandidates.length
+    );
     const directResults = await publishCandidatesDirectly(
       supabase,
-      evaluated.accepted
+      publishableCandidates,
+      evaluated.recentArticles
     );
 
     const published = directResults.filter(
@@ -413,7 +439,8 @@ async function executeAutoPublish({
         editorialNoiseRejected,
         rejectedAfterValidation,
         duplicatesOrInvalidSkipped: evaluated.skipped.length,
-        deferredForNextRun: 0,
+        deferredForNextRun,
+        maxPublishPerRun: NEWS_MAX_PUBLISH_PER_RUN,
         queued: 0,
         published,
         duplicates,

@@ -13,7 +13,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const response = await fetch('/api/articles', { cache: 'no-store' })
+        const response = await fetch('/api/articles?mode=dashboard', { cache: 'no-store' })
         const result = await response.json()
 
         if (response.status === 401 || response.status === 403) {
@@ -25,12 +25,8 @@ export default function AdminDashboard() {
           throw new Error(result.message || 'Unable to load dashboard data')
         }
 
-        const articles = result.articles || []
-        const published = articles.filter((article) => article.status === 'published').length
-        const drafts = articles.filter((article) => article.status !== 'published').length
-
-        setStats({ totalArticles: articles.length, published, drafts })
-        setRecentArticles(articles.slice(0, 5))
+        setStats(result.stats || { totalArticles: 0, published: 0, drafts: 0 })
+        setRecentArticles(result.recentArticles || [])
       } catch (error) {
         console.error('Error fetching stats:', error)
       } finally {

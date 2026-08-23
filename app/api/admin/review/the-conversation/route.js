@@ -80,18 +80,32 @@ export async function POST(request) {
   const published = results.filter(
     (item) => item.status === "published"
   ).length;
+  const duplicates = results.filter(
+    (item) => item.status === "duplicate"
+  ).length;
+  const failedResults = results.filter(
+    (item) => item.status === "failed"
+  );
+  const failed = failedResults.length;
+  const handled = published + duplicates;
+  const success = handled > 0;
+  const firstFailure = failedResults[0]?.error || "";
 
-  return NextResponse.json({
-    success: true,
-    stats: {
-      selected: urls.length,
-      published,
-      duplicates: results.filter((item) => item.status === "duplicate").length,
-      failed: results.filter((item) => item.status === "failed").length,
+  return NextResponse.json(
+    {
+      success,
+      stats: {
+        selected: urls.length,
+        published,
+        duplicates,
+        failed,
+      },
+      releaseRequired: published > 0,
+      message: success
+        ? `Published ${published}; duplicates ${duplicates}; failed ${failed}.`
+        : `No selected article was published. ${firstFailure}`.trim(),
+      results,
     },
-    releaseRequired: published > 0,
-    message:
-      "Selected The Conversation articles were handled as News only. Run the incremental reader release if new rows were published.",
-    results,
-  });
+    { status: success ? 200 : 502 }
+  );
 }

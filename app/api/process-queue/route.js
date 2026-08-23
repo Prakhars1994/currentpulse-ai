@@ -130,7 +130,7 @@ async function rejectDeprecatedCoverageQueueItems(supabase) {
     .select("id,source,coverage_sources")
     .eq("status", "pending")
     .in("pipeline_kind", ["coaching", "coaching_enrichment"])
-    .limit(1000);
+    .limit(240);
 
   if (lookupError) {
     console.warn(
@@ -237,7 +237,7 @@ async function recoverLegacyNewsQueue(supabase) {
     .from("article_queue")
     .select("id,status,attempts,error,pipeline_kind")
     .in("status", ["pending", "failed"])
-    .limit(2000);
+    .limit(300);
   if (error) {
     console.warn("[Queue processor] Legacy News recovery skipped:", error.message);
     return 0;
@@ -289,13 +289,15 @@ async function getPendingQueueItem(
 ) {
   const { data, error } = await supabase
     .from("article_queue")
-    .select("*")
+    .select(
+      "id,title,description,url,source,source_domain,image_url,published_at,importance,category,paper,keywords,status,pipeline_kind,coverage_event_key,coverage_sources,target_article_id,attempts,error,processing_started_at,processed_at,created_at,updated_at,article_id"
+    )
     .eq("status", "pending")
     .lt("attempts", 3)
     .order("importance", { ascending: false })
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
-    .limit(200);
+    .limit(48);
 
   if (error) throw new Error(`Queue fetch failed: ${error.message}`);
   const retryCutoff = Date.now() - AI_RETRY_COOLDOWN_MINUTES * 60 * 1000;
@@ -335,7 +337,9 @@ async function claimQueueItem(supabase, queueItem) {
     })
     .eq("id", queueItem.id)
     .eq("status", "pending")
-    .select()
+    .select(
+      "id,title,description,url,source,source_domain,image_url,published_at,importance,category,paper,keywords,status,pipeline_kind,coverage_event_key,coverage_sources,target_article_id,attempts,error,processing_started_at,processed_at,created_at,updated_at,article_id"
+    )
     .maybeSingle();
 
   if (error) throw new Error(`Queue claim failed: ${error.message}`);

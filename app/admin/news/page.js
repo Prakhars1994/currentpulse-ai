@@ -97,14 +97,25 @@ export default function AdminNewsPage() {
       });
       const data = await response.json();
 
+      const failureDetails = (data.results || [])
+        .filter((item) => item.status === "failed")
+        .slice(0, 3)
+        .map((item) => item.error)
+        .filter(Boolean)
+        .join(" | ");
+
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Publication failed.");
+        throw new Error(
+          [data.message, failureDetails].filter(Boolean).join(" | ") ||
+            "Publication failed."
+        );
       }
 
       setMessage(
         `Published ${data.stats?.published || 0}; ` +
           `duplicates ${data.stats?.duplicates || 0}; ` +
           `failed ${data.stats?.failed || 0}. ` +
+          (failureDetails ? `Failures: ${failureDetails}. ` : "") +
           (data.releaseRequired
             ? "New News is in Supabase; run the incremental reader release to expose it on the static site."
             : "")
