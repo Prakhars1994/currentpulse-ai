@@ -13,8 +13,8 @@ export async function generateMetadata({ searchParams }) {
   const params = await searchParams;
   const page = Math.max(1, Number(params?.page) || 1);
   const canonical = page <= 1 ? `${SITE_URL}/news` : `${SITE_URL}/news/page/${page}`;
-  const title = page <= 1 ? "Latest India & World News" : `Latest India & World News - Page ${page}`;
-  const description = "Read concise, source-backed India and world news with key facts, context and why each development matters.";
+  const title = page <= 1 ? "Latest News Today — India, World, Science & Analysis" : `Latest News Archive - Page ${page}`;
+  const description = "Read source-attributed public-interest news and expert analysis selected for CurrentPulse, kept separate from UPSC Current Affairs.";
 
   return {
     title,

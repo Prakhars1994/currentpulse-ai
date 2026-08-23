@@ -43,11 +43,11 @@ test("content workflows dispatch one incremental reader release only after data 
   assert.match(readerRelease, /reuse-local/);
 });
 
-test("incremental reader planning is bounded and refreshes stream-specific public paths", () => {
+test("incremental reader planning is bounded and refreshes only exact stream paths", () => {
   assert.match(releasePaths, /article_sources/);
   assert.match(releasePaths, /source_kind/);
-  assert.match(releasePaths, /NEWS_ARCHIVE_PAGES/);
-  assert.match(releasePaths, /\/news\/page\/\$\{page\}/);
+  assert.match(releasePaths, /paths\.add\("\/news"\)/);
+  assert.doesNotMatch(releasePaths, /\/news\/page\/\$\{page\}/);
   assert.match(releasePaths, /\/current-affairs\/\$\{article\.slug\}/);
   assert.match(releasePaths, /\/exams\/\$\{exam\.slug\}/);
   assert.match(releasePaths, /\/quiz/);

@@ -1928,3 +1928,120 @@ main.min-h-screen:not(.news-article-page) .geo-map-panel-head > span {
     font-size: 4.85px;
   }
 }
+
+/* ===== 23 Aug 2026: licensed Conversation reading + admin preview ===== */
+.licensed-republished-article {
+  max-width: 76ch;
+  margin-inline: auto;
+  color: #27272a;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1.03rem, 1.4vw, 1.12rem);
+  line-height: 1.82;
+}
+.licensed-republished-article > * + * { margin-top: 1.15rem; }
+.licensed-republished-article p { max-width: none !important; margin-inline: 0; }
+.licensed-republished-article h2,
+.licensed-republished-article h3,
+.licensed-republished-article h4 {
+  margin-top: 1.8rem;
+  margin-bottom: .65rem;
+  padding-left: 0 !important;
+  color: #18181b !important;
+  font-family: Georgia, "Times New Roman", serif;
+  line-height: 1.25;
+}
+.licensed-republished-article h2 { font-size: 1.55rem; }
+.licensed-republished-article h3 { font-size: 1.3rem; }
+.licensed-republished-article h4 { font-size: 1.12rem; }
+.licensed-republished-article h3::before { display: none !important; }
+.licensed-republished-article ul,
+.licensed-republished-article ol {
+  display: block;
+  max-width: none;
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+.licensed-republished-article li {
+  margin: .45rem 0;
+  padding: 0 !important;
+  background: transparent !important;
+}
+.licensed-republished-article blockquote {
+  margin: 1.4rem 0;
+  border-left: 4px solid #b91c1c;
+  background: #fff7ed;
+  padding: .9rem 1rem;
+  color: #3f3f46;
+}
+.licensed-republished-article a {
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.licensed-republished-article hr {
+  margin: 1.6rem 0;
+  border: 0;
+  border-top: 1px solid #d6d3d1;
+}
+.licensed-republished-article img[src*="counter.theconversation.com"] {
+  display: block;
+  width: 1px !important;
+  height: 1px !important;
+  margin: 0 !important;
+  border: 0 !important;
+}
+
+.admin-conversation-preview {
+  margin-top: 1rem;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: .9rem;
+  background: #fafafa;
+}
+.admin-conversation-preview-meta {
+  border-bottom: 1px solid #e5e7eb;
+  padding: .7rem .9rem;
+  background: #f3f4f6;
+  color: #4b5563;
+  font-size: .74rem;
+  font-weight: 800;
+}
+.admin-conversation-preview-body {
+  max-height: 34rem;
+  overflow-y: auto;
+  padding: 1rem 1.1rem 1.25rem;
+  color: #1f2937;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: .98rem;
+  line-height: 1.75;
+}
+.admin-conversation-preview-body > * + * { margin-top: 1rem; }
+.admin-conversation-preview-body h2,
+.admin-conversation-preview-body h3,
+.admin-conversation-preview-body h4 {
+  margin-top: 1.4rem;
+  margin-bottom: .55rem;
+  color: #111827;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.admin-conversation-preview-body h2 { font-size: 1.35rem; }
+.admin-conversation-preview-body h3 { font-size: 1.18rem; }
+.admin-conversation-preview-body ul,
+.admin-conversation-preview-body ol {
+  margin: .8rem 0;
+  padding-left: 1.45rem;
+}
+.admin-conversation-preview-body ul { list-style: disc; }
+.admin-conversation-preview-body ol { list-style: decimal; }
+.admin-conversation-preview-body li { margin: .35rem 0; }
+.admin-conversation-preview-body a {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+.admin-conversation-preview-body blockquote {
+  margin: 1rem 0;
+  border-left: 4px solid #b91c1c;
+  background: #fff7ed;
+  padding: .75rem .9rem;
+}

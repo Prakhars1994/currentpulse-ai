@@ -30,6 +30,10 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 900;
 
+const AUTOMATED_NEWS_ENABLED = ["1", "true", "yes"].includes(
+  String(process.env.AUTOMATED_NEWS_ENABLED || "false").toLowerCase()
+);
+
 const NEWS_PUBLISH_CONCURRENCY = Math.max(
   1,
   Math.min(6, Number(process.env.NEWS_PUBLISH_CONCURRENCY || 3))
@@ -500,11 +504,20 @@ async function executeUnifiedCollection(
   scope = "scheduled",
   { full = false, newsBatch = 0, newsBatchSize = 6, historyDate = "" } = {}
 ) {
-  const runNews = ["scheduled", "all", "news"].includes(scope);
+  const requestedNews = ["scheduled", "all", "news"].includes(scope);
+  const runNews = requestedNews && AUTOMATED_NEWS_ENABLED;
   const runCoverage = ["scheduled", "all", "coverage"].includes(scope);
   const fullRun = full || scope === "all" || Boolean(historyDate);
 
-  let news = { success: true, skipped: true };
+  let news = requestedNews && !AUTOMATED_NEWS_ENABLED
+    ? {
+        success: true,
+        skipped: true,
+        disabled: true,
+        message:
+          "Automatic legacy News collection is inactive. Use the admin News Review lane.",
+      }
+    : { success: true, skipped: true };
   let coverage = { success: true, skipped: true };
 
   if (runNews && runCoverage) {
@@ -524,12 +537,12 @@ async function executeUnifiedCollection(
         newsBatchSize,
         historyDate,
       });
-  } else {
+  } else if (runCoverage) {
     coverage = await collectCoverageSafely({ full: fullRun, historyDate });
   }
 
   const requestedResults = [
-    ...(runNews ? [news] : []),
+    ...(requestedNews ? [news] : []),
     ...(runCoverage ? [coverage] : []),
   ];
 

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 import {
-  loadTheConversationReviewFeed,
+  conversationArticleId,
+  fetchTheConversationRepublish,
   publishTheConversationArticle,
 } from "@/lib/news/theConversation";
 
@@ -11,18 +12,186 @@ export const maxDuration = 150;
 
 const MAX_SELECTED = 8;
 
+function previewHtmlWithoutCounter(html = "") {
+  // A private admin preview must not create a production republication view.
+  // The untouched counter remains in the stored/published HTML.
+  return String(html || "").replace(
+    /<img\b[^>]*counter\.theconversation\.com[^>]*>/gi,
+    ""
+  );
+}
+
 export async function GET(request) {
   const auth = await requireAuthenticatedAdmin(request);
   if (!auth.ok) return auth.response;
 
+  const searchParams = new URL(request.url).searchParams;
+  const previewUrl = String(searchParams.get("preview") || "").trim();
+
+  if (previewUrl) {
+    try {
+      const article = await fetchTheConversationRepublish(previewUrl);
+
+      return NextResponse.json(
+        {
+          success: true,
+          preview: {
+            articleId: article.articleId,
+            title: article.title,
+            canonical: article.canonical,
+            authors: article.authors,
+            institutions: article.institutions,
+            html: previewHtmlWithoutCounter(article.html),
+          },
+        },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    } catch (error) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            error?.message || "Unable to load the full Conversation preview.",
+        },
+        { status: 502 }
+      );
+    }
+  }
+
   try {
-    const feed = await loadTheConversationReviewFeed({ limit: 40 });
+    const { data: marker, error: markerError } = await auth.supabase
+      .from("news_queue")
+      .select("summary,generated_at,reason")
+      .eq("source", "The Conversation")
+      .eq("status", "review_batch")
+      .order("generated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (markerError) {
+      throw new Error(
+        `Conversation review marker lookup failed: ${markerError.message}`
+      );
+    }
+
+    if (!marker) {
+      return NextResponse.json(
+        {
+          success: true,
+          maxSelectable: MAX_SELECTED,
+          source: "The Conversation",
+          items: [],
+          stats: {
+            available: 0,
+            alreadyPublished: 0,
+          },
+          message:
+            "No scheduled Conversation review batch exists yet. Scheduled refreshes run at 10:00, 15:00 and 21:00 IST.",
+        },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
+    let batch = {};
+    try {
+      batch = JSON.parse(marker.summary || "{}");
+    } catch {
+      batch = {};
+    }
+
+    const windowStart = String(batch.windowStart || "");
+    const windowEnd = String(batch.windowEnd || "");
+
+    if (!windowStart || !windowEnd) {
+      throw new Error("Latest Conversation review marker has no valid window.");
+    }
+
+    const { data: queueRows, error: queueError } = await auth.supabase
+      .from("news_queue")
+      .select(
+        "id,title,url,summary,created_at,category,keywords,generated_at,reason"
+      )
+      .eq("source", "The Conversation")
+      .eq("status", "review")
+      .gte("created_at", windowStart)
+      .lt("created_at", windowEnd)
+      .order("created_at", { ascending: false })
+      .limit(240);
+
+    if (queueError) {
+      throw new Error(
+        `Conversation review inbox lookup failed: ${queueError.message}`
+      );
+    }
+
+    const keyedItems = (queueRows || [])
+      .map((row) => {
+        const articleId = conversationArticleId(row.url);
+        return {
+          id: row.id,
+          articleId,
+          sourceKey: articleId
+            ? `news:the-conversation:${articleId}`
+            : "",
+          title: row.title,
+          description: row.summary || "",
+          url: row.url,
+          author: "",
+          publishedAt: row.created_at,
+          source: "The Conversation",
+          edition: row.category || "",
+        };
+      })
+      .filter((item) => item.sourceKey);
+
+    let alreadyPublished = new Set();
+
+    if (keyedItems.length) {
+      const { data, error } = await auth.supabase
+        .from("article_sources")
+        .select("source_key")
+        .in(
+          "source_key",
+          keyedItems.map((item) => item.sourceKey)
+        );
+
+      if (error) {
+        throw new Error(
+          `Conversation published-state lookup failed: ${error.message}`
+        );
+      }
+
+      alreadyPublished = new Set(
+        (data || []).map((row) => String(row.source_key || "")).filter(Boolean)
+      );
+    }
+
+    const items = keyedItems.filter(
+      (item) => !alreadyPublished.has(item.sourceKey)
+    );
 
     return NextResponse.json(
       {
         success: true,
         maxSelectable: MAX_SELECTED,
-        ...feed,
+        source: "The Conversation",
+        reviewDate: windowEnd.slice(0, 10),
+        window: {
+          start: windowStart,
+          end: windowEnd,
+          finalEnd: batch.finalWindowEnd || "",
+          slot: Number(batch.slot) || null,
+          refreshedAt: marker.generated_at,
+          feedsHealthy: Number(batch.feedsHealthy) || 0,
+          feedsRequested: Number(batch.feedsRequested) || 0,
+          uniqueInWindow: Number(batch.uniqueInWindow) || keyedItems.length,
+        },
+        stats: {
+          foundInWindow: keyedItems.length,
+          alreadyPublished: alreadyPublished.size,
+          available: items.length,
+        },
+        items,
       },
       { headers: { "Cache-Control": "no-store" } }
     );
@@ -31,7 +200,7 @@ export async function GET(request) {
       {
         success: false,
         message:
-          error?.message || "Unable to load The Conversation review feed.",
+          error?.message || "Unable to load The Conversation review inbox.",
       },
       { status: 502 }
     );

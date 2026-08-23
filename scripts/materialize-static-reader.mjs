@@ -594,9 +594,13 @@ const reused = succeeded.filter((item) => item.reused);
 const reusedLocal = succeeded.filter((item) => item.reusedLocal);
 const failed = results.filter((item) => item && !item.ok);
 const requiredFailures = [
-  ...failed.filter((item) => CORE_PATHS.includes(item.pathname)),
+  ...failed.filter(
+    (item) => Boolean(changedFile) || CORE_PATHS.includes(item.pathname)
+  ),
   ...skippedForBudget
-    .filter((pathname) => CORE_PATHS.includes(pathname))
+    .filter(
+      (pathname) => Boolean(changedFile) || CORE_PATHS.includes(pathname)
+    )
     .map((pathname) => ({
       pathname,
       ok: false,
@@ -651,7 +655,11 @@ if (requiredStaticFailures.length) {
   console.error(JSON.stringify(requiredStaticFailures, null, 2));
   process.exit(4);
 }
-if (paths.length >= 25 && succeeded.length < Math.min(25, paths.length)) {
+if (
+  !changedFile &&
+  paths.length >= 25 &&
+  succeeded.length < Math.min(25, paths.length)
+) {
   console.error("Static reader produced too few pages to be considered healthy.");
   process.exit(3);
 }

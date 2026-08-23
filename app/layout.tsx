@@ -20,11 +20,11 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: "CurrentPulse AI",
   title: {
-    default: "CurrentPulse AI — Daily UPSC Current Affairs, Quiz & Notes",
+    default: "UPSC Current Affairs Today, PYQs, Quiz & News — CurrentPulse AI",
     template: "%s | CurrentPulse AI",
   },
   description:
-    "Selection-oriented daily UPSC current affairs with syllabus linkage, current-static notes, Prelims facts, Mains analysis, quizzes, maps, PDFs and official PYQs.",
+    "Daily UPSC current affairs for Prelims and Mains from trusted coaching sources, plus PYQs, quizzes, PDFs, exam updates and source-attributed news.",
   keywords: [
     "UPSC current affairs",
     "daily current affairs for UPSC",
@@ -46,15 +46,15 @@ export const metadata: Metadata = {
     locale: "en_IN",
     url: SITE_URL,
     siteName: "CurrentPulse AI",
-    title: "CurrentPulse AI — Selection-oriented UPSC Current Affairs",
+    title: "UPSC Current Affairs Today, PYQs & Quiz — CurrentPulse AI",
     description:
-      "Daily UPSC current affairs connected to the syllabus, static subjects, Prelims facts and Mains answer writing.",
+      "Daily UPSC current affairs with trusted-source coverage, Prelims facts, Mains analysis, PYQs, quizzes and exam updates.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CurrentPulse AI — UPSC Current Affairs",
+    title: "UPSC Current Affairs Today — CurrentPulse AI",
     description:
-      "Daily syllabus-linked current affairs, static notes, quizzes, maps and Mains analysis.",
+      "Daily UPSC current affairs, PYQs, quizzes, exam updates and source-attributed news.",
   },
   robots: {
     index: true,

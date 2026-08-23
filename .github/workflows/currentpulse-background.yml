@@ -15,6 +15,11 @@ on:
     - cron: "0 14 * * *"  # 19:30 IST
     - cron: "0 17 * * *"  # 22:30 IST
     - cron: "0 18 * * *"  # 23:30 IST
+
+    # Conversation review inbox: three metadata-only refreshes per day.
+    - cron: "30 4 * * *"   # 10:00 IST
+    - cron: "30 9 * * *"   # 15:00 IST
+    - cron: "30 15 * * *"  # 21:00 IST
   workflow_dispatch:
     inputs:
       mode:
@@ -32,6 +37,7 @@ on:
           - coverage
           - queue
           - exams
+          - conversation-review
 
 permissions:
   contents: read
@@ -70,6 +76,10 @@ env:
   WHATSAPP_TEMPLATE_LANGUAGE: ${{ secrets.WHATSAPP_TEMPLATE_LANGUAGE }}
 
   NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
+
+  # Legacy newspaper/Google-News automation is intentionally inactive.
+  # Current News enters through the manual review lane.
+  AUTOMATED_NEWS_ENABLED: "false"
 
   NEWS_CORE_SOURCES_PER_RUN: "4"
   NEWS_SUPPLEMENTAL_SOURCES_PER_RUN: "2"
@@ -278,14 +288,40 @@ jobs:
 
           mode="${MANUAL_MODE:-}"
           if [[ -z "${mode}" || "${mode}" == "smart" ]]; then
-            if [[ -n "${EVENT_SCHEDULE:-}" ]]; then
-              mode="smart-hourly"
-            else
-              mode="smart-full"
-            fi
+            case "${EVENT_SCHEDULE:-}" in
+              "30 4 * * *") mode="conversation-review-10" ;;
+              "30 9 * * *") mode="conversation-review-15" ;;
+              "30 15 * * *") mode="conversation-review-21" ;;
+              "")
+                mode="smart-full"
+                ;;
+              *)
+                mode="smart-hourly"
+                ;;
+            esac
           fi
 
           case "${mode}" in
+            conversation-review)
+              hour="$(TZ=Asia/Kolkata date +%H)"
+              if (( 10#$hour < 13 )); then
+                slot=10
+              elif (( 10#$hour < 18 )); then
+                slot=15
+              else
+                slot=21
+              fi
+              node scripts/refresh-conversation-review.mjs --slot "${slot}"
+              ;;
+            conversation-review-10)
+              node scripts/refresh-conversation-review.mjs --slot 10
+              ;;
+            conversation-review-15)
+              node scripts/refresh-conversation-review.mjs --slot 15
+              ;;
+            conversation-review-21)
+              node scripts/refresh-conversation-review.mjs --slot 21
+              ;;
             coverage)
               api_required "/api/coverage-import?source=all&limit=2000"
 

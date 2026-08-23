@@ -15,7 +15,10 @@ type SitemapArticle = {
   slug: string;
   created_at?: string | null;
   updated_at?: string | null;
-  article_sources?: Array<{ source_kind?: string | null }> | null;
+  article_sources?: Array<{
+    source_kind?: string | null;
+    source_name?: string | null;
+  }> | null;
 };
 
 type SitemapExam = {
@@ -65,7 +68,7 @@ const loadSitemapDatabaseRows = unstable_cache(
           title,slug,created_at,updated_at,why_news,syllabus_linkage,india_relevance,
           static_foundation,data_examples,prelims,mains,answer_framework,question,
           visual_summary,memory_trick,content,seo_description,quality_score,quality_version,
-          article_sources(source_kind,source_url,source_published_at)
+          article_sources(source_kind,source_name,source_url,source_published_at)
         `)
         .eq("status", "published")
         .order("created_at", { ascending: false })
@@ -123,7 +126,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
       }
 
-      if (kinds.has("news") && isPublicNewsArticle(article)) {
+      const indexableNewsSource = (article.article_sources || []).some(
+        (source) =>
+          source?.source_kind === "news" &&
+          source?.source_name === "PB-SHABD"
+      );
+
+      if (indexableNewsSource && isPublicNewsArticle(article)) {
         const key = `news:${article.slug}`;
         if (!seen.has(key)) {
           seen.add(key);

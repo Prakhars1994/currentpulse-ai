@@ -50,7 +50,7 @@ export async function GET() {
         title,slug,created_at,updated_at,why_news,syllabus_linkage,india_relevance,
         static_foundation,data_examples,prelims,mains,answer_framework,question,
         visual_summary,memory_trick,content,seo_description,quality_score,quality_version,
-        article_sources!inner(source_kind,source_url,source_published_at)
+        article_sources!inner(source_kind,source_name,source_url,source_published_at)
       `)
       .eq("status", "published")
       .eq("article_sources.source_kind", "news")
@@ -67,7 +67,13 @@ export async function GET() {
     const urls = [];
 
     for (const article of data || []) {
+      const indexableNewsSource = (article.article_sources || []).some(
+        (source) =>
+          source?.source_kind === "news" &&
+          source?.source_name === "PB-SHABD"
+      );
       if (!isPublicNewsArticle(article)) continue;
+      if (!indexableNewsSource) continue;
 
       const slug = String(article?.slug || "").trim();
       const title = String(article?.title || "").trim();

@@ -99,7 +99,9 @@ export async function generateMetadata({ params }) {
       ...(image ? { images: [{ url: absoluteSiteUrl(image), width: 1200, height: 630 }] } : {}),
     },
     twitter: { card: image ? "summary_large_image" : "summary", title: newsPresentation?.title || article.title, description, ...(image ? { images: [absoluteSiteUrl(image)] } : {}) },
-    robots: { index: true, follow: true },
+    robots: licensedConversation
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
   };
 }
 

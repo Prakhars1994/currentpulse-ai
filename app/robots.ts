@@ -15,7 +15,7 @@ export default function robots(): MetadataRoute.Robots {
         "/api/ai/",
       ],
     },
-    sitemap: [`${SITE_URL}/sitemap.xml`, `${SITE_URL}/news-sitemap.xml`],
+    sitemap: [`${SITE_URL}/sitemap.xml`],
     host: SITE_URL,
   };
 }

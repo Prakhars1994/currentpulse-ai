@@ -39,14 +39,6 @@ const supabase = createClient(supabaseUrl, serviceKey, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-const NEWS_ARCHIVE_PAGES = Math.max(
-  2,
-  Math.min(
-    60,
-    Number(process.env.STATIC_NEWS_ARCHIVE_PAGES || 48)
-  )
-);
-
 const EXAM_INDEX_PATHS = [
   "/exams/results",
   "/exams/admit-cards",
@@ -238,13 +230,10 @@ for (const [id, article] of articleById) {
 }
 
 if (newsChanged) {
+  // Immediate News releases refresh the landing page plus exact changed
+  // article/category paths. Deep archive pages are reconciled by a full
+  // reader release instead of every manual publication.
   paths.add("/news");
-
-  // Numbered offset pagination shifts after an insertion/deletion. Refresh
-  // every small archive index page, but NOT every historical article detail.
-  for (let page = 2; page <= NEWS_ARCHIVE_PAGES; page += 1) {
-    paths.add(`/news/page/${page}`);
-  }
 }
 
 if (coverageChanged) {

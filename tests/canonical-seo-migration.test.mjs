@@ -12,11 +12,11 @@ test("canonical host is strictly https://cp.vliab.workers.dev across site config
   assert.doesNotMatch(siteUrlModule, /currentpulse-ai\.vercel\.app/);
 });
 
-test("robots.txt declares canonical host and canonical sitemaps", () => {
+test("robots.txt declares canonical host and only the active canonical sitemap", () => {
   const robots = read("app/robots.ts");
   assert.match(robots, /SITE_URL/);
   assert.match(robots, /\/sitemap\.xml/);
-  assert.match(robots, /\/news-sitemap\.xml/);
+  assert.doesNotMatch(robots, /\/news-sitemap\.xml/);
   assert.match(robots, /host:\s*SITE_URL/);
 });
 
@@ -73,4 +73,5 @@ test("sitemaps only expose rows that pass the same public stream gates", () => {
   assert.match(sitemap, /isCurrentAffairsReady/);
   assert.match(newsSitemap, /isPublicNewsArticle/);
   assert.match(newsSitemap, /if \(!isPublicNewsArticle\(article\)\) continue/);
+  assert.match(newsSitemap, /source_name === "PB-SHABD"/);
 });

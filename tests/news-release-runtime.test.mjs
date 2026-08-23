@@ -31,11 +31,14 @@ test("one-time News release fails loudly on queue/runtime errors", () => {
   );
 });
 
-test("normal News mode remains direct-publish and queue-free", () => {
+test("normal News mode is queue-free and legacy auto-News is explicitly disabled", () => {
   const workflow = read(".github/workflows/currentpulse-background.yml");
+  const route = read("app/api/auto-publish/route.js");
   const normalNewsBlock =
-    workflow.match(/\n\s+news\)\n([\s\S]*?)\n\s+;;/)?.[1] || "";
+    workflow.match(/\r?\n\s+news\)\r?\n([\s\S]*?)\r?\n\s+;;/)?.[1] || "";
 
   assert.match(normalNewsBlock, /auto-publish/);
   assert.doesNotMatch(normalNewsBlock, /drain_queue/);
+  assert.match(workflow, /AUTOMATED_NEWS_ENABLED:\s*"false"/);
+  assert.match(route, /process\.env\.AUTOMATED_NEWS_ENABLED \|\| "false"/);
 });
