@@ -48,7 +48,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  CRON_SECRET: currentpulse-github-actions-local-runner
+  CRON_SECRET: ${{ secrets.CRON_SECRET }}
   NEXT_PUBLIC_BASE_URL: https://cp.vliab.workers.dev
   NEXT_PUBLIC_SITE_URL: https://cp.vliab.workers.dev
 

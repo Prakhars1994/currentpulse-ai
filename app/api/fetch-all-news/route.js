@@ -3,6 +3,7 @@ import { GENERAL_NEWS_QUERY_TERMS, NEWS_SOURCES } from "@/lib/news/sourceCatalog
 import { fetchSourceRss } from "@/lib/news/rss";
 import { deduplicateArticles } from "@/lib/news/filter";
 import { assessNewsCandidate } from "@/lib/editorial/publicationSafety";
+import { isCronAuthorized } from "@/lib/cronAuth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,10 @@ function clamp(value, minimum, maximum, fallback) {
 }
 
 export async function GET(request) {
+  if (!isCronAuthorized(request)) {
+    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
   const startedAt = Date.now();
   const { searchParams } = new URL(request.url);
   const perSource = clamp(searchParams.get("perSource"), 2, 100, DEFAULT_PER_SOURCE);

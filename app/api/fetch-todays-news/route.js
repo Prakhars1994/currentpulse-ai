@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 import { classifyNewsCategory, resolvePaper } from "@/lib/contentTaxonomy";
 import { assessNewsCandidate } from "@/lib/editorial/publicationSafety";
+import { isCronAuthorized } from "@/lib/cronAuth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -957,7 +958,11 @@ function isRelevantArticle(
   );
 }
 
-export async function GET() {
+export async function GET(request) {
+  if (!isCronAuthorized(request)) {
+    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const collectedArticles =
       await collectLatestPibNews();
@@ -1159,6 +1164,6 @@ export async function GET() {
   }
 }
 
-export async function POST() {
-  return GET();
+export async function POST(request) {
+  return GET(request);
 }
