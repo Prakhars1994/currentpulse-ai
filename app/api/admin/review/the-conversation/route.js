@@ -144,7 +144,7 @@ export async function GET(request) {
       })
       .filter((item) => item.sourceKey);
 
-    let alreadyPublished = new Set();
+    let publishedSources = new Map();
 
     if (keyedItems.length) {
       const { data, error } = await auth.supabase
@@ -161,14 +161,23 @@ export async function GET(request) {
         );
       }
 
-      alreadyPublished = new Set(
-        (data || []).map((row) => String(row.source_key || "")).filter(Boolean)
+      publishedSources = new Map(
+        (data || [])
+          .filter((row) => row?.source_key && row?.article_id)
+          .map((row) => [String(row.source_key), row.article_id])
       );
     }
 
     const items = keyedItems.filter(
-      (item) => !alreadyPublished.has(item.sourceKey)
+      (item) => !publishedSources.has(item.sourceKey)
     );
+    const publishedItems = keyedItems
+      .filter((item) => publishedSources.has(item.sourceKey))
+      .map((item) => ({
+        ...item,
+        articleId: publishedSources.get(item.sourceKey),
+        publicationStatus: "published",
+      }));
 
     return NextResponse.json(
       {
@@ -188,10 +197,11 @@ export async function GET(request) {
         },
         stats: {
           foundInWindow: keyedItems.length,
-          alreadyPublished: alreadyPublished.size,
+          alreadyPublished: publishedItems.length,
           available: items.length,
         },
         items,
+        publishedItems,
       },
       { headers: { "Cache-Control": "no-store" } }
     );

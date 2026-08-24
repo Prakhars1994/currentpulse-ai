@@ -35,6 +35,7 @@ async function readApiJson(response) {
 
 export default function ConversationReviewWorkspace({ embedded = false }) {
   const [items, setItems] = useState([]);
+  const [publishedItems, setPublishedItems] = useState([]);
   const [selected, setSelected] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
@@ -64,6 +65,7 @@ export default function ConversationReviewWorkspace({ embedded = false }) {
 
       const nextItems = data.items || [];
       setItems(nextItems);
+      setPublishedItems(data.publishedItems || []);
       setReviewDate(data.reviewDate || "");
       setFeedStats(data.stats || null);
       setWindowInfo(data.window || null);
@@ -189,9 +191,10 @@ export default function ConversationReviewWorkspace({ embedded = false }) {
         selectedUrls.filter((url) => !failedUrls.has(url))
       );
 
-      setItems((current) =>
-        current.filter((item) => !completed.has(item.url))
-      );
+      // Reload once after all 8-item batches complete so the server's durable
+      // source-key state, not optimistic client state, separates published
+      // stories from the new review queue.
+      await load();
       setSelected(new Set(failedUrls));
 
       setMessage(
@@ -199,8 +202,8 @@ export default function ConversationReviewWorkspace({ embedded = false }) {
           (failureDetails.length
             ? `Failures: ${failureDetails.slice(0, 3).join(" | ")}. `
             : "") +
-          (published > 0
-            ? "Published News is safely stored; the public reader release is still required before it appears on /news."
+          (completed.size
+            ? "Completed items are now marked separately as already published."
             : "")
       );
     } catch (error) {
@@ -293,7 +296,7 @@ export default function ConversationReviewWorkspace({ embedded = false }) {
       </section>
 
       <div className="text-sm text-gray-600">
-        {filtered.length} general-public articles in the current editorial window · selected {selected.size}
+        {filtered.length} new general-public articles in the current editorial window · selected {selected.size}
       </div>
 
       <div className="flex flex-wrap gap-3 text-sm">
@@ -406,6 +409,21 @@ export default function ConversationReviewWorkspace({ embedded = false }) {
           </div>
         ) : null}
       </section>
+
+      {publishedItems.length ? (
+        <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5" aria-label="Already published Conversation articles">
+          <h2 className="text-lg font-black text-emerald-950">Already published</h2>
+          <p className="mt-1 text-sm text-emerald-800">These stories are recorded as published and are intentionally kept out of the new-item selection.</p>
+          <div className="mt-4 space-y-2">
+            {publishedItems.map((item) => (
+              <div key={item.url} className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm text-emerald-950">
+                <span className="mr-2 font-black text-emerald-700">Published</span>
+                {item.title}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -11,6 +11,7 @@ function load(relative) {
 test("Admin home embeds PDF intake and Conversation review", () => {
   const dashboard = load("app/admin/page.jsx");
   const workspace = load("components/admin/ConversationReviewWorkspace.jsx");
+  const route = load("app/api/admin/review/the-conversation/route.js");
 
   assert.match(dashboard, /PdfImportWorkspace/);
   assert.match(dashboard, /ConversationReviewWorkspace/);
@@ -23,6 +24,9 @@ test("Admin home embeds PDF intake and Conversation review", () => {
   assert.match(workspace, /readApiJson/);
   assert.match(workspace, /instead of JSON/);
   assert.match(workspace, /Deselect all/);
+  assert.match(workspace, /Already published/);
+  assert.match(workspace, /await load\(\)/);
+  assert.match(route, /publishedItems/);
   assert.doesNotMatch(workspace, /selected\.size\}\/8/);
 });
 
