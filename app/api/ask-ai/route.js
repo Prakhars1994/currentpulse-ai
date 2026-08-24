@@ -8,8 +8,12 @@ import { isDisplayWorthyNews } from "@/lib/news/newsQuality";
 const MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite"];
 const STOP = new Set(["what","when","where","which","why","how","about","with","from","this","that","the","and","for","are","was","were","has","have","explain","upsc","current","affairs"]);
 const ANSWER_CACHE_TTL_MS = 5 * 60 * 1000;
+const CLIENT_WINDOW_MS = 10 * 60 * 1000;
+const MAX_UNCACHED_QUESTIONS_PER_WINDOW = 3;
 const answerCache = globalThis.__currentPulseAnswerCache || new Map();
 globalThis.__currentPulseAnswerCache = answerCache;
+const clientQuestionWindows = globalThis.__currentPulseQuestionWindows || new Map();
+globalThis.__currentPulseQuestionWindows = clientQuestionWindows;
 
 function answerCacheKey(question, mode) {
   return `${String(mode || "Explain Topic").trim().toLowerCase()}|${String(question || "").trim().toLowerCase().replace(/\s+/g, " ")}`;
@@ -32,6 +36,32 @@ function writeAnswerCache(key, payload) {
     if (oldest) answerCache.delete(oldest);
   }
   return payload;
+}
+
+function allowUncachedQuestion(request) {
+  const client = request.headers.get("cf-connecting-ip") || "unknown";
+  const now = Date.now();
+  const window = (clientQuestionWindows.get(client) || []).filter(
+    (timestamp) => now - timestamp < CLIENT_WINDOW_MS
+  );
+
+  if (window.length >= MAX_UNCACHED_QUESTIONS_PER_WINDOW) {
+    clientQuestionWindows.set(client, window);
+    return false;
+  }
+
+  window.push(now);
+  clientQuestionWindows.set(client, window);
+
+  if (clientQuestionWindows.size > 5000) {
+    for (const [key, timestamps] of clientQuestionWindows) {
+      if (!timestamps.some((timestamp) => now - timestamp < CLIENT_WINDOW_MS)) {
+        clientQuestionWindows.delete(key);
+      }
+    }
+  }
+
+  return true;
 }
 
 function buildInstruction(mode) {
@@ -124,6 +154,15 @@ export async function POST(request) {
     const cacheKey = answerCacheKey(cleanQuestion, mode);
     const cachedPayload = readAnswerCache(cacheKey);
     if (cachedPayload) return NextResponse.json({ ...cachedPayload, cached: true });
+
+    if (!allowUncachedQuestion(request)) {
+      return NextResponse.json(
+        {
+          answer: "To keep CurrentPulse AI available for everyone, please wait a few minutes before asking another new question.",
+        },
+        { status: 429, headers: { "Retry-After": "600" } }
+      );
+    }
 
     const articles = await retrieveArticles(cleanQuestion).catch((error) => {
       console.error("[Ask AI] Retrieval error:", error);

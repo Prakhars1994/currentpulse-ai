@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { getConfiguredAiProviders } from "@/lib/ai/router";
+import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -36,7 +37,10 @@ function queueMigrationMessage(error) {
   return "Open this endpoint after the next Auto News and Queue Processor runs; the latest safe error is shown below.";
 }
 
-export async function GET() {
+export async function GET(request) {
+  const auth = await requireAuthenticatedAdmin(request);
+  if (!auth.ok) return auth.response;
+
   const supabase = createServerSupabase();
   const generatedAt = new Date().toISOString();
 

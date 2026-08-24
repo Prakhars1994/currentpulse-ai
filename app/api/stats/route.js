@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +36,10 @@ async function exactCount(query) {
   return count || 0;
 }
 
-export async function GET() {
+export async function GET(request) {
+  const auth = await requireAuthenticatedAdmin(request);
+  if (!auth.ok) return auth.response;
+
   try {
     const supabase = createServerSupabase();
     const indiaDay = getIndiaDayRange();
