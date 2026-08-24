@@ -4,6 +4,7 @@ import {
   conversationArticleId,
   loadTheConversationReviewWindow,
 } from "../lib/news/theConversation.js";
+import { isGeneralPublicConversationItem } from "../lib/news/conversationPublicInterest.js";
 
 const IST_OFFSET_MS = 330 * 60 * 1000;
 const SOURCE_NAME = "The Conversation";
@@ -116,11 +117,14 @@ const result = await loadTheConversationReviewWindow({
   limit: MAX_ROWS_PER_WINDOW,
 });
 
+const publicItems = result.items.filter(isGeneralPublicConversationItem);
+
 console.log(`CONVERSATION_REVIEW_SLOT=${slot}:00 IST`);
 console.log(`WINDOW_START=${window.start.toISOString()}`);
 console.log(`WINDOW_END=${window.end.toISOString()}`);
 console.log(`FINAL_WINDOW_END=${window.finalEnd.toISOString()}`);
 console.log(`UNIQUE_IN_WINDOW=${result.stats.uniqueInWindow}`);
+console.log(`GENERAL_PUBLIC_ITEMS=${publicItems.length}`);
 console.log(
   `FEEDS_HEALTHY=${result.stats.feedsHealthy}/${result.stats.feedsRequested}`
 );
@@ -133,7 +137,7 @@ for (const feed of result.feedSummary) {
 }
 
 if (dryRun) {
-  for (const item of result.items) {
+  for (const item of publicItems) {
     console.log(
       `- ${item.publishedAt} | ${item.edition || "unknown"} | ${item.title}`
     );
@@ -153,7 +157,7 @@ const supabase = createClient(
 );
 
 const generatedAt = new Date().toISOString();
-const rows = result.items.map((item) =>
+const rows = publicItems.map((item) =>
   rowFromItem(item, generatedAt, window.batchKey)
 );
 
@@ -201,6 +205,7 @@ const marker = {
     feedsHealthy: result.stats.feedsHealthy,
     feedsRequested: result.stats.feedsRequested,
     uniqueInWindow: result.stats.uniqueInWindow,
+    generalPublicItems: publicItems.length,
   }),
   score: 0,
   status: MARKER_STATUS,

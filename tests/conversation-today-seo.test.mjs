@@ -32,7 +32,7 @@ test("Conversation review feed is all-English and today-only in IST", () => {
 
 test("admin News can preview the full sanitized Conversation article", () => {
   const route = load("app/api/admin/review/the-conversation/route.js");
-  const page = load("app/admin/news/page.js");
+  const page = load("components/admin/ConversationReviewWorkspace.jsx");
   const css = load("app/globals.css");
 
   assert.match(route, /searchParams\.get\("preview"\)/);

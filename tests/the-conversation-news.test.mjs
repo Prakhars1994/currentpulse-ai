@@ -94,12 +94,12 @@ test("republish sanitation removes ordinary images but keeps links and page coun
 
 test("admin review and licensed renderer are wired into News", () => {
   const route = load("app/api/admin/review/the-conversation/route.js");
-  const admin = load("app/admin/news/page.js");
+  const admin = load("components/admin/ConversationReviewWorkspace.jsx");
   const detail = load("app/news/[slug]/page.js");
 
   assert.match(route, /requireAuthenticatedAdmin/);
   assert.match(route, /publishTheConversationArticle/);
-  assert.match(admin, /News-only republication/);
+  assert.match(admin, /General-public News review/);
   assert.match(detail, /licensed_republish_the_conversation/);
   assert.match(detail, /LicensedNewsArticle/);
 });

@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { FileText, TrendingUp, Clock, CheckCircle } from 'lucide-react'
+import PdfImportWorkspace from '@/components/admin/PdfImportWorkspace'
+import ConversationReviewWorkspace from '@/components/admin/ConversationReviewWorkspace'
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -72,6 +74,14 @@ export default function AdminDashboard() {
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <PdfImportWorkspace embedded />
+      </div>
+
+      <div className="mt-8">
+        <ConversationReviewWorkspace embedded />
       </div>
 
       <div className="mt-8">
