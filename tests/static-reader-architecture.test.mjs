@@ -34,6 +34,7 @@ test("static reader materializer blocks Next RSC prefetch and emits an asset man
   assert.match(source, /recentlyChangedPaths/);
   assert.match(source, /looksLikeNotFoundPlaceholder/);
   assert.match(source, /stale static asset removed/);
+  assert.match(source, /staleAssetsRemoved/);
   assert.match(source, /intentionally noindex/);
   assert.match(source, /STATIC_NEWS_ARCHIVE_PAGES \|\| 48/);
   assert.match(source, /materializeStaticFiles/);

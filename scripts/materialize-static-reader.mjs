@@ -480,6 +480,7 @@ async function renderOne(pathname) {
       return {
         pathname,
         ok: false,
+        staleRemoved: true,
         status: response.status,
         reason: "Article detail rendered as not-found; stale static asset removed.",
       };
@@ -592,7 +593,11 @@ const skippedForBudget = paths.filter(
 const succeeded = results.filter((item) => item?.ok);
 const reused = succeeded.filter((item) => item.reused);
 const reusedLocal = succeeded.filter((item) => item.reusedLocal);
-const failed = results.filter((item) => item && !item.ok);
+// A confirmed not-found article is an intentional terminal outcome: its stale
+// static asset has been removed and the Worker can return the real 404. It is
+// not a failed render and must not prevent a healthy reader release.
+const staleRemoved = results.filter((item) => item?.staleRemoved);
+const failed = results.filter((item) => item && !item.ok && !item.staleRemoved);
 const requiredFailures = [
   ...failed.filter(
     (item) => Boolean(changedFile) || CORE_PATHS.includes(item.pathname)
@@ -623,6 +628,7 @@ const manifest = {
   reusedLocalArchivePages: reusedLocal.length,
   localReuseEnabled: reuseLocal,
   failedPages: failed.length,
+  staleAssetsRemoved: staleRemoved.length,
   skippedForBudget: skippedForBudget.length,
   budgetExhausted: renderRun.budgetExhausted,
   budgetSeconds,
@@ -644,7 +650,7 @@ await fs.writeFile(
 );
 
 console.log(
-  `STATIC_READER_COMPLETE generated=${succeeded.length} failed=${failed.length} requiredFailed=${requiredFailures.length}`
+  `STATIC_READER_COMPLETE generated=${succeeded.length} staleRemoved=${staleRemoved.length} failed=${failed.length} requiredFailed=${requiredFailures.length}`
 );
 
 if (requiredFailures.length) {
@@ -658,7 +664,7 @@ if (requiredStaticFailures.length) {
 if (
   !changedFile &&
   paths.length >= 25 &&
-  succeeded.length < Math.min(25, paths.length)
+  succeeded.length + staleRemoved.length < Math.min(25, paths.length)
 ) {
   console.error("Static reader produced too few pages to be considered healthy.");
   process.exit(3);
