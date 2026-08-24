@@ -52,6 +52,7 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
   const [progress, setProgress] = useState(null);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState([]);
+  const fileInputId = `pdf-file-${stream}`;
 
   const selectedDrafts = useMemo(
     () =>
@@ -202,6 +203,7 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
 
       <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
         <input
+          id={fileInputId}
           type="file"
           accept="application/pdf,.pdf"
           onChange={(event) => {
@@ -211,10 +213,25 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
             setMessage("");
             setErrors([]);
           }}
-          className="block w-full text-sm"
+          className="sr-only"
         />
 
-        <div className="mt-3 flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <label
+            htmlFor={fileInputId}
+            className="cursor-pointer rounded-lg border border-slate-700 bg-white px-4 py-2.5 text-sm font-bold text-slate-950 shadow-sm transition hover:bg-slate-100 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-blue-600"
+          >
+            Choose PDF
+          </label>
+
+          {file ? (
+            <span className="text-sm font-semibold text-slate-800">
+              {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
+            </span>
+          ) : (
+            <span className="text-sm text-slate-700">No PDF selected</span>
+          )}
+
           <button
             type="button"
             onClick={readPdf}
@@ -231,11 +248,6 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
             )}
           </button>
 
-          {file ? (
-            <span className="text-xs text-slate-500">
-              {file.name} · {(file.size / 1024 / 1024).toFixed(1)} MB
-            </span>
-          ) : null}
         </div>
       </div>
 

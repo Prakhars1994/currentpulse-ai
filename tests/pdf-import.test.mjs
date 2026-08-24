@@ -33,6 +33,18 @@ test("PDF importer exposes exactly two admin PDF lanes", () => {
   assert.match(sidebar, /\/admin\/pdf-import/);
 });
 
+test("PDF lanes use visible chooser labels connected to separate hidden file inputs", () => {
+  const workspace = load("components/admin/PdfImportWorkspace.jsx");
+
+  assert.match(workspace, /const fileInputId = `pdf-file-\$\{stream\}`/);
+  assert.match(workspace, /id=\{fileInputId\}/);
+  assert.match(workspace, /htmlFor=\{fileInputId\}/);
+  assert.match(workspace, /Choose PDF/);
+  assert.match(workspace, /className="sr-only"/);
+  assert.match(workspace, /No PDF selected/);
+  assert.match(workspace, /disabled=\{!file \|\| reading \|\| publishing\}/);
+});
+
 test("PDF extraction is browser-side and raw PDF is not uploaded", () => {
   const client = load("lib/pdf/clientExtract.js");
   const admin = load("app/admin/pdf-import/page.js");
