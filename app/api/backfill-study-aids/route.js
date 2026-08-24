@@ -2,8 +2,6 @@ import { after, NextResponse } from "next/server";
 
 import { generateStudyAids } from "@/lib/ai/generateStudyAids";
 import { isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
-import { persistRemoteArticleImage } from "@/lib/news/imageStorage";
-import { findRelevantCommonsImage } from "@/lib/news/relevantImage";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
@@ -56,13 +54,6 @@ async function execute(limit) {
       const currentImage = isVerifiedReusableArticleImage(article)
         ? article.image || article.image_url || ""
         : "";
-      const replaceImage = !currentImage;
-      const commons = replaceImage
-        ? await findRelevantCommonsImage(item.imageSearchQuery, article.title)
-        : null;
-      const stored = commons
-        ? await persistRemoteArticleImage(supabase, commons.url, article.slug || article.title)
-        : currentImage;
 
       const { error: updateError } = await supabase
         .from("articles")
@@ -71,23 +62,6 @@ async function execute(limit) {
           visual_summary: item.visualSummary,
           memory_trick: item.memoryTrick,
           map_locations: item.mapLocations,
-          ...(commons
-            ? {
-                image: stored || commons.url,
-                image_url: stored || commons.url,
-                image_alt: article.title,
-                image_caption: commons.caption,
-                image_source_url: commons.sourceUrl,
-              }
-            : replaceImage
-              ? {
-                  image: null,
-                  image_url: null,
-                  image_alt: article.title,
-                  image_caption: null,
-                  image_source_url: null,
-                }
-              : {}),
           updated_at: new Date().toISOString(),
         })
         .eq("id", article.id);
@@ -95,9 +69,7 @@ async function execute(limit) {
       results.push({
         status: "updated",
         articleId: article.id,
-        image: commons
-          ? "wikimedia_commons"
-          : currentImage
+        image: currentImage
             ? "preserved_licensed"
             : "currentpulse_article_visual",
       });

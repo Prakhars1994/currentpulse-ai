@@ -2,7 +2,7 @@ import { after, NextResponse } from "next/server";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import { persistRemoteArticleImage } from "@/lib/news/imageStorage";
-import { findRelevantCommonsImage } from "@/lib/news/relevantImage";
+import { isTerminalImageResolution, resolveGovernmentArticleImage } from "@/lib/news/governmentImageResolver";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 
 export const runtime = "nodejs";
@@ -39,7 +39,7 @@ async function executeBackfill(limit) {
   const supabase = createServerSupabase();
   const { data, error } = await supabase
     .from("articles")
-    .select("id,title,slug,category,why_news,image,image_url,image_source_url,image_caption,image_search_query,created_at,article_sources(source_kind,source_url)")
+    .select("id,title,slug,category,why_news,image,image_url,image_source_url,image_caption,image_search_query,image_resolution,created_at,article_sources(source_kind,source_url)")
     .eq("status", "published")
     .order("created_at", { ascending: false })
     .limit(1000);
@@ -51,7 +51,8 @@ async function executeBackfill(limit) {
       (source) => source?.source_kind === "coaching"
     ) ? "coverage" : "news";
     return isPublishedArticleSafe(article, { stream }) &&
-      !isVerifiedReusableArticleImage(article);
+      !isVerifiedReusableArticleImage(article) &&
+      !isTerminalImageResolution(article.image_resolution);
   };
   const missing = (data || [])
     .filter(needsReplacement)
@@ -59,14 +60,11 @@ async function executeBackfill(limit) {
 
   const results = await mapWithConcurrency(missing, async (article) => {
     try {
-      const commons = await findRelevantCommonsImage(
-        article.image_search_query || article.title,
-        article.title
-      );
-      const stored = commons
+      const government = await resolveGovernmentArticleImage(article);
+      const stored = government.image
         ? await persistRemoteArticleImage(
             supabase,
-            commons.url,
+            government.image.url,
             article.slug || article.title
           )
         : "";
@@ -74,11 +72,12 @@ async function executeBackfill(limit) {
       const { error: updateError } = await supabase
         .from("articles")
         .update({
-          image: stored || commons?.url || null,
-          image_url: stored || commons?.url || null,
+          image: stored || government.image?.url || null,
+          image_url: stored || government.image?.url || null,
           image_alt: article.title,
-          image_caption: commons?.caption || null,
-          image_source_url: commons?.sourceUrl || null,
+          image_caption: government.image?.attribution || null,
+          image_source_url: government.image?.sourcePageUrl || null,
+          image_resolution: government.resolution,
           updated_at: new Date().toISOString(),
         })
         .eq("id", article.id);
@@ -89,7 +88,7 @@ async function executeBackfill(limit) {
         status: "updated",
         articleId: article.id,
         title: article.title,
-        imageType: commons ? "wikimedia_commons" : "currentpulse_article_visual",
+        imageType: government.image ? government.resolution.provider : "currentpulse_article_visual",
       };
     } catch (backfillError) {
       console.error(`[Image backfill] Failed for ${article.id}:`, backfillError?.message || backfillError);
