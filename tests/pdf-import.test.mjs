@@ -41,6 +41,8 @@ test("PDF lanes use visible chooser labels connected to separate hidden file inp
   assert.match(workspace, /htmlFor=\{fileInputId\}/);
   assert.match(workspace, /Choose PDF/);
   assert.match(workspace, /className="sr-only"/);
+  assert.match(workspace, /sticky top-4 z-20/);
+  assert.match(workspace, /Upload a PDF/);
   assert.match(workspace, /No PDF selected/);
   assert.match(workspace, /disabled=\{!file \|\| reading \|\| publishing\}/);
 });

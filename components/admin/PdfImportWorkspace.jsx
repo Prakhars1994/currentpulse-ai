@@ -201,7 +201,7 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
         <FileUp className="h-8 w-8 text-slate-400" />
       </div>
 
-      <div className="mt-5 rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+      <div className="sticky top-4 z-20 mt-5 rounded-xl border-2 border-dashed border-blue-300 bg-white p-4 shadow-lg">
         <input
           id={fileInputId}
           type="file"
@@ -217,9 +217,10 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
         />
 
         <div className="flex flex-wrap items-center gap-3">
+          <span className="text-sm font-bold text-slate-950">Upload a PDF</span>
           <label
             htmlFor={fileInputId}
-            className="cursor-pointer rounded-lg border border-slate-700 bg-white px-4 py-2.5 text-sm font-bold text-slate-950 shadow-sm transition hover:bg-slate-100 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-blue-600"
+            className="cursor-pointer rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-blue-600"
           >
             Choose PDF
           </label>
