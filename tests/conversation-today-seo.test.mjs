@@ -81,7 +81,8 @@ test("SEO keeps licensed Conversation duplicates out of CurrentPulse indexing", 
 
   assert.match(detail, /licensedConversation[\s\S]{0,80}index:\s*false/);
   assert.match(sitemap, /source_name === "PB-SHABD"/);
-  assert.match(newsSitemap, /source_name === "PB-SHABD"/);
+  assert.match(newsSitemap, /NextResponse\.redirect/);
+  assert.match(newsSitemap, /\/sitemap\.xml/);
   assert.doesNotMatch(robots, /news-sitemap\.xml/);
   assert.match(layout, /UPSC Current Affairs Today/);
 });
