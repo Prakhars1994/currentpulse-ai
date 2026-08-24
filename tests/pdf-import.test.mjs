@@ -20,13 +20,15 @@ function page(pageNumber, lines) {
   };
 }
 
-test("PDF importer exposes exactly two admin PDF lanes", () => {
+test("PDF importer exposes separate English CA, Hindi CA and News PDF lanes", () => {
   const pageSource = load("components/admin/PdfImportWorkspace.jsx");
   const sidebar = load("components/admin/AdminSidebar.jsx");
 
   assert.match(pageSource, /stream="ca"/);
+  assert.match(pageSource, /stream="ca_hi"/);
   assert.match(pageSource, /stream="news"/);
   assert.match(pageSource, /Current Affairs PDF/);
+  assert.match(pageSource, /हिंदी Current Affairs PDF/);
   assert.match(pageSource, /News PDF/);
   assert.match(pageSource, /No AI call is used for extraction/);
   assert.match(sidebar, /PDF Import/);
@@ -57,16 +59,17 @@ test("PDF extraction is browser-side and raw PDF is not uploaded", () => {
   assert.doesNotMatch(admin, /\/api\/upload/);
 });
 
-test("PDF publish route records CA and News source rows", () => {
+test("PDF publish route records English CA, Hindi CA and News source rows", () => {
   const route = load("app/api/admin/pdf-import/publish/route.js");
 
   assert.match(route, /MAX_ARTICLES_PER_REQUEST = 20/);
-  assert.match(route, /source_kind: stream === "ca" \? "coaching" : "news"/);
+  assert.match(route, /stream === "ca" \|\| stream === "ca_hi"/);
   assert.match(route, /CurrentPulse Admin CA PDF/);
   assert.match(route, /CurrentPulse Admin News PDF/);
   assert.match(route, /zero_ai_pdf_import/);
   assert.match(route, /full_text_preserved/);
   assert.match(route, /releaseRequired: published > 0/);
+  assert.match(route, /language: stream === "ca_hi" \? "hi" : "en"/);
 });
 
 test("CA admin PDF stays an internal policy exception", () => {

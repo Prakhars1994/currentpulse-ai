@@ -15,6 +15,24 @@ function formatDate(value) {
       });
 }
 
+async function readApiJson(response) {
+  const contentType = response.headers.get("content-type") || "";
+  const body = await response.text();
+
+  if (!contentType.includes("application/json")) {
+    const preview = body.replace(/\s+/g, " ").trim().slice(0, 140);
+    throw new Error(
+      `Conversation service returned ${response.status} ${response.statusText || "response"} instead of JSON.${preview ? ` ${preview}` : ""}`
+    );
+  }
+
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error(`Conversation service returned invalid JSON (${response.status}).`);
+  }
+}
+
 export default function ConversationReviewWorkspace({ embedded = false }) {
   const [items, setItems] = useState([]);
   const [selected, setSelected] = useState(new Set());
@@ -36,7 +54,7 @@ export default function ConversationReviewWorkspace({ embedded = false }) {
       const response = await fetch("/api/admin/review/the-conversation", {
         cache: "no-store",
       });
-      const data = await response.json();
+      const data = await readApiJson(response);
 
       if (!response.ok || !data.success) {
         throw new Error(
@@ -102,7 +120,7 @@ export default function ConversationReviewWorkspace({ embedded = false }) {
         `/api/admin/review/the-conversation?preview=${encodeURIComponent(url)}`,
         { cache: "no-store" }
       );
-      const data = await response.json();
+      const data = await readApiJson(response);
 
       if (!response.ok || !data.success || !data.preview?.html) {
         throw new Error(
@@ -147,7 +165,7 @@ export default function ConversationReviewWorkspace({ embedded = false }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ urls: batch }),
         });
-        const data = await response.json();
+        const data = await readApiJson(response);
 
         published += Number(data.stats?.published || 0);
         duplicates += Number(data.stats?.duplicates || 0);

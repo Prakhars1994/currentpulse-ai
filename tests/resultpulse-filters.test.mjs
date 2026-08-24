@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-import { EXAM_FILTER_GROUPS, EXAM_FILTER_SOURCES, normalizeExamFilters } from "../lib/exams/filters.js";
+import { EXAM_FILTER_GROUPS, EXAM_FILTER_SOURCES, normalizeExamFilters, normalizeExamPage } from "../lib/exams/filters.js";
 
 function read(path) {
   return fs.readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -27,13 +27,26 @@ test("ResultPulse filter normalization is bounded and rejects unknown selectors"
   );
 });
 
+test("ResultPulse archive pagination is bounded and preserves filters", () => {
+  assert.equal(normalizeExamPage("3"), 3);
+  assert.equal(normalizeExamPage("0"), 1);
+  assert.equal(normalizeExamPage("999999"), 10000);
+  const repository = read("lib/exams/repository.js");
+  const page = read("components/ExamUpdatesPage.jsx");
+  assert.match(repository, /\.range\(safeOffset, safeOffset \+ safeLimit\)/);
+  assert.match(repository, /hasMore: rows\.length > safeLimit/);
+  assert.match(page, /ResultPulse archive pagination/);
+  assert.match(page, /query\.set\("page", String\(targetPage\)\)/);
+});
+
 test("ResultPulse pushes filters into bounded Supabase reads without AI", () => {
   const repository = read("lib/exams/repository.js");
   assert.match(repository, /\.eq\("update_type", active\.type\)/);
   assert.match(repository, /\.eq\("source_group", active\.group\)/);
   assert.match(repository, /\.eq\("source_name", sourceFilter\.label\)/);
   assert.match(repository, /exam_name\.ilike/);
-  assert.match(repository, /candidateLimit/);
+  assert.match(repository, /safeOffset/);
+  assert.match(repository, /\.range\(safeOffset, safeOffset \+ safeLimit\)/);
 
   const combined = `${repository}\n${read("lib/exams/filters.js")}\n${read("components/ExamUpdatesPage.jsx")}\n${read("app/exams/page.js")}`;
   assert.doesNotMatch(combined, /@\/lib\/ai\//);

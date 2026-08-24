@@ -20,6 +20,8 @@ test("Admin home embeds PDF intake and Conversation review", () => {
   assert.match(workspace, /General Public News/);
   assert.match(workspace, /setSelected\(new Set\(nextItems\.map/);
   assert.match(workspace, /offset \+= 8/);
+  assert.match(workspace, /readApiJson/);
+  assert.match(workspace, /instead of JSON/);
   assert.match(workspace, /Deselect all/);
   assert.doesNotMatch(workspace, /selected\.size\}\/8/);
 });

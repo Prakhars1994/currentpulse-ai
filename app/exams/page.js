@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import ExamUpdatesPage from "@/components/ExamUpdatesPage";
-import { normalizeExamFilters } from "@/lib/exams/filters";
+import { normalizeExamFilters, normalizeExamPage } from "@/lib/exams/filters";
 import { SITE_URL } from "@/lib/siteUrl";
 
 export const metadata = {
@@ -12,6 +12,7 @@ export const metadata = {
 };
 
 export default async function Page({ searchParams }) {
-  const filters = normalizeExamFilters((await searchParams) || {});
-  return <ExamUpdatesPage filters={filters} />;
+  const params = (await searchParams) || {};
+  const filters = normalizeExamFilters(params);
+  return <ExamUpdatesPage filters={filters} page={normalizeExamPage(params.page)} />;
 }

@@ -50,7 +50,8 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
   const title = clean(article.title).slice(0, 180);
   const importIndex = Number(article.importIndex);
   const suffix = `${date.replace(/-/g, "")}-${fileHash.slice(0, 7)}-${importIndex}`;
-  const slug = `${slugify(title) || "pdf-import"}-${suffix}`.slice(0, 180);
+  const slugPrefix = stream === "ca_hi" ? "hindi-current-affairs" : (slugify(title) || "pdf-import");
+  const slug = `${slugPrefix}-${suffix}`.slice(0, 180);
   const fullText = clean(article.fullText).slice(0, MAX_ARTICLE_TEXT);
   const whyNews = clean(article.why_news).slice(0, MAX_ARTICLE_TEXT);
   const staticFoundation = clean(article.static_foundation).slice(0, MAX_ARTICLE_TEXT);
@@ -77,7 +78,7 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
     data_examples: dataExamples,
     india_relevance: indiaRelevance,
     syllabus_linkage:
-      stream === "ca"
+      stream === "ca" || stream === "ca_hi"
         ? `- **Paper:** ${paper}\n- **Theme:** ${category}`
         : "",
     seo_title: clean(article.seo_title || title).slice(0, 180),
@@ -91,6 +92,7 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
         .slice(0, 16)
     )],
     status: "published",
+    language: stream === "ca_hi" ? "hi" : "en",
     created_at: createdAt,
     updated_at: createdAt,
     published_at: `${date}T12:00:00`,
@@ -102,7 +104,8 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
       "admin_pdf_import",
       "zero_ai_pdf_import",
       "full_text_preserved",
-      stream === "ca" ? "ca_pdf_import" : "news_pdf_import",
+      stream === "ca" || stream === "ca_hi" ? "ca_pdf_import" : "news_pdf_import",
+      ...(stream === "ca_hi" ? ["hindi_ca_pdf_import"] : []),
     ],
   };
 
@@ -131,8 +134,10 @@ export async function POST(request) {
     const stream =
       body?.stream === "news"
         ? "news"
-        : body?.stream === "ca"
-          ? "ca"
+        : body?.stream === "ca_hi"
+          ? "ca_hi"
+          : body?.stream === "ca"
+            ? "ca"
           : "";
     const fileName = clean(body?.fileName).slice(0, 220);
     const fileHash = clean(body?.fileHash).toLowerCase();
@@ -234,12 +239,12 @@ export async function POST(request) {
       }
 
       const sourceName =
-        stream === "ca"
+        stream === "ca" || stream === "ca_hi"
           ? "CurrentPulse Admin CA PDF"
           : "CurrentPulse Admin News PDF";
       const sourceUrl =
-        stream === "ca"
-          ? `${SITE_URL}/current-affairs`
+        stream === "ca" || stream === "ca_hi"
+          ? `${SITE_URL}${stream === "ca_hi" ? "/current-affairs/hindi" : "/current-affairs"}`
           : `${SITE_URL}/news`;
       const now = new Date().toISOString();
 
@@ -249,7 +254,7 @@ export async function POST(request) {
           article_id: inserted.id,
           event_key: hash(`${date}|${payload.title}`).slice(0, 32),
           source_key: item.sourceKey,
-          source_kind: stream === "ca" ? "coaching" : "news",
+          source_kind: stream === "ca" || stream === "ca_hi" ? "coaching" : "news",
           source_name: sourceName,
           source_title: `Imported from ${fileName}`,
           source_url: sourceUrl,

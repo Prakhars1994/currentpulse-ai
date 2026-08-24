@@ -225,13 +225,12 @@ function isPublicArticleDetailPath(pathname) {
   return pathname.startsWith("/exams/");
 }
 
-function looksLikeNoindexPlaceholder(html = "") {
+function looksLikeNotFoundPlaceholder(html = "") {
   const head = String(html).slice(0, 40000);
-  const robotsTags =
-    head.match(/<meta\b[^>]*\bname=["']robots["'][^>]*>/gi) || [];
   return (
-    robotsTags.some((tag) => /\bnoindex\b/i.test(tag)) ||
-    /<title>\s*(?:News\s+)?Not Found\b/i.test(head)
+    /<title>\s*(?:News\s+)?Not Found\b/i.test(head) ||
+    /<h1[^>]*>\s*404(?:\s|<)/i.test(head) ||
+    /This page could not be found\./i.test(head)
   );
 }
 
@@ -473,15 +472,16 @@ async function renderOne(pathname) {
     if (!/<html\b/i.test(text) || text.length < 500) {
       return { pathname, ok: false, status: response.status, reason: "HTML response was unexpectedly small." };
     }
-    if (isPublicArticleDetailPath(pathname) && looksLikeNoindexPlaceholder(text)) {
+    if (isPublicArticleDetailPath(pathname) && looksLikeNotFoundPlaceholder(text)) {
       // Do not publish a successful-looking static asset for a page whose
-      // reader itself says "not found" / noindex. Remove an old cached copy too.
+      // reader itself says "not found". Licensed Conversation pages are
+      // intentionally noindex and remain valid public reader pages.
       await fs.rm(destination, { force: true });
       return {
         pathname,
         ok: false,
         status: response.status,
-        reason: "Article detail rendered as noindex/not-found; stale static asset removed.",
+        reason: "Article detail rendered as not-found; stale static asset removed.",
       };
     }
 

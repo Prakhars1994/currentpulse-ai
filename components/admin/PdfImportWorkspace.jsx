@@ -191,7 +191,7 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
-            {stream === "ca" ? "PDF 1" : "PDF 2"}
+            {stream === "ca" ? "PDF 1" : stream === "ca_hi" ? "PDF 2" : "PDF 3"}
           </p>
           <h2 className="mt-1 text-2xl font-black text-slate-950">{title}</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
@@ -463,6 +463,13 @@ export default function PdfImportWorkspace({ embedded = false }) {
           stream="ca"
           title="Current Affairs PDF"
           subtitle="Detected topics are formatted for Current Affairs with category, GS paper, Why in News, Static Foundation, Prelims/Mains fields and complete source text retained."
+          publishedAt={publishedAt}
+        />
+
+        <ImportPanel
+          stream="ca_hi"
+          title="हिंदी Current Affairs PDF"
+          subtitle="हिंदी PDF ब्राउज़र में ही पढ़ी जाती है और अलग हिंदी Current Affairs archive में प्रकाशित होती है। प्रत्येक publish request अधिकतम 20 लेखों की है; extraction में AI call नहीं होता।"
           publishedAt={publishedAt}
         />
 

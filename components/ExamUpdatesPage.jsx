@@ -38,15 +38,20 @@ function dateText(value) {
 export default async function ExamUpdatesPage({
   type = "",
   filters = {},
+  page = 1,
   title = "ResultPulse AI",
   description = "Official-source exam results, admit cards, answer keys, applications and deadlines - tracked in one place.",
 }) {
   const activeFilters = normalizeExamFilters({ ...filters, type: type || filters?.type || "" });
+  const currentPage = Math.max(1, Number(page) || 1);
+  const pageSize = 30;
   let updates = [];
+  let hasMore = false;
   let error = null;
   try {
-    const result = await loadExamUpdates({ ...activeFilters, limit: 30 });
+    const result = await loadExamUpdates({ ...activeFilters, limit: pageSize, offset: (currentPage - 1) * pageSize });
     updates = result.updates || [];
+    hasMore = Boolean(result.hasMore);
     error = result.error || null;
   } catch (loadError) {
     console.error("ResultPulse page load failed:", loadError?.message || loadError);
@@ -54,6 +59,16 @@ export default async function ExamUpdatesPage({
   }
 
   const hasFilters = Boolean(activeFilters.type || activeFilters.group || activeFilters.source || activeFilters.q);
+  const queryForPage = (targetPage) => {
+    const query = new URLSearchParams();
+    if (activeFilters.group) query.set("group", activeFilters.group);
+    if (activeFilters.source) query.set("source", activeFilters.source);
+    if (activeFilters.type) query.set("type", activeFilters.type);
+    if (activeFilters.q) query.set("q", activeFilters.q);
+    if (targetPage > 1) query.set("page", String(targetPage));
+    const value = query.toString();
+    return `/exams${value ? `?${value}` : ""}`;
+  };
 
   return (
     <main className="min-h-screen bg-slate-950 py-10 text-white sm:py-14">
@@ -70,6 +85,7 @@ export default async function ExamUpdatesPage({
               </Link>
             ))}
           </div>
+          <p className="mt-4 text-sm font-bold text-slate-400">Chronological official archive · Page {currentPage}</p>
 
           <form method="get" action="/exams" className="mt-7 rounded-2xl border border-slate-700/80 bg-slate-950/55 p-4">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
@@ -140,9 +156,16 @@ export default async function ExamUpdatesPage({
 
         {!updates.length && !error && (
           <div className="mt-9 rounded-3xl border border-dashed border-slate-700 p-10 text-center">
-            <h2 className="text-2xl font-black">ResultPulse is ready for its first official-source scan</h2>
-            <p className="mt-3 text-slate-400">Once the exam collector runs, verified official updates will appear here automatically.</p>
+            <h2 className="text-2xl font-black">No official updates match this page</h2>
+            <p className="mt-3 text-slate-400">Try clearing a filter or return to a newer archive page. ResultPulse keeps published official updates instead of removing old entries.</p>
           </div>
+        )}
+        {(currentPage > 1 || hasMore) && (
+          <nav className="mt-9 flex flex-wrap items-center justify-center gap-3" aria-label="ResultPulse archive pagination">
+            {currentPage > 1 && <Link href={queryForPage(currentPage - 1)} className="rounded-xl border border-slate-700 px-5 py-3 font-black text-slate-200">← Newer updates</Link>}
+            <span className="text-sm font-bold text-slate-400">Page {currentPage}</span>
+            {hasMore && <Link href={queryForPage(currentPage + 1)} className="rounded-xl bg-violet-400 px-5 py-3 font-black text-slate-950">Older updates →</Link>}
+          </nav>
         )}
         <div className="mt-10"><ExamSubscriptionForm /></div>
       </div>
