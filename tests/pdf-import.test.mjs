@@ -53,7 +53,8 @@ test("PDF extraction is browser-side and raw PDF is not uploaded", () => {
   const client = load("lib/pdf/clientExtract.js");
   const admin = load("app/admin/pdf-import/page.js");
 
-  assert.match(client, /pdfjs-dist\/legacy\/build\/pdf\.mjs/);
+  assert.match(client, /PDFJS_MODULE_URL/);
+  assert.match(client, /webpackIgnore: true/);
   assert.match(client, /crypto\.subtle\.digest/);
   assert.doesNotMatch(admin, /FormData\(\)/);
   assert.doesNotMatch(admin, /\/api\/upload/);
