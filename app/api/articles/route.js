@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 import { assessPublishedArticle } from "@/lib/editorial/publicationSafety";
+import { ensureArticleStream, normalizeAdminStream } from "@/lib/publisher/articleStream";
+import { requestReaderRelease } from "@/lib/publisher/requestReaderRelease";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +56,7 @@ function invalidIdResponse() {
 
 function unsafePublicationResponse(payload, body) {
   if (payload.status !== "published") return null;
-  const stream = body?.stream === "news" ? "news" : "coverage";
+  const stream = normalizeAdminStream(body?.stream);
   const assessment = assessPublishedArticle(payload, { stream });
   if (assessment.allowed) return null;
   return NextResponse.json(
@@ -129,7 +131,7 @@ export async function GET(request) {
 
     const { data, error } = await auth.supabase
       .from("articles")
-      .select("*")
+      .select("*,article_sources(id,source_kind,source_name)")
       .eq("id", numericId)
       .maybeSingle();
 
@@ -227,13 +229,36 @@ export async function POST(request) {
       );
     }
 
+    let readerRefreshQueued = false;
+    if (payload.status === "published") {
+      const stream = normalizeAdminStream(body?.stream);
+      try {
+        await ensureArticleStream(auth.supabase, data, stream);
+      } catch (sourceError) {
+        console.error("Admin article stream classification error:", sourceError);
+        return NextResponse.json(
+          { success: false, message: "Article was saved, but its public stream could not be classified." },
+          { status: 500 }
+        );
+      }
+      try {
+        await requestReaderRelease({ articleId: data.id, stream });
+        readerRefreshQueued = true;
+      } catch (dispatchError) {
+        console.error("Admin reader release dispatch error:", dispatchError);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message:
         payload.status === "published"
-          ? "Article published successfully."
+          ? readerRefreshQueued
+            ? "Article published. Live reader refresh queued."
+            : "Article published to database, but live reader refresh could not be queued."
           : "Draft saved successfully.",
       article: data,
+      readerRefreshQueued,
     });
   } catch (error) {
     console.error("Article create API error:", error);
@@ -283,10 +308,35 @@ export async function PUT(request) {
       );
     }
 
+    let readerRefreshQueued = false;
+    if (payload.status === "published") {
+      const stream = normalizeAdminStream(body?.stream);
+      try {
+        await ensureArticleStream(auth.supabase, data, stream);
+      } catch (sourceError) {
+        console.error("Admin article stream classification error:", sourceError);
+        return NextResponse.json(
+          { success: false, message: "Article was updated, but its public stream could not be classified." },
+          { status: 500 }
+        );
+      }
+      try {
+        await requestReaderRelease({ articleId: data.id, stream });
+        readerRefreshQueued = true;
+      } catch (dispatchError) {
+        console.error("Admin reader release dispatch error:", dispatchError);
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      message: "Article updated successfully.",
+      message: payload.status === "published"
+        ? readerRefreshQueued
+          ? "Article published. Live reader refresh queued."
+          : "Article published to database, but live reader refresh could not be queued."
+        : "Draft saved successfully.",
       article: data,
+      readerRefreshQueued,
     });
   } catch (error) {
     console.error("Article update API error:", error);

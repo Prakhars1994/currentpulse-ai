@@ -229,11 +229,18 @@ for (const [id, article] of articleById) {
   }
 }
 
+if (articleById.size) {
+  paths.add("/");
+  paths.add("/sitemap.xml");
+}
+
 if (newsChanged) {
   // Immediate News releases refresh the landing page plus exact changed
   // article/category paths. Deep archive pages are reconciled by a full
   // reader release instead of every manual publication.
   paths.add("/news");
+  paths.add("/news-sitemap.xml");
+  paths.add("/feed.xml");
 }
 
 if (coverageChanged) {

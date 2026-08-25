@@ -23,6 +23,7 @@ const articleSchema = z.object({
     .max(160, "Meta description must be less than 160 characters")
     .optional(),
   status: z.enum(["draft", "published"]),
+  stream: z.enum(["coverage", "news"]),
 });
 
 export default function ArticleForm({ article = null }) {
@@ -63,6 +64,9 @@ export default function ArticleForm({ article = null }) {
       seo_title: article?.seo_title || "",
       seo_description: article?.seo_description || "",
       status: article?.status || "draft",
+      stream: (article?.article_sources || []).some(
+        (source) => source?.source_kind === "news"
+      ) ? "news" : "coverage",
     },
   });
 
@@ -110,6 +114,7 @@ export default function ArticleForm({ article = null }) {
         seo_title: data.seo_title || "",
         seo_description: data.seo_description || "",
         status: data.status,
+        stream: data.stream,
 
         image: imageUrl || null,
         content,
@@ -227,6 +232,16 @@ export default function ArticleForm({ article = null }) {
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label htmlFor="stream" className="block text-sm font-medium text-gray-700">
+                Stream *
+              </label>
+              <select id="stream" {...register("stream")} className={inputClass}>
+                <option value="coverage">Current Affairs</option>
+                <option value="news">News</option>
+              </select>
+            </div>
+
             <div>
               <label
                 htmlFor="category"
