@@ -36,6 +36,16 @@ test("standalone CA is allowed while helper fragments are excluded", () => {
   assert.equal(isStandaloneCurrentAffairsArticle({ title: "RELATED UPSC PYQ", slug: "related-upsc-pyq-20260825-abc" }), false);
   assert.equal(isStandaloneCurrentAffairsArticle({ title: "• UPI → NPCI", slug: "upi-npci-20260825-abc" }), false);
   assert.equal(isStandaloneCurrentAffairsArticle({ title: "Prelims facts", slug: "prelims-facts-abc" }), false);
+  for (const [title, slug] of [
+    ["CURRENTPULSE AI", "currentpulse-ai-20260826-266b0bc-0"],
+    ["OPEN CURRENTPULSE AI -> cp.vliab.workers.dev", "open-currentpulse-ai-cpvliabworkersdev-20260826-266b0bc-1"],
+    ["26 AUG 2026 TOPIC MIX", "26-aug-2026-topic-mix"],
+    ["TODAY'S 5", "todays-5"],
+    ["NEWS STATIC + EVIDENCE PRELIMS + MAINS", "news-static-evidence-prelims-mains"],
+    ["HOW TO USE THIS 7-PAGE BRIEF", "how-to-use-this-7-page-brief"],
+  ]) {
+    assert.equal(isStandaloneCurrentAffairsArticle({ title, slug }), false, title);
+  }
 });
 
 test("exam sitemap keeps useful and future-dated updates but removes generic and duplicate events", () => {
