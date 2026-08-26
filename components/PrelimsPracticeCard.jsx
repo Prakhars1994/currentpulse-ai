@@ -27,7 +27,7 @@ export default function PrelimsPracticeCard({ value }) {
 
   return (
     <details id="prelims-practice" className="rounded-2xl border border-amber-400/25 bg-amber-400/5 p-5 scroll-mt-28">
-      <summary className="cursor-pointer font-black text-amber-200">🧠 Prelims Practice Question</summary>
+      <summary className="flex cursor-pointer items-center justify-between gap-3 font-black text-amber-200">🧠 Prelims Practice Question <span aria-hidden="true">⌄</span></summary>
       <div className="mt-4 text-slate-200">
         <ArticleContent content={parsed.question} />
         {parsed.options.length > 0 && <ol className="mt-4 space-y-2">{parsed.options.map((option) => <li key={option.key}><strong>{option.key}.</strong> {option.text}</li>)}</ol>}

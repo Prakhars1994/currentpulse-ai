@@ -90,6 +90,15 @@ test("CA admin PDF stays an internal policy exception", () => {
   );
 });
 
+test("PDF front matter cannot become article titles", () => {
+  const importer = load("lib/pdf/importFormat.js");
+  const safety = load("lib/editorial/publicationSafety.js");
+  for (const marker of ["currentpulse\\s+ai", "today['’]?s", "how\\s+to\\s+use", "topic\\s+mix", "related\\s+upsc"]) {
+    assert.ok(importer.toLowerCase().includes(marker.toLowerCase()));
+    assert.ok(safety.toLowerCase().includes(marker.toLowerCase()));
+  }
+});
+
 test("synthetic PDF headings become separate CA articles", async () => {
   const original = load("lib/pdf/importFormat.js");
   const taxonomyUrl = pathToFileURL(
