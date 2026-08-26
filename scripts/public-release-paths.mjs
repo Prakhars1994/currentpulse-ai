@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import process from "node:process";
 import { createClient } from "@supabase/supabase-js";
 import { createCategorySlug } from "../lib/categoryRouting.js";
+import { assessExamSitemapRecord, isStandaloneCurrentAffairsArticle } from "../lib/sitemapQuality.js";
 
 function arg(name, fallback = "") {
   const index = process.argv.indexOf(name);
@@ -91,7 +92,7 @@ async function fetchArticlesByIds(ids) {
   for (const batch of chunks(uniqueIds, 100)) {
     const { data, error } = await supabase
       .from("articles")
-      .select("id,slug,category,status,created_at,updated_at")
+      .select("id,title,slug,category,status,created_at,updated_at")
       .in("id", batch);
 
     if (error) {
@@ -141,7 +142,7 @@ const [
 ] = await Promise.all([
   boundedChangedRows(
     "articles",
-    "id,slug,category,status,created_at,updated_at",
+    "id,title,slug,category,status,created_at,updated_at",
     400
   ),
   boundedChangedRows(
@@ -151,7 +152,7 @@ const [
   ),
   boundedChangedRows(
     "exam_updates",
-    "id,slug,status,updated_at",
+    "id,slug,title,official_url,status,updated_at",
     400
   ),
   boundedChangedRows(
@@ -214,7 +215,7 @@ for (const [id, article] of articleById) {
     paths.add(`/news/${article.slug}`);
   }
 
-  if (kinds.has("coaching")) {
+  if (kinds.has("coaching") && isStandaloneCurrentAffairsArticle(article)) {
     coverageChanged = true;
     paths.add(`/current-affairs/${article.slug}`);
   }
@@ -252,7 +253,7 @@ if (changedExams.length) {
   paths.add("/exams");
 
   for (const exam of changedExams) {
-    if (exam?.slug) paths.add(`/exams/${exam.slug}`);
+    if (exam?.slug && assessExamSitemapRecord(exam).allowed) paths.add(`/exams/${exam.slug}`);
   }
 
   for (const route of EXAM_INDEX_PATHS) {

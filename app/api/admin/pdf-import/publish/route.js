@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 import { SITE_URL } from "@/lib/siteUrl";
 import { serializeNewsPresentation } from "@/lib/news/newsPresentation";
+import { isStandaloneCurrentAffairsArticle } from "@/lib/sitemapQuality";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -221,6 +222,16 @@ export async function POST(request) {
         date,
         fileHash,
       });
+
+      if ((stream === "ca" || stream === "ca_hi") && !isStandaloneCurrentAffairsArticle(payload)) {
+        results.push({
+          status: "failed",
+          importIndex: item.importIndex,
+          title: payload.title,
+          error: "A PDF section heading or memory/helper fragment cannot be published as a standalone Current Affairs article.",
+        });
+        continue;
+      }
 
       const { data: inserted, error: insertError } = await auth.supabase
         .from("articles")

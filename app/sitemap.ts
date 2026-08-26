@@ -7,6 +7,7 @@ import {
   isCurrentAffairsReady,
   isPublicNewsArticle,
 } from "@/lib/articleStreams";
+import { selectExamSitemapRecords } from "@/lib/sitemapQuality";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -23,6 +24,11 @@ type SitemapArticle = {
 
 type SitemapExam = {
   slug: string;
+  title?: string | null;
+  agency?: string | null;
+  update_type?: string | null;
+  official_url?: string | null;
+  source_name?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -75,7 +81,7 @@ const loadSitemapDatabaseRows = unstable_cache(
         .limit(2500),
       supabase
         .from("exam_updates")
-        .select("slug,created_at,updated_at")
+        .select("slug,title,agency,update_type,official_url,source_name,created_at,updated_at")
         .eq("status", "published")
         .order("created_at", { ascending: false })
         .limit(1500),
@@ -146,7 +152,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       }
     }
 
-    const examRoutes: MetadataRoute.Sitemap = (sitemapData.exams as SitemapExam[]).map((exam) => ({
+    const selectedExams = selectExamSitemapRecords(sitemapData.exams as SitemapExam[]);
+    const examRoutes: MetadataRoute.Sitemap = selectedExams.included.map((exam) => ({
       url: `${SITE_URL}/exams/${exam.slug}`,
       lastModified: exam.updated_at || exam.created_at || undefined,
       changeFrequency: "daily",

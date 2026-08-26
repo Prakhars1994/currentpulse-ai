@@ -1,0 +1,938 @@
+{
+  "generatedAt": "2026-08-26T08:15:24.121Z",
+  "sampleBasis": "Current canonical sitemap plus server-rendered News links; not an export of historical GSC URLs.",
+  "sitemapStatus": 200,
+  "sitemapCount": 586,
+  "samples": {
+    "caPaths": [
+      "/current-affairs/science-and-technology-society-tribal-affairs",
+      "/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "/current-affairs/illegal-migrants-in-india",
+      "/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister"
+    ],
+    "newsPaths": [
+      "/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607"
+    ],
+    "examPath": "/exams/sbi-careers-list-of-provisionally-selected-candidates-214-kb-1151b919",
+    "categories": [
+      "/category/polity",
+      "/category/economy",
+      "/category/environment"
+    ]
+  },
+  "migration": [
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/current-affairs",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/news",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/news",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/news",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/current-affairs/science-and-technology-society-tribal-affairs",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/science-and-technology-society-tribal-affairs",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/science-and-technology-society-tribal-affairs",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/science-and-technology-society-tribal-affairs",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/science-and-technology-society-tribal-affairs",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/current-affairs/illegal-migrants-in-india",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/illegal-migrants-in-india",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/illegal-migrants-in-india",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/illegal-migrants-in-india",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/illegal-migrants-in-india",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/category/polity",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/category/polity",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/category/polity",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/category/polity",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/category/polity",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/category/economy",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/category/economy",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/category/economy",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/category/economy",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/category/economy",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai.vercel.app/category/environment",
+      "oldStatus": 200,
+      "location": "",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai.vercel.app/category/environment",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": false,
+      "redirectHops": 0,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/category/environment",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/category/environment",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/category/environment",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/current-affairs",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/current-affairs",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/current-affairs",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/current-affairs"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/news",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/news",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/news",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/news"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/news",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/news",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/science-and-technology-society-tribal-affairs",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/current-affairs/science-and-technology-society-tribal-affairs",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/science-and-technology-society-tribal-affairs",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/current-affairs/science-and-technology-society-tribal-affairs"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/science-and-technology-society-tribal-affairs",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/science-and-technology-society-tribal-affairs",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/science-and-technology-society-tribal-affairs",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/science-and-technology-society-tribal-affairs",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/gorkha-statehood-demand-and-the-issue-of-new-state-formation-in-india",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/illegal-migrants-in-india",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/current-affairs/illegal-migrants-in-india",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/illegal-migrants-in-india",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/current-affairs/illegal-migrants-in-india"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/illegal-migrants-in-india",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/illegal-migrants-in-india",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/illegal-migrants-in-india",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/illegal-migrants-in-india",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/india-can-become-global-shipbuilding-hub-defence-minister",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/historic-sulphur-emissions-the-likely-cause-of-damage-to-murujuga-rock-art-new-research-286244",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/the-robot-olympics-were-spectacular-but-will-this-technology-end-up-helping-humans-290320",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/algorithms-are-choosing-who-sees-what-political-ads-nz-urgently-needs-transparency-290248",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/news/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://theconversation.com/israel-is-cementing-its-control-over-the-west-bank-and-east-jerusalem-while-the-world-is-distracted-288607",
+      "selfCanonical": false,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/category/polity",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/category/polity",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/category/polity",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/category/polity"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/category/polity",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/category/polity",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/category/polity",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/category/polity",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/category/economy",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/category/economy",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/category/economy",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/category/economy"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/category/economy",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/category/economy",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/category/economy",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/category/economy",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    },
+    {
+      "oldUrl": "https://currentpulse-ai-kl7x.vercel.app/category/environment",
+      "oldStatus": 308,
+      "location": "https://currentpulse-ai.vercel.app/category/environment",
+      "chain": [
+        {
+          "url": "https://currentpulse-ai-kl7x.vercel.app/category/environment",
+          "status": 308,
+          "location": "https://currentpulse-ai.vercel.app/category/environment"
+        },
+        {
+          "url": "https://currentpulse-ai.vercel.app/category/environment",
+          "status": 200,
+          "location": ""
+        }
+      ],
+      "pathPreserved": false,
+      "permanent": true,
+      "redirectHops": 1,
+      "actualFinalUrl": "https://currentpulse-ai.vercel.app/category/environment",
+      "actualFinalStatus": 200,
+      "reachedCanonicalHost": false,
+      "expectedFinalUrl": "https://cp.vliab.workers.dev/category/environment",
+      "canonicalDestinationStatus": 200,
+      "canonical": "https://cp.vliab.workers.dev/category/environment",
+      "selfCanonical": true,
+      "vercelCanonicalLeak": false
+    }
+  ],
+  "staticReader": [
+    {
+      "pathname": "/",
+      "status": 200,
+      "staticReaderMarker": true,
+      "title": "UPSC Current Affairs Today, PYQs, Quiz &amp; News — CurrentPulse AI",
+      "description": "Daily UPSC current affairs for Prelims and Mains from trusted coaching sources, plus PYQs, quizzes, PDFs, exam updates and source-attributed news.",
+      "robots": "index, follow",
+      "canonical": "https://cp.vliab.workers.dev",
+      "selfCanonical": true,
+      "metadataInInitialHead": true,
+      "articleSchema": false,
+      "breadcrumbSchema": false,
+      "internalLinks": 49,
+      "paginationLinks": 0
+    },
+    {
+      "pathname": "/current-affairs",
+      "status": 200,
+      "staticReaderMarker": true,
+      "title": "UPSC Current Affairs | CurrentPulse AI",
+      "description": "Analytical Current Affairs with Prelims facts, static linkage and Mains dimensions.",
+      "robots": "index, follow",
+      "canonical": "https://cp.vliab.workers.dev/current-affairs",
+      "selfCanonical": true,
+      "metadataInInitialHead": true,
+      "articleSchema": false,
+      "breadcrumbSchema": false,
+      "internalLinks": 53,
+      "paginationLinks": 0
+    },
+    {
+      "pathname": "/news",
+      "status": 200,
+      "staticReaderMarker": true,
+      "title": "Latest News Today — India, World, Science &amp; Analysis | CurrentPulse AI",
+      "description": "Read source-attributed public-interest news and expert analysis selected for CurrentPulse, kept separate from UPSC Current Affairs.",
+      "robots": "index, follow",
+      "canonical": "https://cp.vliab.workers.dev/news",
+      "selfCanonical": true,
+      "metadataInInitialHead": true,
+      "articleSchema": false,
+      "breadcrumbSchema": false,
+      "internalLinks": 79,
+      "paginationLinks": 1
+    },
+    {
+      "pathname": "/current-affairs/science-and-technology-society-tribal-affairs",
+      "status": 200,
+      "staticReaderMarker": false,
+      "title": "Science &amp; Technology + Society + Tribal Affairs | CurrentPulse AI",
+      "description": "The Ministry of Tribal Affairs launched the full-fledged Adi Vaani Platform, along with its iOS application, during the National Conclave on Tribal Languag",
+      "robots": "index, follow",
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/science-and-technology-society-tribal-affairs",
+      "selfCanonical": true,
+      "metadataInInitialHead": false,
+      "articleSchema": true,
+      "breadcrumbSchema": true,
+      "internalLinks": 30,
+      "paginationLinks": 0
+    },
+    {
+      "pathname": "/news/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "status": 200,
+      "staticReaderMarker": false,
+      "title": "Inflation eases less than expected, making another interest rate hike more likely | CurrentPulse AI",
+      "description": "The Reserve Bank has warned that if we don’t see inflation coming down, it will have to raise interest rates again.",
+      "robots": "noindex, follow",
+      "canonical": "https://theconversation.com/inflation-eases-less-than-expected-making-another-interest-rate-hike-more-likely-290333",
+      "selfCanonical": false,
+      "metadataInInitialHead": false,
+      "articleSchema": true,
+      "breadcrumbSchema": false,
+      "internalLinks": 45,
+      "paginationLinks": 0
+    },
+    {
+      "pathname": "/exams/sbi-careers-list-of-provisionally-selected-candidates-214-kb-1151b919",
+      "status": 200,
+      "staticReaderMarker": false,
+      "title": "LIST OF PROVISIONALLY SELECTED CANDIDATES(214 KB) | ResultPulse AI | CurrentPulse AI",
+      "description": "Official result update from SBI Careers. Open the official source to apply, download, or verify details.",
+      "robots": "index, follow",
+      "canonical": "https://cp.vliab.workers.dev/exams/sbi-careers-list-of-provisionally-selected-candidates-214-kb-1151b919",
+      "selfCanonical": true,
+      "metadataInInitialHead": false,
+      "articleSchema": false,
+      "breadcrumbSchema": false,
+      "internalLinks": 35,
+      "paginationLinks": 0
+    }
+  ]
+}
