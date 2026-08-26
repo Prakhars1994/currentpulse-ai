@@ -71,6 +71,8 @@ test("PDF publish route records English CA, Hindi CA and News source rows", () =
   assert.match(route, /full_text_preserved/);
   assert.match(route, /releaseRequired: published > 0/);
   assert.match(route, /language: stream === "ca_hi" \? "hi" : "en"/);
+  assert.match(route, /map_locations: mapLocations/);
+  assert.match(route, /image_url: imageUrl \|\| null/);
 });
 
 test("CA admin PDF stays an internal policy exception", () => {

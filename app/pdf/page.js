@@ -3,6 +3,8 @@ export const revalidate = 3600;
 import Link from "next/link";
 import { CalendarDays, FileDown, Layers3 } from "lucide-react";
 import { indiaDate } from "@/lib/study/digestDates";
+import ExamPdfLibrary from "@/components/ExamPdfLibrary";
+import { loadPublishedExamPdfs } from "@/lib/examPdfs";
 
 export const metadata = {
   title: "Current Affairs PDF Digests",
@@ -21,7 +23,7 @@ function recentDates(today, count = 21) {
   });
 }
 
-export default function PdfPage() {
+export default async function PdfPage() {
   /*
    * The library index does not need to load the complete CA corpus.
    * Actual digest routes fetch their own bounded date range only when opened.
@@ -29,6 +31,7 @@ export default function PdfPage() {
   const today = indiaDate();
   const month = today.slice(0, 7);
   const dates = recentDates(today);
+  const examPdfs = await loadPublishedExamPdfs();
 
   return (
     <main className="pdf-library-theme min-h-screen px-6 py-14 text-white">
@@ -132,6 +135,8 @@ export default function PdfPage() {
             ))}
           </div>
         </div>
+
+        <ExamPdfLibrary rows={examPdfs} />
       </div>
     </main>
   );

@@ -63,3 +63,12 @@ test("ResultPulse filters are GET-based and bookmarkable", () => {
   assert.match(page, /name="q"/);
   assert.match(route, /searchParams/);
 });
+
+test("ResultPulse retries verified official UPSC pages and reboots empty conditional caches", () => {
+  const sources = read("lib/exams/sourceCatalog.js");
+  const collector = read("lib/exams/collector.js");
+  assert.match(sources, /fallbackUrls/);
+  assert.match(sources, /exams-related-info\/written-result/);
+  assert.match(collector, /fetchSourceOnce/);
+  assert.match(collector, /populatedSources\.has\(source\.name\)/);
+});

@@ -371,6 +371,11 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
                       </select>
                     </div>
 
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <input value={article.image_url || ""} onChange={(event) => updateDraft(article.importIndex, "image_url", event.target.value)} placeholder="Reusable image URL (optional)" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                      <input value={Array.isArray(article.map_locations) ? article.map_locations.join(", ") : (article.map_locations || "")} onChange={(event) => updateDraft(article.importIndex, "map_locations", event.target.value)} placeholder="Map places, comma separated" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                    </div>
+
                     <details className="mt-3 rounded-lg bg-slate-50 p-3">
                       <summary className="cursor-pointer text-sm font-bold text-slate-700">
                         Preview extracted article ({article.fullText.length.toLocaleString()} chars)
@@ -482,7 +487,7 @@ export default function PdfImportWorkspace({ embedded = false }) {
       </div>
 
       <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-        PDF images are not copied into Supabase in this first version. CurrentPulse
+        PDF text stays browser-side; each detected article can be associated with a reusable image URL and map places before publishing. CurrentPulse
         can use its existing safe category visuals, which avoids image copyright
         problems and prevents storage quota growth.
       </div>
