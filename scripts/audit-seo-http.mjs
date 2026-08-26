@@ -53,11 +53,40 @@ for (const legacyOrigin of LEGACY_ORIGINS) {
   for (const pathname of samplePaths) {
     try {
       const oldUrl = `${legacyOrigin}${pathname}`;
-      const response = await fetch(oldUrl, { headers, redirect: "manual" });
-      const location = response.headers.get("location") || "";
       const expected = `${CANONICAL_ORIGIN}${pathname}`;
       const target = await destination(pathname);
-      migration.push({ oldUrl, oldStatus: response.status, location, pathPreserved: equivalentUrl(location, expected), permanent: response.status === 301 || response.status === 308, redirectHops: response.status === 301 || response.status === 308 ? 1 : 0, finalUrl: expected, finalStatus: target.status, canonical: target.canonical, selfCanonical: equivalentUrl(target.canonical, expected), vercelCanonicalLeak: /vercel\.app/i.test(target.canonical) });
+      const chain = [];
+      let currentUrl = oldUrl;
+      let finalResponse = null;
+      for (let hop = 0; hop < 5; hop += 1) {
+        const response = await fetch(currentUrl, { headers, redirect: "manual" });
+        const locationHeader = response.headers.get("location") || "";
+        const nextUrl = locationHeader ? new URL(locationHeader, currentUrl).toString() : "";
+        chain.push({ url: currentUrl, status: response.status, location: nextUrl });
+        if (![301, 302, 303, 307, 308].includes(response.status) || !nextUrl) {
+          finalResponse = response;
+          break;
+        }
+        currentUrl = nextUrl;
+      }
+      const permanent = chain.length > 1 && chain.slice(0, -1).every((hop) => hop.status === 301 || hop.status === 308);
+      migration.push({
+        oldUrl,
+        oldStatus: chain[0]?.status || 0,
+        location: chain[0]?.location || "",
+        chain,
+        pathPreserved: equivalentUrl(chain[0]?.location, expected),
+        permanent,
+        redirectHops: Math.max(0, chain.length - 1),
+        actualFinalUrl: chain.at(-1)?.url || oldUrl,
+        actualFinalStatus: finalResponse?.status || chain.at(-1)?.status || 0,
+        reachedCanonicalHost: equivalentUrl(chain.at(-1)?.url, expected),
+        expectedFinalUrl: expected,
+        canonicalDestinationStatus: target.status,
+        canonical: target.canonical,
+        selfCanonical: equivalentUrl(target.canonical, expected),
+        vercelCanonicalLeak: /vercel\.app/i.test(target.canonical),
+      });
     } catch (error) {
       migration.push({ oldUrl: `${legacyOrigin}${pathname}`, error: error?.message || String(error) });
     }
@@ -86,4 +115,4 @@ const report = { generatedAt: new Date().toISOString(), sampleBasis: "Current ca
 const output = path.resolve("docs/seo-indexing-http-audit.json");
 await fs.mkdir(path.dirname(output), { recursive: true });
 await fs.writeFile(output, `${JSON.stringify(report, null, 2)}\n`, "utf8");
-console.log(JSON.stringify({ sitemapCount: report.sitemapCount, samplePaths: samplePaths.length, migrationChecks: migration.length, migrationFailures: migration.filter((row) => row.error || !row.permanent || !row.pathPreserved || row.finalStatus !== 200 || !row.selfCanonical || row.vercelCanonicalLeak).length, staticReader: staticReader.map(({ pathname, status, staticReaderMarker, selfCanonical, internalLinks, articleSchema, breadcrumbSchema }) => ({ pathname, status, staticReaderMarker, selfCanonical, internalLinks, articleSchema, breadcrumbSchema })), report: output }, null, 2));
+console.log(JSON.stringify({ sitemapCount: report.sitemapCount, samplePaths: samplePaths.length, migrationChecks: migration.length, migrationFailures: migration.filter((row) => row.error || !row.permanent || !row.pathPreserved || !row.reachedCanonicalHost || row.canonicalDestinationStatus !== 200 || !row.selfCanonical || row.vercelCanonicalLeak).length, staticReader: staticReader.map(({ pathname, status, staticReaderMarker, selfCanonical, internalLinks, articleSchema, breadcrumbSchema }) => ({ pathname, status, staticReaderMarker, selfCanonical, internalLinks, articleSchema, breadcrumbSchema })), report: output }, null, 2));
