@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { createClient } from "@supabase/supabase-js";
+import { assessExamSitemapRecord, isStandaloneCurrentAffairsArticle } from "../lib/sitemapQuality.js";
 
 function arg(name, fallback = "") {
   const index = process.argv.indexOf(name);
@@ -244,14 +245,14 @@ async function addRecentlyChangedDatabasePaths(paths) {
     const [articleResult, examResult] = await Promise.all([
       supabase
         .from("articles")
-        .select("slug,created_at,updated_at,article_sources(source_kind)")
+        .select("title,slug,created_at,updated_at,article_sources(source_kind)")
         .eq("status", "published")
         .gte("updated_at", since)
         .order("updated_at", { ascending: false })
         .limit(1200),
       supabase
         .from("exam_updates")
-        .select("slug,created_at,updated_at")
+        .select("slug,title,official_url,created_at,updated_at")
         .eq("status", "published")
         .gte("updated_at", since)
         .order("updated_at", { ascending: false })
@@ -271,7 +272,7 @@ async function addRecentlyChangedDatabasePaths(paths) {
           recentlyChangedPaths.add(route);
           pathMetadata.set(route, { lastModified });
         }
-        if (kinds.has("coaching")) {
+        if (kinds.has("coaching") && isStandaloneCurrentAffairsArticle(article)) {
           const route = `/current-affairs/${article.slug}`;
           paths.add(route);
           recentlyChangedPaths.add(route);
@@ -284,7 +285,7 @@ async function addRecentlyChangedDatabasePaths(paths) {
       console.warn(`[static-reader] Recent exam refresh query failed: ${examResult.error.message}`);
     } else {
       for (const exam of examResult.data || []) {
-        if (!exam?.slug) continue;
+        if (!exam?.slug || !assessExamSitemapRecord(exam).allowed) continue;
         const route = `/exams/${exam.slug}`;
         paths.add(route);
         recentlyChangedPaths.add(route);
