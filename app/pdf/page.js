@@ -1,4 +1,6 @@
-export const revalidate = 3600;
+// The public reader materializer must observe newly published/unpublished
+// exam_pdfs rows instead of reusing the build-time prerender.
+export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { CalendarDays, FileDown, Layers3 } from "lucide-react";

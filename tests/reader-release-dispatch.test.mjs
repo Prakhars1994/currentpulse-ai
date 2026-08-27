@@ -10,6 +10,7 @@ const route = read("app/api/admin/exam-pdfs/route.js");
 const refresh = read("app/api/admin/exam-pdfs/refresh/route.js");
 const workspace = read("components/admin/ExamPdfWorkspace.jsx");
 const planner = read("scripts/public-release-paths.mjs");
+const pdfPage = read("app/pdf/page.js");
 
 test("safe reader-release reasons cover missing token and GitHub failures", () => {
   assert.equal(readerReleaseReason(new ReaderReleaseError("token_missing")), "token_missing");
@@ -60,4 +61,6 @@ test("authenticated retry only queues the PDF reader release", () => {
 test("exam_pdfs changes include the public PDF path", () => {
   assert.match(planner, /optionalChangedRows\("exam_pdfs"/);
   assert.match(planner, /if \(changedExamPdfs\.length\) paths\.add\("\/pdf"\)/);
+  assert.match(pdfPage, /export const dynamic = "force-dynamic"/);
+  assert.doesNotMatch(pdfPage, /export const revalidate/);
 });
