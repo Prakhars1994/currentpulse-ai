@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { EXAM_PDF_EXAMS, EXAM_PDF_TYPES } from "@/lib/examPdfs";
+import { readerReleaseAdminMessage } from "@/lib/publisher/readerReleaseResult";
 
 export default function ExamPdfWorkspace() {
   const [message, setMessage] = useState("");
@@ -16,11 +17,24 @@ export default function ExamPdfWorkspace() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Upload failed.");
       setMessageTone("success");
-      setMessage(`${data.message}${data.releaseQueued ? " Public /pdf refresh queued." : " Public refresh still needs the incremental release token."}`);
+      setMessage(`${data.message}${data.releaseQueued ? " Public /pdf refresh queued." : ` Public reader refresh was not queued: ${readerReleaseAdminMessage(data.readerRefresh?.reason)}`}`);
       form.reset();
     } catch (error) {
       setMessageTone("error");
       setMessage(error.message);
+    } finally { setBusy(false); }
+  }
+
+  async function refreshPublicPdf() {
+    setBusy(true); setMessage("");
+    try {
+      const response = await fetch("/api/admin/exam-pdfs/refresh", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Refresh request failed.");
+      setMessageTone(data.releaseQueued ? "success" : "error");
+      setMessage(data.releaseQueued ? "Public /pdf refresh queued." : `Public reader refresh was not queued: ${readerReleaseAdminMessage(data.readerRefresh?.reason)}`);
+    } catch (error) {
+      setMessageTone("error"); setMessage(error.message);
     } finally { setBusy(false); }
   }
 
@@ -63,6 +77,9 @@ export default function ExamPdfWorkspace() {
           </label>
           <button disabled={busy} className="rounded-xl bg-violet-700 px-5 py-3 font-black text-white shadow-sm hover:bg-violet-800 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-400 disabled:text-slate-100">
             {busy ? "Uploading…" : "Upload / replace PDF"}
+          </button>
+          <button type="button" onClick={refreshPublicPdf} disabled={busy} className="rounded-xl border border-violet-300 bg-white px-5 py-3 font-black text-violet-800 hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500">
+            Refresh public PDF page
           </button>
           {message && <p role="status" className={`rounded-xl border p-4 text-sm font-bold ${messageTone === "error" ? "border-red-300 bg-red-50 text-red-800" : "border-emerald-300 bg-emerald-50 text-emerald-800"}`}>{message}</p>}
         </form>
