@@ -53,9 +53,20 @@ test("exam PDF migration and API enforce publication, type and safe replacement"
   assert.match(migration, /enable row level security/);
   assert.match(api, /requireAuthenticatedAdmin/);
   assert.match(api, /file\.type !== "application\/pdf"/);
-  assert.match(api, /published: false/);
-  assert.match(api, /published: true/);
+  assert.match(api, /p_published: published/);
+  assert.match(api, /storage\.from\("exam-pdfs"\)\.remove\(\[uploadedPath\]\)/);
   assert.match(api, /requestReaderRelease/);
+  assert.match(api, /publish_exam_pdf_atomic/);
+  assert.doesNotMatch(api, /previous\?\.id/);
+});
+
+test("exam PDF replacement is serialized and transactionally rolls back", () => {
+  const migration = read("supabase/migrations/20260826202000_atomic_exam_pdf_publication.sql");
+  assert.match(migration, /pg_advisory_xact_lock/);
+  assert.match(migration, /for update/);
+  assert.match(migration, /security invoker/);
+  assert.match(migration, /revoke execute[\s\S]+public, anon, authenticated/);
+  assert.match(migration, /grant execute[\s\S]+service_role/);
 });
 
 test("public PDF area hides drafts and missing files", () => {

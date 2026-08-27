@@ -35,19 +35,26 @@ export async function POST(request) {
     if (uploadError) throw uploadError;
     const { data: publicData } = auth.supabase.storage.from("exam-pdfs").getPublicUrl(uploadedPath, { download: safeName });
 
-    const { data: previous } = published ? await auth.supabase.from("exam_pdfs").select("id").eq("exam_slug", examSlug).eq("pdf_type", pdfType).eq("published", true).maybeSingle() : { data: null };
-    if (previous?.id) {
-      const { error } = await auth.supabase.from("exam_pdfs").update({ published: false, updated_at: new Date().toISOString() }).eq("id", previous.id);
-      if (error) throw error;
-    }
-    const { data: inserted, error: insertError } = await auth.supabase.from("exam_pdfs").insert({ exam_slug: examSlug, pdf_type: pdfType, title, description: description || null, coverage_start: coverageStart, coverage_end: coverageEnd, file_url: publicData.publicUrl, storage_path: uploadedPath, original_filename: safeName, version, published, created_at: `${publicationDate}T12:00:00Z`, updated_at: new Date().toISOString() }).select("id").single();
-    if (insertError) {
-      if (previous?.id) await auth.supabase.from("exam_pdfs").update({ published: true, updated_at: new Date().toISOString() }).eq("id", previous.id);
-      throw insertError;
-    }
+    const updatedAt = new Date().toISOString();
+    const { data: inserted, error: insertError } = await auth.supabase.rpc("publish_exam_pdf_atomic", {
+      p_exam_slug: examSlug,
+      p_pdf_type: pdfType,
+      p_title: title,
+      p_description: description || null,
+      p_coverage_start: coverageStart,
+      p_coverage_end: coverageEnd,
+      p_file_url: publicData.publicUrl,
+      p_storage_path: uploadedPath,
+      p_original_filename: safeName,
+      p_version: version,
+      p_published: published,
+      p_created_at: `${publicationDate}T12:00:00Z`,
+      p_updated_at: updatedAt,
+    }).single();
+    if (insertError) throw insertError;
     let releaseQueued = false;
-    if (published) { try { await requestReaderRelease({ articleId: `exam-pdf-${inserted.id}`, stream: "pdf" }); releaseQueued = true; } catch (error) { console.error("Exam PDF reader refresh not queued:", error.message); } }
-    return NextResponse.json({ success: true, releaseQueued, message: previous?.id ? "Published replacement; previous edition retained as unpublished." : published ? "Exam PDF published." : "Exam PDF saved as draft." });
+    if (published) { try { await requestReaderRelease({ articleId: `exam-pdf-${inserted.inserted_id}`, stream: "pdf" }); releaseQueued = true; } catch (error) { console.error("Exam PDF reader refresh not queued:", error.message); } }
+    return NextResponse.json({ success: true, releaseQueued, message: inserted.previous_id ? "Published replacement; previous edition retained as unpublished." : published ? "Exam PDF published." : "Exam PDF saved as draft." });
   } catch (error) {
     if (uploadedPath) await auth.supabase.storage.from("exam-pdfs").remove([uploadedPath]);
     return NextResponse.json({ success: false, message: error?.message || "Exam PDF upload failed." }, { status: 500 });
