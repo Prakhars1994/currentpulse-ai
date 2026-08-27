@@ -26,7 +26,7 @@ export default function AdminShell({ children }) {
 
         <div className="lg:pl-64">
           <AdminHeader />
-          <main className="p-6">{children}</main>
+          <main className="p-4 text-slate-900 sm:p-6">{children}</main>
         </div>
 
         <Toaster position="top-right" />

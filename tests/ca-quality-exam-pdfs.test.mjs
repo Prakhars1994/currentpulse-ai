@@ -78,6 +78,23 @@ test("public PDF area hides drafts and missing files", () => {
   assert.match(library, /type="application\/pdf"/);
 });
 
+test("Admin light surfaces and exam PDF controls set readable contrast explicitly", () => {
+  const shell = read("components/admin/AdminShell.jsx");
+  const workspace = read("components/admin/ExamPdfWorkspace.jsx");
+  assert.match(shell, /<main className="[^"]*text-slate-900/);
+  assert.doesNotMatch(workspace, /return <main/);
+  assert.match(workspace, /<section[^>]+aria-labelledby="exam-pdf-upload-title"/);
+  assert.match(workspace, /border-slate-300 bg-white p-5 text-slate-900 shadow-md/);
+  assert.match(workspace, /font-bold text-slate-800/);
+  assert.match(workspace, /border border-slate-300 bg-white p-3 text-slate-900 placeholder:text-slate-400/);
+  assert.match(workspace, /focus:border-violet-500 focus:ring-2 focus:ring-violet-500\/30/);
+  assert.match(workspace, /file:bg-slate-100[^"]*file:text-slate-800/);
+  assert.match(workspace, /accent-violet-600/);
+  assert.match(workspace, /disabled:bg-slate-400 disabled:text-slate-100/);
+  assert.match(workspace, /border-red-300 bg-red-50 text-red-800/);
+  assert.match(workspace, /border-emerald-300 bg-emerald-50 text-emerald-800/);
+});
+
 test("UPSC listing includes Essay and both compulsory qualifying papers", () => {
   const source = read("lib/upsc/questionPapers.js");
   assert.match(source, /paper: "Essay"/);
