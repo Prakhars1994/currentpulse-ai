@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
   { name: 'PDF Import', href: '/admin/pdf-import', icon: FileUp },
+  { name: 'Exam PDFs', href: '/admin/exam-pdfs', icon: FileUp },
   { name: 'All Articles', href: '/admin/articles', icon: FileText },
   { name: 'Create Article', href: '/admin/articles/create', icon: PlusCircle },
 ]

@@ -76,6 +76,14 @@ async function boundedChangedRows(table, fields, limit) {
   return rows;
 }
 
+async function optionalChangedRows(table, fields, limit) {
+  try { return await boundedChangedRows(table, fields, limit); }
+  catch (error) {
+    if (/does not exist|schema cache/i.test(error.message || "")) return [];
+    throw error;
+  }
+}
+
 function chunks(values, size = 100) {
   const result = [];
   for (let index = 0; index < values.length; index += size) {
@@ -139,6 +147,7 @@ const [
   changedSources,
   changedExams,
   changedQuiz,
+  changedExamPdfs,
 ] = await Promise.all([
   boundedChangedRows(
     "articles",
@@ -160,6 +169,7 @@ const [
     "id,quiz_date,updated_at",
     100
   ),
+  optionalChangedRows("exam_pdfs", "id,published,updated_at", 40),
 ]);
 
 const changedArticleIds = new Set(
@@ -264,6 +274,8 @@ if (changedExams.length) {
 if (changedQuiz.length) {
   paths.add("/quiz");
 }
+
+if (changedExamPdfs.length) paths.add("/pdf");
 
 if (!paths.size) {
   throw new Error(

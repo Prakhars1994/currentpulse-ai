@@ -64,6 +64,9 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
   const category = clean(article.category).slice(0, 80) || "Polity & Governance";
   const paper = clean(article.paper).slice(0, 30) || "Prelims";
   const createdAt = publicationTimestamp(date);
+  const imageUrl = clean(article.image_url).slice(0, 2000);
+  const mapLocations = (Array.isArray(article.map_locations) ? article.map_locations : clean(article.map_locations).split(","))
+    .map((value) => clean(value).slice(0, 100)).filter(Boolean).slice(0, 8);
 
   const common = {
     title,
@@ -99,6 +102,8 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
     published_at: `${date}T12:00:00`,
     image_alt: title,
     image_search_query: title,
+    image_url: imageUrl || null,
+    map_locations: mapLocations,
     quality_score: 92,
     quality_version: 4,
     quality_flags: [

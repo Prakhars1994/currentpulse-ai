@@ -71,6 +71,8 @@ test("PDF publish route records English CA, Hindi CA and News source rows", () =
   assert.match(route, /full_text_preserved/);
   assert.match(route, /releaseRequired: published > 0/);
   assert.match(route, /language: stream === "ca_hi" \? "hi" : "en"/);
+  assert.match(route, /map_locations: mapLocations/);
+  assert.match(route, /image_url: imageUrl \|\| null/);
 });
 
 test("CA admin PDF stays an internal policy exception", () => {
@@ -86,6 +88,15 @@ test("CA admin PDF stays an internal policy exception", () => {
     policyEntries.slice(0, 7),
     ["vision", "drishti", "insights", "forum", "nextias", "vajiram", "iasbaba"]
   );
+});
+
+test("PDF front matter cannot become article titles", () => {
+  const importer = load("lib/pdf/importFormat.js");
+  const safety = load("lib/editorial/publicationSafety.js");
+  for (const marker of ["currentpulse\\s+ai", "today['’]?s", "how\\s+to\\s+use", "topic\\s+mix", "related\\s+upsc"]) {
+    assert.ok(importer.toLowerCase().includes(marker.toLowerCase()));
+    assert.ok(safety.toLowerCase().includes(marker.toLowerCase()));
+  }
 });
 
 test("synthetic PDF headings become separate CA articles", async () => {

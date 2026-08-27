@@ -25,7 +25,7 @@ export default function OfficialPapers({ papers }) {
         <label>{stage === "All" ? "Year" : `${stage} year`}<select value={year} onChange={(event) => setYear(event.target.value)}><option>All</option>{years.map((value) => <option key={value}>{value}</option>)}</select></label>
       </div>
 
-      <p className="paper-coverage-note"><strong>Verified coverage:</strong> Prelims 2011–2026 and 15 Mains examination years, 2011–2025. The year menu follows the selected stage. Recent papers use direct UPSC PDFs; older years use the UPSC archive where available and a clearly labelled trusted legacy index where the official public archive does not expose that year.</p>
+      <p className="paper-coverage-note"><strong>Verified coverage:</strong> Prelims 2011–2026 and 15 Mains examination years, 2011–2025, including Essay and the compulsory Indian-language and English papers where verified. The year menu follows the selected stage. Recent papers use direct UPSC PDFs; archive-only entries never invent a PDF URL.</p>
 
       <div className="paper-card-grid">
         {filtered.map((paper, index) => (

@@ -13,9 +13,11 @@ import MapMasteryPanel from "@/components/MapMasteryPanel";
 import CompactMarkdownSection from "@/components/CompactMarkdownSection";
 import EvidenceHighlights from "@/components/EvidenceHighlights";
 import MainsAccordion from "@/components/MainsAccordion";
+import PrelimsPracticeCard from "@/components/PrelimsPracticeCard";
 import RelatedYouTubeVideo from "@/components/RelatedYouTubeVideo";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
+import { suppressRepeatedArticleSections } from "@/lib/articleSectionDedupe";
 
 // Remove HTML tags for SEO descriptions and reading-time calculation
 function stripHtml(html = "") {
@@ -169,6 +171,7 @@ export default async function ArticlePage({ params }) {
   if (!article || !isPublishedArticleSafe(article, { stream: "coverage" })) {
     notFound();
   }
+  const displayArticle = suppressRepeatedArticleSections(article);
 
   const readingTime = calculateReadingTime(article);
 
@@ -396,15 +399,15 @@ export default async function ArticlePage({ params }) {
           <ArticleStudyVisuals
             mapLocations={article.map_locations}
             title={article.title}
-            articleText={article.why_news}
+            articleText={displayArticle.why_news}
             category={article.category}
           />
-          <MapMasteryPanel title={article.title} articleText={`${article.why_news || ""} ${article.static_foundation || ""}`} />
+          <MapMasteryPanel title={article.title} articleText={`${displayArticle.why_news || ""} ${displayArticle.static_foundation || ""}`} />
 
           <section id="why-in-news" className="article-section article-section--context scroll-mt-28">
             <h2 className="article-section-title text-purple-200">📌 Why in News?</h2>
             <ArticleContent
-              content={article.why_news}
+              content={displayArticle.why_news}
               fallback="Why in News will be updated soon."
             />
           </section>
@@ -415,38 +418,40 @@ export default async function ArticlePage({ params }) {
               <div><small>Exam map</small><h2>Syllabus & Relevance</h2></div>
             </div>
             <CompactMarkdownSection
-              content={article.syllabus_linkage || `- **Paper:** ${article.paper || "General Studies"}
+              content={displayArticle.syllabus_linkage || `- **Paper:** ${article.paper || "General Studies"}
 - **Theme:** ${article.category || "Current Affairs"}`}
               limit={3}
             />
-            {article.india_relevance && (
+            {displayArticle.india_relevance && (
               <details className="compact-inline-details">
                 <summary>Why it matters for India</summary>
-                <CompactMarkdownSection content={article.india_relevance} limit={4} />
+                <CompactMarkdownSection content={displayArticle.india_relevance} limit={4} />
               </details>
             )}
           </section>
 
-          {article.static_foundation && (
+          {displayArticle.static_foundation && (
             <section id="static-foundation" className="compact-study-section compact-study-section--static scroll-mt-28">
               <div className="compact-section-heading"><span>🏛️</span><div><small>Quick base</small><h2>Static Foundation</h2></div></div>
-              <CompactMarkdownSection content={article.static_foundation} limit={7} />
+              <CompactMarkdownSection content={displayArticle.static_foundation} limit={7} />
             </section>
           )}
 
-          {article.data_examples && (
+          {displayArticle.data_examples && (
             <section id="evidence" className="compact-study-section compact-study-section--evidence scroll-mt-28">
               <div className="compact-section-heading"><span>📊</span><div><small>Answer enrichment</small><h2>Data, Reports, Cases & Examples</h2></div></div>
-              <EvidenceHighlights content={article.data_examples} limit={6} />
+              <EvidenceHighlights content={displayArticle.data_examples} limit={6} />
             </section>
           )}
 
           <section id="prelims" className="compact-study-section compact-study-section--prelims scroll-mt-28">
             <div className="compact-section-heading"><span>🎯</span><div><small>Rapid revision</small><h2>Prelims Quick Facts</h2></div></div>
-            <CompactMarkdownSection content={article.prelims} limit={8} fallback="Prelims facts will be updated soon." />
+            <CompactMarkdownSection content={displayArticle.prelims} limit={8} fallback="Prelims facts will be updated soon." />
           </section>
 
-          <MainsAccordion mains={article.mains} answerFramework={article.answer_framework} question={article.question} />
+          <PrelimsPracticeCard value={displayArticle.question} />
+
+          <MainsAccordion mains={displayArticle.mains} answerFramework={displayArticle.answer_framework} />
 
         </article>
 

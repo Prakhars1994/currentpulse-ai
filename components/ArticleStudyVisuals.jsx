@@ -467,12 +467,12 @@ function resolveLocation(location = "") {
   };
 }
 
-function Marker({ point, label, variant = "focus" }) {
+function Marker({ point, label, number, variant = "focus" }) {
   if (!point) return null;
   return (
-    <span className={`geo-marker geo-marker--${variant}`} style={{ left: `${point[0]}%`, top: `${point[1]}%` }}>
+    <span className={`geo-marker geo-marker--${variant}`} style={{ left: `${point[0]}%`, top: `${point[1]}%` }} title={label} aria-label={`${number}. ${label}`}>
       <i />
-      <b>{label}</b>
+      <b>{number}</b>
     </span>
   );
 }
@@ -500,6 +500,10 @@ function LocationTrail({ meta }) {
 
 function MapPanel({ title, icon, asset, meta, physical = false, context = [], regional = false, compact = true }) {
   const isIndia = meta.mapType === "india";
+  const markers = [
+    ...context,
+    ...(meta.point ? [{ label: meta.label, point: meta.point, variant: "focus" }] : []),
+  ].filter((item, index, all) => item.point && all.findIndex((candidate) => candidate.label === item.label) === index);
   return (
     <div className={`geo-map-panel ${compact ? "geo-map-panel--compact" : ""} ${isIndia ? "geo-map-panel--india" : "geo-map-panel--world"}`}>
       <div className="geo-map-panel-head">
@@ -511,10 +515,12 @@ function MapPanel({ title, icon, asset, meta, physical = false, context = [], re
           style={regional && meta.point ? { "--map-origin-x": `${meta.point[0]}%`, "--map-origin-y": `${meta.point[1]}%` } : undefined}
         >
           <img src={asset} alt={`${physical ? "Physical" : "Political"} locator map for ${meta.label}`} />
-          {context.map((item) => <Marker key={`${item.label}-${item.variant}`} point={item.point} label={item.label} variant={item.variant} />)}
-          <Marker point={meta.point} label={meta.label} />
+          {markers.map((item, index) => <Marker key={`${item.label}-${item.variant}`} point={item.point} label={item.label} number={index + 1} variant={item.variant} />)}
         </div>
       </div>
+      <ol className="grid grid-cols-2 gap-x-3 gap-y-1 px-3 pb-3 text-[11px] text-slate-300" aria-label={`${title} map legend`}>
+        {markers.map((item, index) => <li key={item.label}><strong className="text-cyan-300">{index + 1}.</strong> {item.label}</li>)}
+      </ol>
     </div>
   );
 }

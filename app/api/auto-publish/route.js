@@ -187,9 +187,6 @@ async function collectNews({
     const match = newspaperAgenda.find((article) => isSameEvent(article, official));
     if (!match) continue;
     match.coverage = [...new Set([...(match.coverage || []), official.source])];
-    if (official.description && !String(match.description || "").includes(official.description)) {
-      match.description = `${match.description || ""}\n\nOFFICIAL VERIFICATION (${official.source}): ${official.description}`.trim().slice(0, 6500);
-    }
   }
 
   return {
