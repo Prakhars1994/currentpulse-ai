@@ -12,6 +12,7 @@ const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), "
 const route = read("app/api/articles/route.js");
 const form = read("components/admin/ArticleForm.jsx");
 const dispatch = read("lib/publisher/requestReaderRelease.js");
+const dispatchRequest = read("lib/publisher/dispatchReaderRelease.js");
 const planner = read("scripts/public-release-paths.mjs");
 
 test("draft saves do not request a reader release", () => {
@@ -52,8 +53,8 @@ test("reader dispatch stays server-only, incremental, and does not expose its to
   assert.match(dispatch, /import "server-only"/);
   assert.match(dispatch, /GITHUB_READER_RELEASE_TOKEN/);
   assert.doesNotMatch(dispatch, /NEXT_PUBLIC_GITHUB/);
-  assert.match(dispatch, /full: false/);
-  assert.match(dispatch, /admin-publish:/);
+  assert.match(dispatchRequest, /full: "false"/);
+  assert.match(dispatchRequest, /admin-publish:/);
   assert.match(planner, /paths\.add\("\/"\)/);
   assert.match(planner, /paths\.add\("\/sitemap\.xml"\)/);
   assert.match(planner, /paths\.add\("\/feed\.xml"\)/);

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 import { EXAM_PDF_EXAM_SLUGS, EXAM_PDF_TYPE_SLUGS } from "@/lib/examPdfs";
 import { requestReaderRelease } from "@/lib/publisher/requestReaderRelease";
+import { readerReleaseReason } from "@/lib/publisher/readerReleaseResult";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -53,8 +54,18 @@ export async function POST(request) {
     }).single();
     if (insertError) throw insertError;
     let releaseQueued = false;
-    if (published) { try { await requestReaderRelease({ articleId: `exam-pdf-${inserted.inserted_id}`, stream: "pdf" }); releaseQueued = true; } catch (error) { console.error("Exam PDF reader refresh not queued:", error.message); } }
-    return NextResponse.json({ success: true, releaseQueued, message: inserted.previous_id ? "Published replacement; previous edition retained as unpublished." : published ? "Exam PDF published." : "Exam PDF saved as draft." });
+    let readerRefresh = { queued: false, reason: published ? "not_attempted" : "not_published" };
+    if (published) {
+      try {
+        await requestReaderRelease({ articleId: `exam-pdf-${inserted.inserted_id}`, stream: "pdf" });
+        releaseQueued = true;
+        readerRefresh = { queued: true, reason: null };
+      } catch (error) {
+        readerRefresh = { queued: false, reason: readerReleaseReason(error) };
+        console.error("Exam PDF reader refresh not queued:", readerRefresh.reason);
+      }
+    }
+    return NextResponse.json({ success: true, releaseQueued, readerRefresh, message: inserted.previous_id ? "Published replacement; previous edition retained as unpublished." : published ? "Exam PDF published." : "Exam PDF saved as draft." });
   } catch (error) {
     if (uploadedPath) await auth.supabase.storage.from("exam-pdfs").remove([uploadedPath]);
     return NextResponse.json({ success: false, message: error?.message || "Exam PDF upload failed." }, { status: 500 });
