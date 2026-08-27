@@ -9,14 +9,15 @@ export default function ExamPdfWorkspace() {
   const [busy, setBusy] = useState(false);
   async function submit(event) {
     event.preventDefault();
+    const form = event.currentTarget;
     setBusy(true); setMessage("");
     try {
-      const response = await fetch("/api/admin/exam-pdfs", { method: "POST", body: new FormData(event.currentTarget) });
+      const response = await fetch("/api/admin/exam-pdfs", { method: "POST", body: new FormData(form) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Upload failed.");
       setMessageTone("success");
       setMessage(`${data.message}${data.releaseQueued ? " Public /pdf refresh queued." : " Public refresh still needs the incremental release token."}`);
-      event.currentTarget.reset();
+      form.reset();
     } catch (error) {
       setMessageTone("error");
       setMessage(error.message);

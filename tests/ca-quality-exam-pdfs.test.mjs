@@ -95,6 +95,14 @@ test("Admin light surfaces and exam PDF controls set readable contrast explicitl
   assert.match(workspace, /border-emerald-300 bg-emerald-50 text-emerald-800/);
 });
 
+test("Admin PDF workspace retains the form element across the async upload", () => {
+  const workspace = read("components/admin/ExamPdfWorkspace.jsx");
+  assert.match(workspace, /const form = event\.currentTarget;/);
+  assert.match(workspace, /new FormData\(form\)/);
+  assert.match(workspace, /form\.reset\(\)/);
+  assert.doesNotMatch(workspace, /event\.currentTarget\.reset\(\)/);
+});
+
 test("UPSC listing includes Essay and both compulsory qualifying papers", () => {
   const source = read("lib/upsc/questionPapers.js");
   assert.match(source, /paper: "Essay"/);
