@@ -10,16 +10,9 @@ import {
 const root = new URL("../", import.meta.url);
 const read = (file) => fs.readFileSync(new URL(file, root), "utf8");
 
-test("canonical host and legacy path-preserving permanent redirects remain intentional", () => {
+test("canonical host remains Cloudflare-only without Vercel deployment configuration", () => {
   assert.match(read("lib/siteUrl.js"), /https:\/\/cp\.vliab\.workers\.dev/);
-  const redirects = JSON.parse(read("vercel.json")).redirects;
-  for (const host of ["currentpulse-ai.vercel.app", "currentpulse-ai-kl7x.vercel.app"]) {
-    const rule = redirects.find((item) => item.has?.some((entry) => entry.value === host));
-    assert.ok(rule);
-    assert.equal(rule.source, "/(.*)");
-    assert.equal(rule.destination, "https://cp.vliab.workers.dev/$1");
-    assert.equal(rule.permanent, true);
-  }
+  assert.equal(fs.existsSync(new URL("vercel.json", root)), false);
 });
 
 test("Current Affairs and News landing pages remain indexable", () => {
