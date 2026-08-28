@@ -63,7 +63,7 @@ npm run build
 npm start
 ```
 
-Set the same environment variables in Vercel and change `NEXT_PUBLIC_BASE_URL` to your production domain.
+Configure production secrets on Cloudflare Worker `cp`; both `NEXT_PUBLIC_BASE_URL` and `NEXT_PUBLIC_SITE_URL` use `https://cp.vliab.workers.dev`.
 
 ## Security
 

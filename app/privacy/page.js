@@ -20,7 +20,7 @@ const sections = [
     "heading": "Notes and analytics",
     "bullets": [
       "Revision Notes currently save in your browser on the device unless a future sync feature is explicitly offered.",
-      "CurrentPulse may use privacy-conscious traffic analytics, including Vercel Analytics and Google Analytics when configured, to understand aggregate site usage."
+      "CurrentPulse may use privacy-conscious traffic analytics, including Google Analytics when configured, to understand aggregate site usage."
     ]
   },
   {

@@ -30,29 +30,10 @@ test("RSS feed declares canonical host links", () => {
   assert.doesNotMatch(feed, /vercel\.app/);
 });
 
-test("vercel.json contains permanent 308 host-level redirects for legacy domains and does not redirect canonical host", () => {
-  const config = JSON.parse(read("vercel.json"));
-  assert.equal(Array.isArray(config.redirects), true);
-
-  const legacyHostRules = config.redirects.filter((rule) =>
-    rule.has?.some((h) =>
-      h.type === "host" &&
-      (h.value === "currentpulse-ai.vercel.app" || h.value === "currentpulse-ai-kl7x.vercel.app")
-    )
-  );
-
-  assert.equal(legacyHostRules.length, 2);
-  for (const rule of legacyHostRules) {
-    assert.equal(rule.source, "/(.*)");
-    assert.equal(rule.destination, "https://cp.vliab.workers.dev/$1");
-    assert.equal(rule.permanent, true);
-  }
-
-  // Canonical host must never be redirected
-  const canonicalRedirect = config.redirects.find((rule) =>
-    rule.has?.some((h) => h.value === "cp.vliab.workers.dev")
-  );
-  assert.equal(canonicalRedirect, undefined);
+test("Vercel deployment configuration and runtime analytics are absent", () => {
+  assert.equal(fs.existsSync(new URL("../vercel.json", import.meta.url)), false);
+  assert.doesNotMatch(read("package.json"), /@vercel\/analytics/);
+  assert.doesNotMatch(read("app/layout.tsx"), /@vercel\/analytics|<Analytics/);
 });
 
 test("middleware is strictly scoped to /admin and does not intercept public routes", () => {
