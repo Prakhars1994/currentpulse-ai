@@ -57,11 +57,11 @@ export async function POST(request) {
     let readerRefresh = { queued: false, reason: published ? "not_attempted" : "not_published" };
     if (published) {
       try {
-        await requestReaderRelease({ articleId: `exam-pdf-${inserted.inserted_id}`, stream: "pdf" });
+        const release = await requestReaderRelease({ articleId: `exam-pdf-${inserted.inserted_id}`, stream: "pdf", supabase: auth.supabase });
         releaseQueued = true;
-        readerRefresh = { queued: true, reason: null };
+        readerRefresh = { queued: true, durable: release.durable, reason: null };
       } catch (error) {
-        readerRefresh = { queued: false, reason: readerReleaseReason(error) };
+        readerRefresh = { queued: false, durable: Boolean(error?.durable), reason: readerReleaseReason(error) };
         console.error("Exam PDF reader refresh not queued:", readerRefresh.reason);
       }
     }

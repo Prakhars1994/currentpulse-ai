@@ -13,10 +13,13 @@ test("reader traffic no longer writes article views directly to Supabase", () =>
   assert.doesNotMatch(source, /\.rpc\s*\(/);
 });
 
-test("Cloudflare serves static reader assets before Worker SSR", () => {
+test("Cloudflare keeps archive assets while freshness-critical routes run Worker-first", () => {
   const config = read("wrangler.jsonc");
   assert.match(config, /"html_handling"\s*:\s*"drop-trailing-slash"/);
   assert.match(config, /"run_worker_first"\s*:\s*\[[\s\S]*"\/api\/\*"[\s\S]*"\/admin\/\*"/);
+  assert.match(config, /"\/news\/\*"/);
+  assert.match(config, /"\/current-affairs\/\*"/);
+  assert.match(config, /"\/pdf\/\*"/);
   assert.doesNotMatch(config, /"run_worker_first"\s*:\s*true/);
 });
 

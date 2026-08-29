@@ -65,7 +65,7 @@ test("public list paths no longer fetch full News/CA bodies", () => {
   assert.doesNotMatch(newsList, /\bmemory_trick\b/);
   assert.doesNotMatch(caList, /\bcontent\b/);
   assert.doesNotMatch(caList, /\banswer_framework\b/);
-  assert.match(streams, /CACHE_TTL_MS = 300_000/);
+  assert.match(streams, /CACHE_TTL_MS = 60_000/);
 });
 
 test("queue and coaching-state recurring reads are bounded", () => {

@@ -19,13 +19,11 @@ test("quiz has a bounded database wait and foundation fallback", () => {
   assert.match(source, /UPSC_FOUNDATION_FALLBACK/);
 });
 
-test("RSS is a zero-runtime static asset", () => {
-  assert.equal(fs.existsSync(new URL("../app/feed.xml/route.js", import.meta.url)), false);
-  assert.equal(fs.existsSync(new URL("../public/feed.xml", import.meta.url)), true);
-
-  const xml = read("public/feed.xml");
-  assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
-  assert.match(xml, /<rss version="2\.0">/);
-  assert.match(xml, /https:\/\/cp\.vliab\.workers\.dev\/current-affairs/);
-  assert.match(xml, /https:\/\/cp\.vliab\.workers\.dev\/news/);
+test("RSS is a short-cached database-backed Worker route", () => {
+  assert.equal(fs.existsSync(new URL("../app/feed.xml/route.js", import.meta.url)), true);
+  assert.equal(fs.existsSync(new URL("../public/feed.xml", import.meta.url)), false);
+  const route = read("app/feed.xml/route.js");
+  assert.match(route, /loadNewsArticles/);
+  assert.match(route, /loadCurrentAffairsArticles/);
+  assert.match(route, /s-maxage=60/);
 });

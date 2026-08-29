@@ -32,6 +32,7 @@ import {
   shouldAttemptDailyQuiz,
   shouldRecoverFailedQueue,
 } from "@/lib/automation/schedulePolicy";
+import { isQueueItemFreshEnough } from "@/lib/queue/queueFreshnessPolicy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -206,7 +207,7 @@ async function recoverRecentFailedItems(supabase) {
   const now = new Date().toISOString();
   const { data: failedRows, error: lookupError } = await supabase
     .from("article_queue")
-    .select("id,error")
+    .select("id,error,pipeline_kind,published_at")
     .eq("status", "failed")
     .in("pipeline_kind", ["coaching", "coaching_enrichment", "news"])
     .gte("updated_at", cutoff)
@@ -216,6 +217,7 @@ async function recoverRecentFailedItems(supabase) {
     return 0;
   }
   const retryIds = (failedRows || [])
+    .filter((row) => isQueueItemFreshEnough(row))
     .filter((row) => /quality validation|invalid json|incomplete|gemini|openrouter|quota|rate limit|ai provider/i.test(String(row.error || "")))
     .map((row) => row.id);
   if (!retryIds.length) return 0;
@@ -235,7 +237,7 @@ async function recoverRecentFailedItems(supabase) {
 async function recoverLegacyNewsQueue(supabase) {
   const { data, error } = await supabase
     .from("article_queue")
-    .select("id,status,attempts,error,pipeline_kind")
+    .select("id,status,attempts,error,pipeline_kind,published_at")
     .in("status", ["pending", "failed"])
     .limit(300);
   if (error) {
@@ -247,6 +249,7 @@ async function recoverLegacyNewsQueue(supabase) {
   const blockedPattern = /PUBLICATION_BLOCKED|Publication safety rejected/i;
   const ids = (data || [])
     .filter((row) => !isCoverageQueueItem(row))
+    .filter((row) => isQueueItemFreshEnough(row))
     .filter((row) => {
       if (row.status === "pending" && Number(row.attempts || 0) >= 3) return true;
       if (row.status !== "failed") return false;
@@ -303,6 +306,7 @@ async function getPendingQueueItem(
   const retryCutoff = Date.now() - AI_RETRY_COOLDOWN_MINUTES * 60 * 1000;
   const ready = (data || [])
     .filter((item) => !attemptedIds.has(item.id))
+    .filter((item) => isQueueItemFreshEnough(item))
     .filter((item) => {
       const waitingForAi = /^Waiting for AI availability:/i.test(String(item.error || ""));
       if (!waitingForAi) return true;

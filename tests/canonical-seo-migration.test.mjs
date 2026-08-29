@@ -21,12 +21,10 @@ test("robots.txt declares canonical host and only the active canonical sitemap",
 });
 
 test("RSS feed declares canonical host links", () => {
-  const feed = read("public/feed.xml");
-  assert.match(feed, /<link>https:\/\/cp\.vliab\.workers\.dev\/<\/link>/);
-  assert.match(feed, /https:\/\/cp\.vliab\.workers\.dev\/current-affairs/);
-  assert.match(feed, /https:\/\/cp\.vliab\.workers\.dev\/news/);
-  assert.match(feed, /https:\/\/cp\.vliab\.workers\.dev\/exams/);
-  assert.match(feed, /https:\/\/cp\.vliab\.workers\.dev\/quiz/);
+  const feed = read("app/feed.xml/route.js");
+  assert.match(feed, /SITE_URL/);
+  assert.match(feed, /`\/current-affairs\/\$\{article\.slug\}`/);
+  assert.match(feed, /`\/news\/\$\{article\.slug\}`/);
   assert.doesNotMatch(feed, /vercel\.app/);
 });
 

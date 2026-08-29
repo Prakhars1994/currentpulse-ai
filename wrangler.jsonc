@@ -16,7 +16,17 @@
     "html_handling": "drop-trailing-slash",
     "run_worker_first": [
       "/api/*",
-      "/admin/*"
+      "/admin/*",
+      "/",
+      "/news",
+      "/news/*",
+      "/current-affairs",
+      "/current-affairs/*",
+      "/pdf",
+      "/pdf/*",
+      "/sitemap.xml",
+      "/news-sitemap.xml",
+      "/feed.xml"
     ]
   },
 

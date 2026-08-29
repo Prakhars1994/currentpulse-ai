@@ -33,7 +33,7 @@ test("dispatch treats successful 204 as queued and sends workflow inputs as stri
   await dispatchReaderRelease({ token: "test-token", owner: "owner", repository: "repo", articleId: 7, stream: "pdf", fetchImpl: async (_url, options) => { body = JSON.parse(options.body); return { ok: true, status: 204 }; } });
   assert.equal(body.inputs.full, "false");
   assert.match(dispatch, /recentlyQueued\.set/);
-  assert.match(dispatch, /return \{ queued: true, deduplicated: false \}/);
+  assert.match(dispatch, /return \{ queued: true, durable: outbox\.durable, deduplicated: false \}/);
 });
 
 test("dispatch classifies missing tokens, GitHub 403, GitHub 422, and network errors", async () => {
@@ -46,7 +46,7 @@ test("dispatch classifies missing tokens, GitHub 403, GitHub 422, and network er
 });
 
 test("publication stays successful when dispatch fails and reports a safe reason", () => {
-  assert.match(route, /readerRefresh = \{ queued: false, reason: readerReleaseReason\(error\) \}/);
+  assert.match(route, /readerRefresh = \{ queued: false, durable: Boolean\(error\?\.durable\), reason: readerReleaseReason\(error\) \}/);
   assert.match(route, /success: true, releaseQueued, readerRefresh/);
   assert.match(route, /releaseQueued = true/);
   assert.doesNotMatch(route, /Authorization|Bearer/);

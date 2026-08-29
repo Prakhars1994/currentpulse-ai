@@ -230,6 +230,7 @@ export async function POST(request) {
     }
 
     let readerRefreshQueued = false;
+    let readerRefreshDurable = false;
     if (payload.status === "published") {
       const stream = normalizeAdminStream(body?.stream);
       try {
@@ -242,9 +243,11 @@ export async function POST(request) {
         );
       }
       try {
-        await requestReaderRelease({ articleId: data.id, stream });
+        const release = await requestReaderRelease({ articleId: data.id, stream, supabase: auth.supabase });
         readerRefreshQueued = true;
+        readerRefreshDurable = release.durable;
       } catch (dispatchError) {
+        readerRefreshDurable = Boolean(dispatchError?.durable);
         console.error("Admin reader release dispatch error:", dispatchError);
       }
     }
@@ -259,6 +262,7 @@ export async function POST(request) {
           : "Draft saved successfully.",
       article: data,
       readerRefreshQueued,
+      readerRefreshDurable,
     });
   } catch (error) {
     console.error("Article create API error:", error);
@@ -309,6 +313,7 @@ export async function PUT(request) {
     }
 
     let readerRefreshQueued = false;
+    let readerRefreshDurable = false;
     if (payload.status === "published") {
       const stream = normalizeAdminStream(body?.stream);
       try {
@@ -321,9 +326,11 @@ export async function PUT(request) {
         );
       }
       try {
-        await requestReaderRelease({ articleId: data.id, stream });
+        const release = await requestReaderRelease({ articleId: data.id, stream, supabase: auth.supabase });
         readerRefreshQueued = true;
+        readerRefreshDurable = release.durable;
       } catch (dispatchError) {
+        readerRefreshDurable = Boolean(dispatchError?.durable);
         console.error("Admin reader release dispatch error:", dispatchError);
       }
     }
@@ -337,6 +344,7 @@ export async function PUT(request) {
         : "Draft saved successfully.",
       article: data,
       readerRefreshQueued,
+      readerRefreshDurable,
     });
   } catch (error) {
     console.error("Article update API error:", error);

@@ -100,7 +100,9 @@ const loadSitemapDatabaseRows = unstable_cache(
   },
   ["currentpulse-sitemap-database-v2"],
   {
-    revalidate: 3600,
+    // The Worker-first sitemap should discover publications promptly without
+    // issuing a multi-thousand-row Supabase query on every crawler request.
+    revalidate: 300,
     tags: ["currentpulse-articles", "currentpulse-exams"],
   }
 );

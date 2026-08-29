@@ -1,6 +1,8 @@
 name: CurrentPulse Incremental Reader Release
 
 on:
+  schedule:
+    - cron: "17 * * * *"
   workflow_dispatch:
     inputs:
       reason:
@@ -24,7 +26,9 @@ permissions:
 
 concurrency:
   group: currentpulse-reader-release
-  cancel-in-progress: true
+  # Every successful run advances a durable database watermark. Cancelling an
+  # older valid release can otherwise lose the only refresh for its mutation.
+  cancel-in-progress: false
 
 env:
   NEXT_TELEMETRY_DISABLED: "1"
@@ -37,7 +41,31 @@ env:
   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
 jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.pending.outputs.release }}
+      max_id: ${{ steps.pending.outputs.max_id }}
+    steps:
+      - name: Check durable release outbox
+        id: pending
+        shell: bash
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          [[ -n "${SUPABASE_URL:-}" && -n "${SERVICE_KEY:-}" ]] || { echo "Missing Supabase release secrets"; exit 1; }
+          response="$(curl --silent --show-error --fail-with-body \
+            "${SUPABASE_URL}/rest/v1/reader_release_requests?select=id&status=eq.pending&order=id.desc&limit=1" \
+            -H "apikey: ${SERVICE_KEY}" -H "Authorization: Bearer ${SERVICE_KEY}")"
+          max_id="$(node -e 'const rows=JSON.parse(process.argv[1]);process.stdout.write(rows[0]?.id?String(rows[0].id):"")' "${response}")"
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" || -n "${max_id}" ]]; then echo "release=true" >> "${GITHUB_OUTPUT}"; else echo "release=false" >> "${GITHUB_OUTPUT}"; fi
+          echo "max_id=${max_id}" >> "${GITHUB_OUTPUT}"
+
   release:
+    needs: preflight
+    if: needs.preflight.outputs.release == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
@@ -219,6 +247,22 @@ jobs:
             curl --silent --show-error --fail --location --retry 3 --retry-delay 2 --max-time 60 "${base}${path}" >/dev/null
           done
           echo "Incremental public reader release passed."
+
+      - name: Complete durable release requests
+        if: success() && needs.preflight.outputs.max_id != ''
+        shell: bash
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          MAX_RELEASE_ID: ${{ needs.preflight.outputs.max_id }}
+        run: |
+          set -euo pipefail
+          completed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          curl --silent --show-error --fail-with-body --request PATCH \
+            "${SUPABASE_URL}/rest/v1/reader_release_requests?status=eq.pending&id=lte.${MAX_RELEASE_ID}" \
+            -H "apikey: ${SERVICE_KEY}" -H "Authorization: Bearer ${SERVICE_KEY}" \
+            -H "Content-Type: application/json" -H "Prefer: return=minimal" \
+            --data "{\"status\":\"completed\",\"completed_at\":\"${completed_at}\",\"updated_at\":\"${completed_at}\"}"
 
       - name: Save refreshed release snapshot
         if: success()

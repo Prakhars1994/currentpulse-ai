@@ -41,6 +41,8 @@ test("content workflows dispatch one incremental reader release only after data 
   assert.match(readerRelease, /wrangler deploy/);
   assert.match(readerRelease, /actions\/cache\/restore@v4/);
   assert.match(readerRelease, /reuse-local/);
+  assert.match(readerRelease, /cancel-in-progress: false/);
+  assert.match(readerRelease, /reader_release_requests/);
 });
 
 test("incremental reader planning is bounded and refreshes only exact stream paths", () => {

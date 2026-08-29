@@ -40,7 +40,7 @@ test("published updates reuse or correct source rows before incremental refresh"
   assert.match(sourceHelper, /else if \(opposite\)/);
   assert.match(sourceHelper, /\.update\(update\)/);
   assert.match(route, /ensureArticleStream\(auth\.supabase, data, stream\)/);
-  assert.match(route, /requestReaderRelease\(\{ articleId: data\.id, stream \}\)/);
+  assert.match(route, /requestReaderRelease\(\{ articleId: data\.id, stream, supabase: auth\.supabase \}\)/);
 });
 
 test("dispatch failure preserves database success and returns a warning", () => {
