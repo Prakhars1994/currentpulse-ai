@@ -2,6 +2,7 @@ import { loadCurrentAffairsArticles, loadNewsArticles } from "@/lib/articleStrea
 import { SITE_URL } from "@/lib/siteUrl";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function xml(value = "") {
   return String(value)
@@ -30,6 +31,7 @@ export async function GET() {
     ...(coverage.articles || []).map((article) => ({ ...article, path: `/current-affairs/${article.slug}` })),
   ]
     .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+    .filter((item) => item.title && item.slug && Number.isFinite(new Date(item.created_at || 0).getTime()))
     .slice(0, 30);
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>
@@ -38,6 +40,7 @@ export async function GET() {
 <link>${SITE_URL}/</link>
 <description>Source-backed News and exam-focused Current Affairs.</description>
 <language>en-IN</language>
+<lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 ${items.map((item) => `<item><title>${xml(item.title)}</title><link>${SITE_URL}${xml(item.path)}</link><guid isPermaLink="true">${SITE_URL}${xml(item.path)}</guid><pubDate>${new Date(item.created_at || Date.now()).toUTCString()}</pubDate><description>${xml(description(item))}</description></item>`).join("\n")}
 </channel></rss>`;
 
