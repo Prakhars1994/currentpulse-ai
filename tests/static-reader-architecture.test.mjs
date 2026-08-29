@@ -42,6 +42,12 @@ test("static reader materializer blocks Next RSC prefetch and emits an asset man
   assert.match(source, /STATIC_NEWS_ARCHIVE_PAGES \|\| 48/);
   assert.match(source, /materializeStaticFiles/);
   assert.match(source, /requiredStaticFailures/);
+  assert.match(source, /WORKER_FIRST_DYNAMIC_PATHS/);
+  assert.match(source, /pruneWorkerFirstDynamicAssets/);
+  assert.match(source, /prunedDynamicPaths/);
+  for (const pathname of ["/", "/news", "/current-affairs", "/pdf", "/sitemap.xml", "/news-sitemap.xml", "/feed.xml"]) {
+    assert.match(source, new RegExp(JSON.stringify(pathname).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  }
   assert.match(source, /--changed-file/);
   assert.match(source, /collectExplicitChangedPaths/);
   assert.match(source, /asset-first-static-reader-incremental/);

@@ -63,13 +63,23 @@ const materializationBudgetMs = budgetSeconds * 1000;
 const materializationStartedAt = Date.now();
 const generatedAt = new Date().toISOString();
 
-const CORE_PATHS = [
+// These routes must always reach Next/Supabase. With OpenNext, Worker-first
+// routing still lets the framework asset resolver return a matching file from
+// ASSETS, so merely listing them in wrangler.jsonc is not enough. Never leave
+// materialized copies of these exact paths in the deployment bundle.
+const WORKER_FIRST_DYNAMIC_PATHS = new Set([
   "/",
   "/current-affairs",
   "/news",
+  "/pdf",
+  "/sitemap.xml",
+  "/news-sitemap.xml",
+  "/feed.xml",
+]);
+
+const CORE_PATHS = [
   "/exams",
   "/quiz",
-  "/pdf",
   "/contact",
   "/ai",
 ];
@@ -77,16 +87,10 @@ const CORE_PATHS = [
 const FORBIDDEN_PREFIXES = ["/api/", "/admin/", "/_next/"];
 const NON_HTML_PATHS = new Set([
   "/robots.txt",
-  "/sitemap.xml",
-  "/news-sitemap.xml",
-  "/feed.xml",
   "/google3ff2ae106454c0cb.html",
 ]);
 const REQUIRED_STATIC_PATHS = new Set([
   "/robots.txt",
-  "/sitemap.xml",
-  "/news-sitemap.xml",
-  "/feed.xml",
 ]);
 const pathMetadata = new Map();
 const recentlyChangedPaths = new Set();
@@ -214,6 +218,29 @@ function destinationFor(pathname) {
   if (pathname === "/") return path.join(outDir, "index.html");
   const safe = pathname.replace(/^\/+|\/+$/g, "");
   return path.join(outDir, safe, "index.html");
+}
+
+function dynamicAssetDestination(pathname) {
+  if (/\.(?:xml|txt)$/i.test(pathname)) {
+    return path.join(outDir, pathname.replace(/^\/+/, ""));
+  }
+  return destinationFor(pathname);
+}
+
+async function pruneWorkerFirstDynamicAssets() {
+  const removed = [];
+  for (const pathname of WORKER_FIRST_DYNAMIC_PATHS) {
+    const destination = dynamicAssetDestination(pathname);
+    try {
+      await fs.rm(destination, { force: true });
+      removed.push(pathname);
+    } catch (error) {
+      throw new Error(
+        `Could not remove freshness-critical static asset ${pathname}: ${error?.message || error}`
+      );
+    }
+  }
+  return removed;
 }
 
 function isPublicArticleDetailPath(pathname) {
@@ -575,11 +602,14 @@ async function mapWithConcurrency(items, limit, handler) {
 }
 
 await fs.mkdir(outDir, { recursive: true });
+const prunedDynamicPaths = await pruneWorkerFirstDynamicAssets();
 const staticFiles = await materializeStaticFiles();
 const requiredStaticFailures = staticFiles.filter(
   (item) => REQUIRED_STATIC_PATHS.has(item.pathname) && !item.ok
 );
-const paths = await collectPaths();
+const paths = (await collectPaths()).filter(
+  (pathname) => !WORKER_FIRST_DYNAMIC_PATHS.has(pathname)
+);
 console.log(`[static-reader] candidate pages=${paths.length} max=${maxPages} concurrency=${concurrency}`);
 
 const renderRun = await mapWithConcurrency(
@@ -635,13 +665,14 @@ const manifest = {
   budgetSeconds,
   requiredFailures,
   requiredStaticFailures,
+  prunedDynamicPaths,
   staticFiles,
   reuseBase: reuseBase || null,
   freshDays,
   failures: failed.slice(0, 100),
   skippedSample: skippedForBudget.slice(0, 100),
   note:
-    "Canonical reader HTML is materialized into Cloudflare Static Assets. API/admin requests remain Worker-backed.",
+    "Archive reader HTML is materialized into Cloudflare Static Assets. Freshness-critical reader shells and XML routes remain Worker/Supabase-backed.",
 };
 
 await fs.writeFile(
