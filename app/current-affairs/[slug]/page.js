@@ -176,6 +176,9 @@ export default async function ArticlePage({ params }) {
   const readingTime = calculateReadingTime(article);
 
   const articleSources = article.article_sources || [];
+  const isProtectedManualImport = article.manual_protected === true &&
+    articleSources.some((source) => source.source_kind === "coaching") &&
+    typeof article.content === "string" && article.content.trim().length > 0;
   if (!isPublishedArticleSafe(article, { stream: "coverage" })) notFound();
   const isCoachingArticle = (articleSources || []).some((source) => source.source_kind === "coaching");
   const hasNewsVersion = (articleSources || []).some((source) => source.source_kind === "news");
@@ -396,6 +399,13 @@ export default async function ArticlePage({ params }) {
 
         <article className="mt-10 space-y-8">
 
+          {isProtectedManualImport ? (
+            <section id="manual-import-content" className="article-section scroll-mt-28">
+              <ArticleContent content={article.content} />
+            </section>
+          ) : (
+            <>
+
           <ArticleStudyVisuals
             mapLocations={article.map_locations}
             title={article.title}
@@ -452,6 +462,9 @@ export default async function ArticlePage({ params }) {
           <PrelimsPracticeCard value={displayArticle.question} />
 
           <MainsAccordion mains={displayArticle.mains} answerFramework={displayArticle.answer_framework} />
+
+            </>
+          )}
 
         </article>
 
