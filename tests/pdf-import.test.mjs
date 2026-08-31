@@ -162,3 +162,25 @@ test("synthetic PDF headings become separate CA articles", async () => {
     fs.rmSync(tempPath, { force: true });
   }
 });
+
+test("strict markers are the only boundaries and fail closed", async () => {
+  const original = load("lib/pdf/importFormat.js");
+  const taxonomyUrl = pathToFileURL(path.resolve(process.cwd(), "lib/contentTaxonomy.js")).href;
+  const tempPath = path.resolve(process.cwd(), "tests/.tmp-strict-pdf.mjs");
+  fs.writeFileSync(tempPath, original.replace('"@/lib/contentTaxonomy"', JSON.stringify(taxonomyUrl)), "utf8");
+  try {
+    const { buildPdfImportPreview } = await import(`${pathToFileURL(tempPath).href}?v=${Date.now()}`);
+    const lines = [
+      "[[CA_START]]", "CA_TITLE: First Article", "CA_CATEGORY: International Relations", "CA_GS: GS Paper II", "CA_DATE: 31 August 2026", "CA_IMAGE: NO", "Why in News", "**important UPSC keyword**", "## Way Forward", "Probable Mains Question", "[[CA_END]]",
+      "[[CA_START]]", "CA_TITLE: Second Article", "CA_CATEGORY: Environment", "CA_GS: GS Paper III", "CA_DATE: 31 August 2026", "CA_IMAGE: YES", "### Internal heading", "body", "[[CA_END]]",
+      "[[CA_START]]", "CA_TITLE: Third Article", "CA_CATEGORY: Economy", "CA_GS: GS Paper III", "CA_DATE: 31 August 2026", "CA_IMAGE: https://example.com/a.png", "1. Numbered section", "body", "[[CA_END]]",
+    ];
+    const preview = buildPdfImportPreview({ stream: "ca", fileName: "strict.pdf", pages: [page(1, lines.map((text, i) => ({ text, fontSize: i % 3 === 0 ? 20 : 10, bold: true, y: 780 - i * 20 })))] });
+    assert.equal(preview.drafts.length, 3);
+    assert.equal(preview.drafts[0].category, "International Relations");
+    assert.equal(preview.drafts[0].paper, "GS Paper II");
+    assert.match(preview.drafts[0].fullText, /\*\*important UPSC keyword\*\*/);
+    assert.doesNotMatch(preview.drafts[0].fullText, /CA_TITLE|CA_START|CA_END/);
+    assert.throws(() => buildPdfImportPreview({ stream: "ca", pages: [page(1, [{ text: "[[CA_START]]", fontSize: 10, y: 500 }])] }), /Invalid CurrentPulse CA PDF format/);
+  } finally { fs.rmSync(tempPath, { force: true }); }
+});
