@@ -35,6 +35,11 @@ function normalizeMarkdown(value = "") {
     : String(value);
 
   return highlightMarkdownFacts(withoutHtml
+    // Strict-PDF controls are import instructions, never reader content.
+    .replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim, "")
+    .replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim, "")
+    .replace(/^\s*CurrentPulse AI\s*\|\s*STRICT CA UPLOAD FORMAT.*$/gim, "")
+    .replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "")
     .replace(/\r\n?/g, "\n")
     // Imported coaching notes often flatten every bullet into one paragraph.
     .replace(/[ \t]*[•●▪◦][ \t]*/g, "\n\n- ")

@@ -78,6 +78,7 @@ export async function GET(request) {
     .from("articles")
     .select("id,title,slug,category,paper,why_news,syllabus_linkage,india_relevance,static_foundation,data_examples,prelims,mains,answer_framework,question,map_locations,quality_score,quality_flags,quality_version,created_at,article_sources!inner(source_kind,source_url,source_title)")
     .eq("status", "published")
+    .eq("manual_protected", false)
     .eq("article_sources.source_kind", "coaching")
     .order("created_at", { ascending: false })
     .limit(limit);

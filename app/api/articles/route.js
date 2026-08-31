@@ -41,6 +41,8 @@ function articlePayload(body) {
     seo_description: cleanText(body?.seo_description).slice(0, 160),
     tags,
     status,
+    // Every Admin-created article is protected from background maintenance.
+    manual_protected: true,
   };
 }
 

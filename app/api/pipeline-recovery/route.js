@@ -76,6 +76,7 @@ export async function GET(request) {
     .from("articles")
     .select("id,title,slug,why_news,syllabus_linkage,india_relevance,static_foundation,data_examples,prelims,mains,answer_framework,question,quality_score,quality_flags,quality_version,updated_at,article_sources!inner(source_kind,source_url)")
     .eq("status", "draft")
+    .eq("manual_protected", false)
     .eq("article_sources.source_kind", "coaching")
     .gte("updated_at", cutoff)
     .order("updated_at", { ascending: false })

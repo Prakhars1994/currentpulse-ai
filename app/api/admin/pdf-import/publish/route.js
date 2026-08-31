@@ -113,6 +113,8 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
       stream === "ca" || stream === "ca_hi" ? "ca_pdf_import" : "news_pdf_import",
       ...(stream === "ca_hi" ? ["hindi_ca_pdf_import"] : []),
     ],
+    // Admin PDF imports are editorial records, never automation candidates.
+    manual_protected: true,
   };
 
   if (stream === "news") {

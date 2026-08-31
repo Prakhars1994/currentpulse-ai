@@ -26,7 +26,7 @@ const ARTICLE_FIELDS = `
   id,title,slug,category,paper,why_news,syllabus_linkage,india_relevance,
   static_foundation,data_examples,prelims,mains,answer_framework,question,
   visual_summary,memory_trick,content,seo_description,map_locations,created_at,updated_at,
-  views,quality_score,quality_flags,status,
+  views,quality_score,quality_flags,status,manual_protected,
   article_sources(id,source_kind,source_name,source_url,source_published_at,event_key)
 `;
 
@@ -202,6 +202,7 @@ export async function GET(request) {
     .from("articles")
     .select(ARTICLE_FIELDS)
     .eq("status", "published")
+    .eq("manual_protected", false)
     .gte("created_at", cutoff)
     .order("created_at", { ascending: false })
     .limit(limit);
