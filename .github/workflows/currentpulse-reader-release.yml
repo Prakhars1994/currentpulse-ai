@@ -6,6 +6,7 @@ on:
     paths:
       - "wrangler.jsonc"
       - "app/page.tsx"
+      - "components/ResultPulsePreview.jsx"
       - ".github/workflows/currentpulse-reader-release.yml"
   schedule:
     - cron: "17 * * * *"
