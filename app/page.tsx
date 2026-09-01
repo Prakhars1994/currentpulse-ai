@@ -60,16 +60,26 @@ const EMPTY_STATS = {
   error: null,
 };
 
+function timeoutAfter(milliseconds: number) {
+  return new Promise<null>((resolve) => {
+    setTimeout(resolve, milliseconds, null);
+  });
+}
+
 export default async function Home() {
   let streams = EMPTY_STREAMS;
   let stats = EMPTY_STATS;
 
   /*
-   * Public homepage must never become HTTP 500 just because a database,
-   * relationship count or external dependency is temporarily unavailable.
+   * The homepage must remain available when Supabase or relationship-count
+   * queries are slow. Rendering a safe empty state is better than keeping the
+   * public route open until Cloudflare times out.
    */
   try {
-    const snapshot = await loadHomepageSnapshot(18);
+    const snapshot = await Promise.race([
+      loadHomepageSnapshot(18),
+      timeoutAfter(5000),
+    ]);
 
     streams = snapshot?.streams || EMPTY_STREAMS;
     stats = snapshot?.stats || EMPTY_STATS;
