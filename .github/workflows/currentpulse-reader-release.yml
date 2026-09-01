@@ -1,6 +1,11 @@
 name: CurrentPulse Incremental Reader Release
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "wrangler.jsonc"
+      - ".github/workflows/currentpulse-reader-release.yml"
   schedule:
     - cron: "17 * * * *"
   workflow_dispatch:
@@ -60,7 +65,7 @@ jobs:
             "${SUPABASE_URL}/rest/v1/reader_release_requests?select=id&status=eq.pending&order=id.desc&limit=1" \
             -H "apikey: ${SERVICE_KEY}" -H "Authorization: Bearer ${SERVICE_KEY}")"
           max_id="$(node -e 'const rows=JSON.parse(process.argv[1]);process.stdout.write(rows[0]?.id?String(rows[0].id):"")' "${response}")"
-          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" || -n "${max_id}" ]]; then echo "release=true" >> "${GITHUB_OUTPUT}"; else echo "release=false" >> "${GITHUB_OUTPUT}"; fi
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" || "${GITHUB_EVENT_NAME}" == "push" || -n "${max_id}" ]]; then echo "release=true" >> "${GITHUB_OUTPUT}"; else echo "release=false" >> "${GITHUB_OUTPUT}"; fi
           echo "max_id=${max_id}" >> "${GITHUB_OUTPUT}"
 
   release:
