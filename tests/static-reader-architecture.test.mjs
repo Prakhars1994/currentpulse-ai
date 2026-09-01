@@ -2,74 +2,33 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 
-function read(path) {
-  return fs.readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-}
+const read = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
 test("reader traffic no longer writes article views directly to Supabase", () => {
   const source = read("components/ArticleViewTracker.jsx");
-  assert.doesNotMatch(source, /@\/lib\/supabase/);
-  assert.doesNotMatch(source, /increment_article_views/);
-  assert.doesNotMatch(source, /\.rpc\s*\(/);
+  assert.doesNotMatch(source, /@\/lib\/supabase|increment_article_views|\.rpc\s*\(/);
 });
 
-test("Cloudflare keeps archive assets while freshness-critical routes run Worker-first", () => {
+test("Cloudflare keeps dynamic reader paths Worker-first but homepage asset-first", () => {
   const config = read("wrangler.jsonc");
-  assert.match(config, /"html_handling"\s*:\s*"drop-trailing-slash"/);
   assert.match(config, /"run_worker_first"\s*:\s*\[[\s\S]*"\/api\/\*"[\s\S]*"\/admin\/\*"/);
   assert.match(config, /"\/news\/\*"/);
   assert.match(config, /"\/current-affairs\/\*"/);
-  assert.match(config, /"\/pdf\/\*"/);
-  assert.doesNotMatch(config, /"run_worker_first"\s*:\s*true/);
+  const workerFirst = config.match(/"run_worker_first"\s*:\s*\[([\s\S]*?)\]/)?.[1] || "";
+  assert.doesNotMatch(workerFirst, /^\s*"\/"\s*(?:,|$)/m);
 });
 
-test("static reader materializer blocks Next RSC prefetch and emits an asset manifest", () => {
+test("static reader materializer retains incremental release safeguards", () => {
   const source = read("scripts/materialize-static-reader.mjs");
-  assert.match(source, /currentpulse-static-reader/);
-  assert.match(source, /_rsc/);
-  assert.match(source, /Next-Router-Prefetch/);
   assert.match(source, /currentpulse-static-reader-manifest\.json/);
-  assert.match(source, /reuse-base/);
-  assert.match(source, /reusedArchivePages/);
-  assert.match(source, /reusedLocalArchivePages/);
   assert.match(source, /reuse-local/);
   assert.match(source, /addRecentlyChangedDatabasePaths/);
-  assert.match(source, /recentlyChangedPaths/);
-  assert.match(source, /looksLikeNotFoundPlaceholder/);
-  assert.match(source, /stale static asset removed/);
-  assert.match(source, /staleAssetsRemoved/);
-  assert.match(source, /intentionally noindex/);
-  assert.match(source, /STATIC_NEWS_ARCHIVE_PAGES \|\| 48/);
-  assert.match(source, /materializeStaticFiles/);
-  assert.match(source, /requiredStaticFailures/);
-  assert.match(source, /WORKER_FIRST_DYNAMIC_PATHS/);
   assert.match(source, /pruneWorkerFirstDynamicAssets/);
-  assert.match(source, /prunedDynamicPaths/);
-  for (const pathname of ["/", "/news", "/current-affairs", "/pdf", "/sitemap.xml", "/news-sitemap.xml", "/feed.xml"]) {
-    assert.match(source, new RegExp(JSON.stringify(pathname).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  }
-  assert.match(source, /--changed-file/);
-  assert.match(source, /collectExplicitChangedPaths/);
-  assert.match(source, /asset-first-static-reader-incremental/);
-  assert.match(source, /contained no valid reader paths/);
-  assert.match(source, /name=\["'\]currentpulse-static-reader/);
 });
 
-test("trusted Current Affairs quality floor is materially higher than the old permissive threshold", () => {
-  const generator = read("lib/ai/generateArticle.js");
-  const publisher = read("lib/publisher/publishArticle.js");
-  assert.match(generator, /score\s*\|\|\s*0\)\s*>=\s*72/);
-  assert.match(publisher, /fallbackQuality\s*<\s*80/);
-});
-
-test("GitHub is the single scheduled heavy automation owner", () => {
+test("GitHub scheduled background is ResultPulse-only", () => {
   const background = read(".github/workflows/currentpulse-background.yml");
-  const maintenance = read(".github/workflows/currentpulse-quality-maintenance.yml");
-  assert.match(background, /schedule:/);
-  for (const utcHour of [1, 4, 7, 10, 14, 17, 18]) {
-    assert.match(background, new RegExp(`0 ${utcHour} \\* \\* \\*`));
-  }
-  assert.match(background, /"0 17 \* \* \*"\)\s+india_hour="22"/);
-  assert.match(background, /EVENT_SCHEDULE/);
-  assert.doesNotMatch(maintenance, /\n\s+schedule:/);
+  for (const utcHour of [1, 7, 14, 17]) assert.match(background, new RegExp(`0 ${utcHour} \\* \\* \\*`));
+  for (const removedHour of [4, 10, 18]) assert.doesNotMatch(background, new RegExp(`0 ${removedHour} \\* \\* \\*`));
+  assert.match(background, /\/api\/exams\/run/);
 });

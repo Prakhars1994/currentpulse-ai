@@ -13,25 +13,37 @@ const readerRelease = load(".github/workflows/currentpulse-reader-release.yml");
 const history = load(".github/workflows/currentpulse-history-repair.yml");
 const releasePaths = load("scripts/public-release-paths.mjs");
 
-test("GitHub background workflow is the single scheduled heavy automation owner", () => {
+test("scheduled background work is ResultPulse-only", () => {
   assert.match(background, /workflow_dispatch:/);
   assert.match(background, /\n\s+schedule:/);
-  for (const utcHour of [1, 4, 7, 10, 14, 17, 18]) {
+
+  for (const utcHour of [1, 7, 14, 17]) {
     assert.match(background, new RegExp(`0 ${utcHour} \\* \\* \\*`));
   }
-  assert.match(background, /EVENT_SCHEDULE/);
-  assert.match(background, /"0 17 \* \* \*"\)\s+india_hour="22"/);
-  assert.doesNotMatch(background, /AUTOMATION_ENABLED/);
+
+  for (const removedHour of [4, 10, 18]) {
+    assert.doesNotMatch(background, new RegExp(`0 ${removedHour} \\* \\* \\*`));
+  }
+
+  assert.match(background, /\/api\/exams\/run\?notifications=0&runner=github/);
+  assert.doesNotMatch(background, /\/api\/coverage-import/);
+  assert.doesNotMatch(background, /\/api\/auto-publish/);
+  assert.doesNotMatch(background, /\/api\/process-queue/);
+  assert.doesNotMatch(background, /news-quality-repair/);
+  assert.doesNotMatch(background, /quality-repair/);
+  assert.doesNotMatch(background, /editorial-cleanup/);
+  assert.doesNotMatch(background, /GEMINI_API_KEY|OPENROUTER_API_KEY|GROQ_API_KEY|MISTRAL_API_KEY/);
   assert.doesNotMatch(maintenance, /\n\s+schedule:/);
 });
 
-test("content workflows dispatch one incremental reader release only after data changes", () => {
+test("background and maintenance release public changes through the reader workflow", () => {
   for (const workflow of [background, maintenance, history]) {
     assert.match(workflow, /public-release-state\.mjs/);
     assert.match(workflow, /currentpulse-reader-release\.yml/);
     assert.doesNotMatch(workflow, /wrangler deploy/);
     assert.doesNotMatch(workflow, /opennextjs-cloudflare build/);
   }
+
   assert.match(readerRelease, /materialize-static-reader\.mjs/);
   assert.match(readerRelease, /public-release-paths\.mjs/);
   assert.match(readerRelease, /currentpulse-static-reader-manifest\.json/);
@@ -45,7 +57,7 @@ test("content workflows dispatch one incremental reader release only after data 
   assert.match(readerRelease, /reader_release_requests/);
 });
 
-test("incremental reader planning is bounded and refreshes only exact stream paths", () => {
+test("incremental reader planning is bounded and refreshes exact stream paths", () => {
   assert.match(releasePaths, /article_sources/);
   assert.match(releasePaths, /source_kind/);
   assert.match(releasePaths, /paths\.add\("\/news"\)/);
@@ -57,7 +69,7 @@ test("incremental reader planning is bounded and refreshes only exact stream pat
   assert.match(releasePaths, /changed-row count exceeded safe incremental limit/);
 });
 
-test("production workflow validates code then materializes the same static reader architecture", () => {
+test("production workflow validates code then materializes the Cloudflare reader", () => {
   assert.match(production, /opennextjs-cloudflare build/);
   assert.match(production, /materialize-static-reader\.mjs/);
   assert.match(production, /wrangler deploy/);

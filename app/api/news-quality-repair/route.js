@@ -19,18 +19,12 @@ function authorised(request) {
 }
 
 function needsRepair(article = {}) {
-  const flags = Array.isArray(article.quality_flags)
-    ? article.quality_flags
-    : [];
-
+  const flags = Array.isArray(article.quality_flags) ? article.quality_flags : [];
   if (flags.includes("awaiting_ai_copy_upgrade")) return true;
-
   const presentation = parseNewsPresentation(article.content);
   if (!presentation) return true;
-
   const quality = assessNewsOutputQuality(article);
   if (!quality.allowed) return true;
-
   return (
     String(presentation.lead || "").trim().length < 100 ||
     String(presentation.keyFacts || "").trim().length < 90 ||
@@ -41,21 +35,13 @@ function needsRepair(article = {}) {
 async function mapWithConcurrency(items, limit, handler) {
   const results = new Array(items.length);
   let index = 0;
-
   async function worker() {
     while (index < items.length) {
       const current = index++;
       results[current] = await handler(items[current], current);
     }
   }
-
-  await Promise.all(
-    Array.from(
-      { length: Math.min(limit, items.length) },
-      () => worker()
-    )
-  );
-
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, () => worker()));
   return results;
 }
 
@@ -68,23 +54,16 @@ export async function GET(request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const apply = ["1", "true", "yes"].includes(
-    String(searchParams.get("apply") || "").toLowerCase()
-  );
-  const repairLimit = Math.min(
-    MAX_REPAIR,
-    Math.max(1, Number(searchParams.get("limit")) || MAX_REPAIR)
-  );
-
+  const apply = ["1", "true", "yes"].includes(String(searchParams.get("apply") || "").toLowerCase());
+  const repairLimit = Math.min(MAX_REPAIR, Math.max(1, Number(searchParams.get("limit")) || MAX_REPAIR));
   const cursor = Math.max(0, Number(searchParams.get("cursor")) || 0);
   const supabase = createServerSupabase();
 
   let query = supabase
     .from("articles")
-    .select(
-      "id,title,slug,category,content,why_news,static_foundation,data_examples,india_relevance,quality_flags,created_at,article_sources!inner(source_kind,source_name,source_title,source_url,source_published_at)"
-    )
+    .select("id,title,slug,category,content,why_news,static_foundation,data_examples,india_relevance,quality_flags,created_at,article_sources!inner(source_kind,source_name,source_title,source_url,source_published_at)")
     .eq("status", "published")
+    .eq("manual_protected", false)
     .eq("article_sources.source_kind", "news")
     .order("id", { ascending: false })
     .limit(MAX_SCAN);
@@ -115,54 +94,22 @@ export async function GET(request) {
       candidates: candidates.length,
       cursor: cursor || null,
       nextCursor,
-      articles: candidates.map((article) => ({
-        id: article.id,
-        slug: article.slug,
-        title: article.title,
-      })),
+      articles: candidates.map((article) => ({ id: article.id, slug: article.slug, title: article.title })),
     });
   }
 
-  const results = await mapWithConcurrency(
-    candidates,
-    CONCURRENCY,
-    async (article) => {
-      const source = (article.article_sources || []).find(
-        (item) => item?.source_kind === "news"
-      );
-
-      if (!source?.source_url) {
-        return {
-          id: article.id,
-          title: article.title,
-          status: "skipped",
-          reason: "No retained News source URL.",
-        };
-      }
-
-      try {
-        const rebuilt = await rebuildPublishedNewsArticle(
-          supabase,
-          article.id,
-          source
-        );
-
-        return {
-          id: article.id,
-          title: article.title,
-          status: "rebuilt",
-          slug: rebuilt.slug,
-        };
-      } catch (error) {
-        return {
-          id: article.id,
-          title: article.title,
-          status: "failed",
-          reason: error?.message || "News rebuild failed.",
-        };
-      }
+  const results = await mapWithConcurrency(candidates, CONCURRENCY, async (article) => {
+    const source = (article.article_sources || []).find((item) => item?.source_kind === "news");
+    if (!source?.source_url) {
+      return { id: article.id, title: article.title, status: "skipped", reason: "No retained News source URL." };
     }
-  );
+    try {
+      const rebuilt = await rebuildPublishedNewsArticle(supabase, article.id, source);
+      return { id: article.id, title: article.title, status: "rebuilt", slug: rebuilt.slug };
+    } catch (error) {
+      return { id: article.id, title: article.title, status: "failed", reason: error?.message || "News rebuild failed." };
+    }
+  });
 
   return NextResponse.json({
     success: true,
