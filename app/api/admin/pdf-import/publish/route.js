@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
+import { requestReaderRelease } from "@/lib/publisher/requestReaderRelease";
 import { SITE_URL } from "@/lib/siteUrl";
-import { isStandaloneCurrentAffairsArticle } from "@/lib/sitemapQuality";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -20,11 +20,25 @@ function clean(value = "") {
     .trim();
 }
 
+function preserveText(value = "") {
+  // The administrator's extracted PDF body is editorial source material.
+  // Do not reflow, deduplicate, rewrite or trim it during publication.
+  return String(value ?? "").replace(/\u0000/g, "");
+}
+
+function todayIst() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 function safeDate(value = "") {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))) {
-    return new Date().toISOString().slice(0, 10);
-  }
-  return value;
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || ""))
+    ? String(value)
+    : todayIst();
 }
 
 function slugify(value = "") {
@@ -39,7 +53,7 @@ function slugify(value = "") {
 }
 
 function hash(value = "") {
-  return createHash("sha256").update(String(value || "")).digest("hex");
+  return createHash("sha256").update(String(value ?? "")).digest("hex");
 }
 
 function publicationTimestamp(date) {
@@ -50,24 +64,34 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
   const title = clean(article.title).slice(0, 180);
   const importIndex = Number(article.importIndex);
   const suffix = `${date.replace(/-/g, "")}-${fileHash.slice(0, 7)}-${importIndex}`;
-  const slugPrefix = stream === "ca_hi" ? "hindi-current-affairs" : (slugify(title) || "pdf-import");
+  const slugPrefix = stream === "ca_hi"
+    ? "hindi-current-affairs"
+    : (slugify(title) || "pdf-import");
   const slug = `${slugPrefix}-${suffix}`.slice(0, 180);
-  const fullText = clean(article.fullText).slice(0, MAX_ARTICLE_TEXT);
-  const whyNews = clean(article.why_news).slice(0, MAX_ARTICLE_TEXT);
-  const staticFoundation = clean(article.static_foundation).slice(0, MAX_ARTICLE_TEXT);
-  const dataExamples = clean(article.data_examples).slice(0, MAX_ARTICLE_TEXT);
-  const prelims = clean(article.prelims).slice(0, MAX_ARTICLE_TEXT);
-  const mains = clean(article.mains).slice(0, MAX_ARTICLE_TEXT);
-  const question = clean(article.question).slice(0, 20_000);
-  const indiaRelevance = clean(article.india_relevance).slice(0, MAX_ARTICLE_TEXT);
+
+  const fullText = preserveText(article.fullText).slice(0, MAX_ARTICLE_TEXT);
+  const whyNews = preserveText(article.why_news).slice(0, MAX_ARTICLE_TEXT);
+  const staticFoundation = preserveText(article.static_foundation).slice(0, MAX_ARTICLE_TEXT);
+  const dataExamples = preserveText(article.data_examples).slice(0, MAX_ARTICLE_TEXT);
+  const prelims = preserveText(article.prelims).slice(0, MAX_ARTICLE_TEXT);
+  const mains = preserveText(article.mains).slice(0, MAX_ARTICLE_TEXT);
+  const question = preserveText(article.question).slice(0, 20_000);
+  const indiaRelevance = preserveText(article.india_relevance).slice(0, MAX_ARTICLE_TEXT);
+
   const category = clean(article.category).slice(0, 80) || "Polity & Governance";
   const paper = clean(article.paper).slice(0, 30) || "Prelims";
   const createdAt = publicationTimestamp(date);
   const imageUrl = clean(article.image_url).slice(0, 2000);
-  const mapLocations = (Array.isArray(article.map_locations) ? article.map_locations : clean(article.map_locations).split(","))
-    .map((value) => clean(value).slice(0, 100)).filter(Boolean).slice(0, 8);
+  const mapLocations = (
+    Array.isArray(article.map_locations)
+      ? article.map_locations
+      : clean(article.map_locations).split(",")
+  )
+    .map((value) => clean(value).slice(0, 100))
+    .filter(Boolean)
+    .slice(0, 8);
 
-  const common = {
+  return {
     title,
     slug,
     category,
@@ -103,21 +127,19 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
     image_search_query: title,
     image_url: imageUrl || null,
     map_locations: mapLocations,
-    quality_score: 92,
+    quality_score: 100,
     quality_version: 4,
     quality_flags: [
       "admin_pdf_import",
       "zero_ai_pdf_import",
       "full_text_preserved",
-      stream === "ca" || stream === "ca_hi" ? "ca_pdf_import" : "news_pdf_import",
+      stream === "ca" || stream === "ca_hi"
+        ? "ca_pdf_import"
+        : "news_pdf_import",
       ...(stream === "ca_hi" ? ["hindi_ca_pdf_import"] : []),
     ],
-    // Admin PDF imports are editorial records, never automation candidates.
     manual_protected: true,
   };
-
-
-  return common;
 }
 
 export async function POST(request) {
@@ -133,7 +155,7 @@ export async function POST(request) {
           ? "ca_hi"
           : body?.stream === "ca"
             ? "ca"
-          : "";
+            : "";
     const fileName = clean(body?.fileName).slice(0, 220);
     const fileHash = clean(body?.fileHash).toLowerCase();
     const date = safeDate(body?.publishedAt);
@@ -165,12 +187,14 @@ export async function POST(request) {
 
     const normalized = articles.map((article, batchIndex) => {
       const importIndex = Number(article?.importIndex);
+      const title = clean(article?.title);
+      const fullText = preserveText(article?.fullText);
 
       if (
         !Number.isInteger(importIndex) ||
         importIndex < 0 ||
-        clean(article?.title).length < 5 ||
-        clean(article?.fullText).length < 80
+        title.length < 5 ||
+        fullText.trim().length < 80
       ) {
         throw new Error(
           `Article ${batchIndex + 1} is missing a valid title, index or body.`
@@ -217,16 +241,6 @@ export async function POST(request) {
         fileHash,
       });
 
-      if ((stream === "ca" || stream === "ca_hi") && !isStandaloneCurrentAffairsArticle(payload)) {
-        results.push({
-          status: "failed",
-          importIndex: item.importIndex,
-          title: payload.title,
-          error: "A PDF section heading or memory/helper fragment cannot be published as a standalone Current Affairs article.",
-        });
-        continue;
-      }
-
       const { data: inserted, error: insertError } = await auth.supabase
         .from("articles")
         .insert([payload])
@@ -243,14 +257,13 @@ export async function POST(request) {
         continue;
       }
 
-      const sourceName =
-        stream === "ca" || stream === "ca_hi"
-          ? "CurrentPulse Admin CA PDF"
-          : "CurrentPulse Admin News PDF";
-      const sourceUrl =
-        stream === "ca" || stream === "ca_hi"
-          ? `${SITE_URL}${stream === "ca_hi" ? "/current-affairs/hindi" : "/current-affairs"}`
-          : `${SITE_URL}/news`;
+      const isCurrentAffairs = stream === "ca" || stream === "ca_hi";
+      const sourceName = isCurrentAffairs
+        ? "CurrentPulse Admin CA PDF"
+        : "CurrentPulse Admin News PDF";
+      const sourceUrl = isCurrentAffairs
+        ? `${SITE_URL}${stream === "ca_hi" ? "/current-affairs?lang=hi" : "/current-affairs"}`
+        : `${SITE_URL}/news`;
       const now = new Date().toISOString();
 
       const { error: sourceError } = await auth.supabase
@@ -259,12 +272,12 @@ export async function POST(request) {
           article_id: inserted.id,
           event_key: hash(`${date}|${payload.title}`).slice(0, 32),
           source_key: item.sourceKey,
-          source_kind: stream === "ca" || stream === "ca_hi" ? "coaching" : "news",
+          source_kind: isCurrentAffairs ? "coaching" : "news",
           source_name: sourceName,
           source_title: `Imported from ${fileName}`,
           source_url: sourceUrl,
           source_published_at: publicationTimestamp(date),
-          content_hash: hash(item.article.fullText),
+          content_hash: hash(preserveText(item.article.fullText)),
           merged_at: now,
           updated_at: now,
         }]);
@@ -290,13 +303,44 @@ export async function POST(request) {
       });
     }
 
-    const published = results.filter((item) => item.status === "published").length;
+    const publishedRows = results.filter((item) => item.status === "published");
+    const published = publishedRows.length;
     const duplicates = results.filter((item) => item.status === "duplicate").length;
     const failed = results.filter((item) => item.status === "failed").length;
 
+    let readerRefreshQueued = false;
+    let readerRefreshDurable = false;
+    let readerRefreshWarning = "";
+
+    if (published > 0) {
+      try {
+        // One release is enough for the whole batch: the release planner uses a
+        // durable timestamp watermark and discovers every changed article.
+        const release = await requestReaderRelease({
+          articleId: publishedRows.at(-1).articleId,
+          stream: stream === "news" ? "news" : "coverage",
+          supabase: auth.supabase,
+        });
+        readerRefreshQueued = true;
+        readerRefreshDurable = Boolean(release?.durable);
+      } catch (dispatchError) {
+        readerRefreshDurable = Boolean(dispatchError?.durable);
+        readerRefreshWarning =
+          "Articles are published in the database, but the immediate reader refresh could not be dispatched.";
+        console.error("PDF reader release dispatch error:", dispatchError);
+      }
+    }
+
+    const success = published + duplicates > 0;
+    const baseMessage = published > 0
+      ? `Published ${published}; duplicates ${duplicates}; failed ${failed}.`
+      : duplicates > 0 && failed === 0
+        ? `All ${duplicates} selected articles were already imported.`
+        : "No selected PDF articles were published.";
+
     return NextResponse.json(
       {
-        success: published + duplicates > 0,
+        success,
         stats: {
           requested: articles.length,
           published,
@@ -304,15 +348,17 @@ export async function POST(request) {
           failed,
         },
         releaseRequired: published > 0,
-        message:
-          published > 0
-            ? `Published ${published}; duplicates ${duplicates}; failed ${failed}.`
-            : duplicates > 0 && failed === 0
-              ? `All ${duplicates} selected articles were already imported.`
-              : "No selected PDF articles were published.",
+        readerRefreshQueued,
+        readerRefreshDurable,
+        readerRefreshWarning,
+        message: readerRefreshWarning
+          ? `${baseMessage} ${readerRefreshWarning}`
+          : published > 0 && readerRefreshQueued
+            ? `${baseMessage} Live reader refresh queued.`
+            : baseMessage,
         results,
       },
-      { status: published + duplicates > 0 ? 200 : 502 }
+      { status: success ? 200 : 502 }
     );
   } catch (error) {
     return NextResponse.json(
