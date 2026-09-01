@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
 import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 import { SITE_URL } from "@/lib/siteUrl";
-import { serializeNewsPresentation } from "@/lib/news/newsPresentation";
 import { isStandaloneCurrentAffairsArticle } from "@/lib/sitemapQuality";
 
 export const runtime = "nodejs";
@@ -117,18 +116,6 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
     manual_protected: true,
   };
 
-  if (stream === "news") {
-    return {
-      ...common,
-      content: serializeNewsPresentation({
-        title,
-        why_news: common.why_news,
-        data_examples: dataExamples,
-        static_foundation: staticFoundation || fullText,
-        india_relevance: indiaRelevance,
-      }),
-    };
-  }
 
   return common;
 }
