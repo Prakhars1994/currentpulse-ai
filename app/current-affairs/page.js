@@ -20,6 +20,7 @@ export async function generateMetadata({ searchParams }) {
   const query = new URLSearchParams();
   if (exam.slug !== "upsc") query.set("exam", exam.slug);
   if (page > 1) query.set("page", String(page));
+  if (hi) query.set("lang", "hi");
   const canonical = `${SITE_URL}/current-affairs${query.toString() ? `?${query.toString()}` : ""}`;
   const baseTitle = hi ? exam.hiTitle : exam.title;
   const title = page <= 1 ? baseTitle : `${baseTitle} - Page ${page}`;
@@ -29,10 +30,7 @@ export async function generateMetadata({ searchParams }) {
     title,
     description,
     alternates: { canonical },
-    // Hindi is deliberately an interface layer for now, not a duplicate
-    // translated article corpus. Keep it out of the index until cached Hindi
-    // article translations exist.
-    robots: todayOnly || hi ? { index: false, follow: true } : { index: true, follow: true },
+    robots: todayOnly ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: { title, description, url: canonical, type: "website" },
   };
 }
@@ -65,7 +63,11 @@ export default async function CurrentAffairsPage({ searchParams }) {
   const pageSize = 24;
   const offset = (requestedPage - 1) * pageSize;
   const { articles, total, hasMore, date, error } = await loadCurrentAffairsArticles({
-    limit: pageSize, offset, todayOnly, exam: exam.slug,
+    limit: pageSize,
+    offset,
+    todayOnly,
+    exam: exam.slug,
+    language: hi ? "hi" : "en",
   });
   const totalPages = Number.isFinite(total) ? Math.max(1, Math.ceil(total / pageSize)) : null;
   const articleSuffix = hi ? "?lang=hi" : "";
@@ -78,7 +80,7 @@ export default async function CurrentAffairsPage({ searchParams }) {
         <div className="relative overflow-hidden rounded-[2rem] border border-cyan-400/15 bg-[radial-gradient(circle_at_90%_0%,rgba(6,182,212,.16),transparent_35%),linear-gradient(135deg,#0f172a,#08111f)] px-6 py-10 shadow-2xl shadow-slate-950/30 sm:px-10 sm:py-12">
           <p className="font-black uppercase tracking-[.22em] text-cyan-400">{hi ? "एक ही CA डेटाबेस · परीक्षा के अनुसार दृश्य" : "One canonical CA database · exam-specific views"}</p>
           <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">{hi ? exam.hiTitle : exam.title}</h1>
-          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">{hi ? exam.hiDescription : exam.description} {hi ? "हर घटना एक बार संग्रहित और डिडुप्लिकेट होती है, फिर अलग परीक्षाओं के लिए पुनः उपयोग होती है।" : "Each event is stored once, deduplicated once and reused across exam views."}</p>
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">{hi ? exam.hiDescription : exam.description} {hi ? "प्रशासक द्वारा प्रकाशित हर हिंदी लेख इसी हिंदी संग्रह में दिखाई देता है।" : "Every administrator-published Current Affairs item remains in the canonical archive."}</p>
 
           <div className="mt-6 flex flex-wrap gap-2">
             {Object.values(EXAM_VERTICALS).map((item) => (
