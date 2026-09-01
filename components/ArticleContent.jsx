@@ -49,10 +49,15 @@ function normalizeMarkdown(value = "") {
     .replace(/[ \t]+(#{2,4})[ \t]+/g, "\n\n$1 ")
     // Keep numbered points on separate lines when source text was flattened.
     .replace(/\s+(\d{1,2}[.)])[ \t]+(?=[A-Z])/g, "\n\n$1 ")
+    // Preserve imported CA labels as semantic, compact major sections.
+    .replace(
+      /(^|\n)\s*(Why in News\?|Data\s*(?:&|and)\s*Facts(?:\s+for\s+UPSC)?|Top\s+Data\s*(?:&|and)\s*Facts(?:\s+for\s+UPSC)?|Static Foundation|Prelims Quick Revision|Probable Prelims Question|Probable Mains Question|UPSC\/?BPSC Syllabus Linkage)\s*:?[ \t]*(?=\n|$)/gim,
+      "$1## $2\n"
+    )
     // Give common UPSC analysis labels a real visual hierarchy, including
     // older articles generated before Markdown headings were enforced.
     .replace(
-      /(?:^|\n|\.\s+)(Background|Context|Significance|Key Issues(?: or Challenges)?|Issues and Challenges|Issues|Challenges|Way Forward|Conclusion|Impact|Implications|Opportunities|Recommendations)\s*:?\s+(?=[A-Z])/gi,
+      /(?:^|\n|\.\s+)(Background|Context|Significance|Key Developments|Key Issues(?: or Challenges)?|Issues and Challenges|Issues|Challenges|Way Forward|Conclusion|Impact|Implications|Opportunities|Recommendations)\s*:?\s+(?=[A-Z])/gi,
       (_, heading) => `\n\n### ${heading}\n\n`
     )
     // Emphasize short factual labels such as "Institution:" or "Report:".
@@ -68,10 +73,19 @@ function normalizeMarkdown(value = "") {
 
 export default function ArticleContent({ content, fallback }) {
   const value = normalizeMarkdown(content || fallback || "");
+  const headingClass = (children) =>
+    /probable\s+(?:prelims|mains)\s+question/i.test(String(children))
+      ? "article-question-heading"
+      : "";
 
   return (
     <div className="article-rich-content">
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{value}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h2: ({ children }) => <h2 className={headingClass(children)}>{children}</h2>,
+        }}
+      >{value}</ReactMarkdown>
     </div>
   );
 }

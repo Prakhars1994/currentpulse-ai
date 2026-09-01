@@ -184,3 +184,22 @@ test("strict markers are the only boundaries and fail closed", async () => {
     assert.throws(() => buildPdfImportPreview({ stream: "ca", pages: [page(1, [{ text: "[[CA_START]]", fontSize: 10, y: 500 }])] }), /Invalid CurrentPulse CA PDF format/);
   } finally { fs.rmSync(tempPath, { force: true }); }
 });
+
+test("CA display headings are renderer-only and import safeguards remain intact", () => {
+  const importer = load("lib/pdf/importFormat.js");
+  const renderer = load("components/ArticleContent.jsx");
+  const route = load("app/api/admin/pdf-import/publish/route.js");
+
+  assert.match(importer, /parseStrictMarkerDrafts/);
+  assert.match(importer, /hasMarkers/);
+  assert.doesNotMatch(importer, /Why in News[\s\S]{0,120}segments\.push/);
+  for (const label of ["Why in News", "Prelims Quick Revision", "Way Forward", "Probable Mains Question"]) {
+    assert.match(renderer, new RegExp(label));
+  }
+  assert.ok(renderer.includes("CA_(?:START|END)"));
+  assert.ok(renderer.includes("CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)"));
+  assert.match(renderer, /remarkGfm/);
+  assert.match(route, /existing\.has\(item\.sourceKey\)/);
+  assert.match(route, /status: "duplicate"/);
+  assert.match(route, /manual_protected: true/);
+});
