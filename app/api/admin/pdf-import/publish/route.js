@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAuthenticatedAdmin } from "@/lib/adminAuth";
 import { requestReaderRelease } from "@/lib/publisher/requestReaderRelease";
 import { resolveGovernmentArticleImage } from "@/lib/news/governmentImageResolver";
+import { isVerifiedReusableArticleImage } from "@/lib/news/categoryImage";
 import { SITE_URL } from "@/lib/siteUrl";
 
 export const runtime = "nodejs";
@@ -33,31 +34,18 @@ async function enrichPublishedArticleImage(supabase, inserted, payload) {
   try {
     const deadlineAt = Date.now() + IMAGE_ENRICHMENT_DEADLINE_MS;
     const resolved = await resolveGovernmentArticleImage({ ...payload, id: inserted.id, slug: inserted.slug }, { deadlineAt });
-    const patch = {
-      image_resolution: resolved.resolution,
-      image_search_query: resolved.query || resolved.resolution?.search_query || payload.image_search_query,
-      updated_at: new Date().toISOString(),
-    };
-    if (resolved.image) {
-      Object.assign(patch, {
-        image: resolved.image.url,
-        image_url: resolved.image.url,
-        image_alt: resolved.image.alt || payload.title,
-        image_caption: resolved.image.attribution || null,
-        image_source_url: resolved.image.sourcePageUrl || null,
-      });
-    }
-    const { error } = await supabase.from("articles").update(patch).eq("id", inserted.id);
-    if (error) throw error;
-    return {
-      status: resolved.image ? "resolved" : "no_safe_image",
-      provider: resolved.resolution?.provider || null,
-      requestsUsed: resolved.resolution?.requests_used || 0,
-    };
-  } catch (error) {
-    console.error("PDF article image enrichment failed:", error?.message || error);
-    return { status: "failed", error: error?.message || "Image enrichment failed" };
-  }
+    const patch = { image_resolution: resolved.resolution, image_search_query: resolved.query || resolved.resolution?.search_query || payload.image_search_query, updated_at: new Date().toISOString() };
+    if (resolved.image) Object.assign(patch, { image: resolved.image.url, image_url: resolved.image.url, image_alt: resolved.image.alt || payload.title, image_caption: resolved.image.attribution || null, image_source_url: resolved.image.sourcePageUrl || null });
+    const { error } = await supabase.from("articles").update(patch).eq("id", inserted.id); if (error) throw error;
+    return { status: resolved.image ? "resolved" : "no_safe_image", provider: resolved.resolution?.provider || null, requestsUsed: resolved.resolution?.requests_used || 0 };
+  } catch (error) { console.error("PDF article image enrichment failed:", error?.message || error); return { status: "failed", error: error?.message || "Image enrichment failed" }; }
+}
+
+async function enrichExistingPdfArticle(supabase, articleId, draftPayload) {
+  const { data: existingArticle, error } = await supabase.from("articles").select("id,slug,title,category,why_news,content,static_foundation,image,image_url,image_source_url,image_caption,image_search_query,image_resolution").eq("id", articleId).single();
+  if (error || !existingArticle) return { status: "duplicate" };
+  if (isVerifiedReusableArticleImage(existingArticle)) return { status: "already_has_image", requestsUsed: 0 };
+  return enrichPublishedArticleImage(supabase, existingArticle, { ...draftPayload, ...existingArticle, image_url: null });
 }
 
 export async function POST(request) {
@@ -68,10 +56,11 @@ export async function POST(request) {
     if (!fileName || !/^[a-f0-9]{64}$/i.test(fileHash)) return NextResponse.json({ success: false, message: "PDF filename/hash is invalid." }, { status: 400 });
     if (articles.length < 1 || articles.length > MAX_ARTICLES_PER_REQUEST) return NextResponse.json({ success: false, message: `Publish 1-${MAX_ARTICLES_PER_REQUEST} articles per batch.` }, { status: 400 });
     const normalized = articles.map((article, batchIndex) => { const importIndex = Number(article?.importIndex); const title = clean(article?.title); const fullText = preserveText(article?.fullText); if (!Number.isInteger(importIndex) || importIndex < 0 || title.length < 5 || fullText.trim().length < 80) throw new Error(`Article ${batchIndex + 1} is missing a valid title, index or body.`); return { sourceKey: `pdf:${stream}:${fileHash}:${importIndex}`, importIndex, article }; });
-    const { data: existingSources, error: existingError } = await auth.supabase.from("article_sources").select("source_key").in("source_key", normalized.map((item) => item.sourceKey)); if (existingError) throw new Error(`PDF duplicate lookup failed: ${existingError.message}`); const existing = new Set((existingSources || []).map((row) => clean(row.source_key)).filter(Boolean)); const results = [];
+    const { data: existingSources, error: existingError } = await auth.supabase.from("article_sources").select("source_key,article_id").in("source_key", normalized.map((item) => item.sourceKey)); if (existingError) throw new Error(`PDF duplicate lookup failed: ${existingError.message}`); const existing = new Map((existingSources || []).map((row) => [clean(row.source_key), row.article_id])); const results = [];
     for (const item of normalized) {
-      if (existing.has(item.sourceKey)) { results.push({ status: "duplicate", importIndex: item.importIndex, title: clean(item.article.title) }); continue; }
-      const payload = buildArticlePayload(item.article, { stream, date, fileHash });
+      const draftPayload = buildArticlePayload(item.article, { stream, date, fileHash });
+      if (existing.has(item.sourceKey)) { const image = await enrichExistingPdfArticle(auth.supabase, existing.get(item.sourceKey), draftPayload); results.push({ status: "duplicate", importIndex: item.importIndex, title: clean(item.article.title), image }); continue; }
+      const payload = draftPayload;
       const { data: inserted, error: insertError } = await auth.supabase.from("articles").insert([payload]).select("id,slug,title").single(); if (insertError) { results.push({ status: "failed", importIndex: item.importIndex, title: payload.title, error: insertError.message }); continue; }
       const isCurrentAffairs = stream === "ca" || stream === "ca_hi"; const sourceName = isCurrentAffairs ? "CurrentPulse Admin CA PDF" : "CurrentPulse Admin News PDF"; const sourceUrl = isCurrentAffairs ? `${SITE_URL}${stream === "ca_hi" ? "/current-affairs?lang=hi" : "/current-affairs"}` : `${SITE_URL}/news`; const now = new Date().toISOString();
       const { error: sourceError } = await auth.supabase.from("article_sources").insert([{ article_id: inserted.id, event_key: hash(`${date}|${payload.title}`).slice(0, 32), source_key: item.sourceKey, source_kind: isCurrentAffairs ? "coaching" : "news", source_name: sourceName, source_title: `Imported from ${fileName}`, source_url: sourceUrl, source_published_at: publicationTimestamp(date), content_hash: hash(preserveText(item.article.fullText)), merged_at: now, updated_at: now }]);
@@ -81,7 +70,7 @@ export async function POST(request) {
     }
     const publishedRows = results.filter((item) => item.status === "published"); const published = publishedRows.length; const duplicates = results.filter((item) => item.status === "duplicate").length; const failed = results.filter((item) => item.status === "failed").length; let readerRefreshQueued = false; let readerRefreshDurable = false; let readerRefreshWarning = "";
     if (published > 0) { try { const release = await requestReaderRelease({ articleId: publishedRows.at(-1).articleId, stream: stream === "news" ? "news" : "coverage", supabase: auth.supabase }); readerRefreshQueued = true; readerRefreshDurable = Boolean(release?.durable); } catch (dispatchError) { readerRefreshDurable = Boolean(dispatchError?.durable); readerRefreshWarning = "Articles are published in the database, but the immediate reader refresh could not be dispatched."; console.error("PDF reader release dispatch error:", dispatchError); } }
-    const success = published + duplicates > 0; const baseMessage = published > 0 ? `Published ${published}; duplicates ${duplicates}; failed ${failed}.` : duplicates > 0 && failed === 0 ? `All ${duplicates} selected articles were already imported.` : "No selected PDF articles were published.";
+    const success = published + duplicates > 0; const baseMessage = published > 0 ? `Published ${published}; duplicates ${duplicates}; failed ${failed}.` : duplicates > 0 && failed === 0 ? `All ${duplicates} selected articles were already imported; missing images were checked once.` : "No selected PDF articles were published.";
     return NextResponse.json({ success, stats: { requested: articles.length, published, duplicates, failed }, releaseRequired: published > 0, readerRefreshQueued, readerRefreshDurable, readerRefreshWarning, message: readerRefreshWarning ? `${baseMessage} ${readerRefreshWarning}` : published > 0 && readerRefreshQueued ? `${baseMessage} Live reader refresh queued.` : baseMessage, results }, { status: success ? 200 : 502 });
   } catch (error) { return NextResponse.json({ success: false, message: error?.message || "PDF import failed." }, { status: 500 }); }
 }
