@@ -1,273 +1,155 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ExternalLink, Pencil, RefreshCw } from "lucide-react";
+import PdfImportWorkspace from "@/components/admin/PdfImportWorkspace";
 
-export default function AdminPage() {
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-  const [paper, setPaper] = useState("");
-  const [whyNews, setWhyNews] = useState("");
-  const [prelims, setPrelims] = useState("");
-  const [mains, setMains] = useState("");
-  const [question, setQuestion] = useState("");
+export default function CurrentAffairsAdminPage() {
+  const router = useRouter();
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState("");
-  const [publishing, setPublishing] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
-
-  function handleImageChange(event) {
-    const selectedFile = event.target.files?.[0];
-
-    if (!selectedFile) {
-      setImage(null);
-      setImagePreview("");
-      return;
-    }
-
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-    ];
-
-    if (!allowedTypes.includes(selectedFile.type)) {
-      alert("Only JPG, PNG and WEBP images are allowed.");
-      event.target.value = "";
-      setImage(null);
-      setImagePreview("");
-      return;
-    }
-
-    if (selectedFile.size > 5 * 1024 * 1024) {
-      alert("Image size must be less than 5 MB.");
-      event.target.value = "";
-      setImage(null);
-      setImagePreview("");
-      return;
-    }
-
-    setImage(selectedFile);
-    setImagePreview(URL.createObjectURL(selectedFile));
-  }
-
-  function removeImage() {
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-    }
-
-    setImage(null);
-    setImagePreview("");
-
-    const fileInput = document.getElementById("article-image");
-
-    if (fileInput) {
-      fileInput.value = "";
-    }
-  }
-
-  async function uploadArticleImage() {
-    if (!image) {
-      return "";
-    }
-
-    setUploadingImage(true);
+  const loadArticles = useCallback(async () => {
+    setLoading(true);
+    setError("");
 
     try {
-      const formData = new FormData();
-      formData.append("file", image);
-
-      const uploadResponse = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
+      const response = await fetch("/api/admin/current-affairs", {
+        cache: "no-store",
       });
-
-      const uploadData = await uploadResponse.json();
-
-      if (!uploadResponse.ok || !uploadData.success) {
-        throw new Error(
-          uploadData.message || "Image upload failed."
-        );
-      }
-
-      return uploadData.imageUrl;
-    } finally {
-      setUploadingImage(false);
-    }
-  }
-
-  async function saveArticle() {
-    if (!title.trim()) {
-      alert("Please enter the article title.");
-      return;
-    }
-
-    if (!category.trim()) {
-      alert("Please enter the article category.");
-      return;
-    }
-
-    if (!paper.trim()) {
-      alert("Please enter the GS paper.");
-      return;
-    }
-
-    setPublishing(true);
-
-    try {
-      const uploadedImageUrl = await uploadArticleImage();
-      const response = await fetch("/api/articles", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title,
-          category,
-          paper,
-          why_news: whyNews,
-          prelims,
-          mains,
-          question,
-          image: uploadedImageUrl,
-status: "published",
-        }),
-      });
-
       const data = await response.json();
 
-      if (data.success) {
-        alert("✅ Article Published Successfully!");
-
-        setTitle("");
-        setCategory("");
-        setPaper("");
-        setWhyNews("");
-        setPrelims("");
-        setMains("");
-        setQuestion("");
-
-        removeImage();
-      } else {
-        alert(data.message || "Failed to publish article.");
+      if (response.status === 401 || response.status === 403) {
+        router.replace("/admin/login");
+        return;
       }
-    } catch (error) {
-      console.error(error);
-      alert(error.message || "Failed to publish article.");
+
+      if (!response.ok) {
+        throw new Error(data?.message || "Unable to load Current Affairs.");
+      }
+
+      setArticles(data.articles || []);
+    } catch (loadError) {
+      setError(loadError?.message || "Unable to load Current Affairs.");
     } finally {
-      setPublishing(false);
+      setLoading(false);
     }
-  }
+  }, [router]);
+
+  useEffect(() => {
+    loadArticles();
+  }, [loadArticles]);
 
   return (
-    <main className="max-w-3xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-8">
-        CurrentPulse Admin Panel
-      </h1>
+    <div className="space-y-8 p-1">
+      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-600">
+              Manual Current Affairs
+            </p>
+            <h1 className="mt-1 text-3xl font-black text-slate-950">
+              Review & publish Current Affairs
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              Only administrator-supplied PDF Current Affairs appear here. Review the detected
+              articles before publishing, then use Edit to evaluate or correct any published item.
+              No coaching-source collection or AI ingestion runs from this page.
+            </p>
+          </div>
 
-      <div className="space-y-4">
-
-        <input
-          className="border p-3 w-full rounded"
-          placeholder="Article Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-
-        <input
-          className="border p-3 w-full rounded"
-          placeholder="Category"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-        />
-
-        <input
-          className="border p-3 w-full rounded"
-          placeholder="GS Paper (Example: GS-2)"
-          value={paper}
-          onChange={(e) => setPaper(e.target.value)}
-        />
-
-        <textarea
-          className="border p-3 w-full h-28 rounded"
-          placeholder="Why in News"
-          value={whyNews}
-          onChange={(e) => setWhyNews(e.target.value)}
-        />
-
-        <textarea
-          className="border p-3 w-full h-28 rounded"
-          placeholder="Prelims Facts"
-          value={prelims}
-          onChange={(e) => setPrelims(e.target.value)}
-        />
-
-        <textarea
-          className="border p-3 w-full h-32 rounded"
-          placeholder="Mains Perspective"
-          value={mains}
-          onChange={(e) => setMains(e.target.value)}
-        />
-
-        <textarea
-          className="border p-3 w-full h-24 rounded"
-          placeholder="Practice Question"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-        />
-        <div className="border rounded p-4">
-          <label
-            htmlFor="article-image"
-            className="block font-semibold mb-2"
+          <button
+            type="button"
+            onClick={loadArticles}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-bold text-slate-800 hover:bg-slate-50 disabled:opacity-50"
           >
-            Article Image
-          </label>
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh list
+          </button>
+        </div>
+      </section>
 
-          <input
-            id="article-image"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleImageChange}
-            className="block w-full"
-          />
+      <PdfImportWorkspace embedded />
 
-          <p className="text-sm text-gray-500 mt-2">
-            JPG, PNG or WEBP. Maximum size: 5 MB.
-          </p>
-
-          {imagePreview && (
-            <div className="mt-4">
-              <img
-                src={imagePreview}
-                alt="Article preview"
-                className="w-full max-h-80 object-cover rounded border"
-              />
-
-              <button
-                type="button"
-                onClick={removeImage}
-                className="mt-3 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-              >
-                Remove Image
-              </button>
-            </div>
-          )}
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-6 py-4">
+          <div>
+            <h2 className="text-xl font-black text-slate-950">Published CA review list</h2>
+            <p className="text-sm text-slate-500">
+              Latest {articles.length} administrator-PDF Current Affairs items.
+            </p>
+          </div>
+          <Link href="/admin/articles" className="text-sm font-bold text-blue-700 hover:text-blue-900">
+            All articles →
+          </Link>
         </div>
 
-        <button
-          type="button"
-          onClick={saveArticle}
-          disabled={publishing}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-3 rounded"
-        >
-          {publishing
-            ? uploadingImage
-              ? "Uploading Image..."
-              : "Publishing Article..."
-            : "Publish Article"}
-        </button>
-
-      </div>
-    </main>
+        {error ? (
+          <div className="m-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            {error}
+          </div>
+        ) : loading ? (
+          <div className="p-8 text-center text-sm text-slate-500">Loading Current Affairs…</div>
+        ) : articles.length === 0 ? (
+          <div className="p-8 text-center">
+            <h3 className="font-bold text-slate-900">No administrator-PDF Current Affairs yet</h3>
+            <p className="mt-2 text-sm text-slate-500">Upload and review a CA PDF above.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-6 py-3">Title</th>
+                  <th className="px-6 py-3">Category</th>
+                  <th className="px-6 py-3">Paper</th>
+                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Published</th>
+                  <th className="px-6 py-3 text-right">Evaluate</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {articles.map((article) => (
+                  <tr key={article.id} className="align-top hover:bg-slate-50/60">
+                    <td className="max-w-xl px-6 py-4 font-semibold text-slate-900">{article.title}</td>
+                    <td className="px-6 py-4 text-slate-600">{article.category || "—"}</td>
+                    <td className="px-6 py-4 text-slate-600">{article.paper || "—"}</td>
+                    <td className="px-6 py-4">
+                      <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
+                        {article.status || "published"}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-slate-500">
+                      {article.created_at ? new Date(article.created_at).toLocaleDateString("en-IN") : "—"}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end gap-3">
+                        <Link
+                          href={`/admin/articles/edit/${article.id}`}
+                          className="inline-flex items-center gap-1 font-bold text-blue-700 hover:text-blue-900"
+                        >
+                          <Pencil className="h-4 w-4" /> Edit
+                        </Link>
+                        <Link
+                          href={`/current-affairs/${article.slug}`}
+                          target="_blank"
+                          className="inline-flex items-center gap-1 font-bold text-slate-600 hover:text-slate-900"
+                        >
+                          <ExternalLink className="h-4 w-4" /> Live
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
