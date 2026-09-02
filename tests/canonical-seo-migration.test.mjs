@@ -45,11 +45,14 @@ test("ResultPulse User-Agent uses canonical host", () => {
   assert.match(collector, /\+https:\/\/cp\.vliab\.workers\.dev\/exams/);
   assert.doesNotMatch(collector, /currentpulse-ai\.vercel\.app/);
 });
-test("canonical sitemap exposes only rows that pass the public stream gates", () => {
+
+test("canonical sitemap preserves historical CA but limits News discovery to admin PDFs", () => {
   const sitemap = read("app/sitemap.ts");
   const newsSitemap = read("app/news-sitemap.xml/route.js");
-  assert.match(sitemap, /isPublicNewsArticle/);
-  assert.match(sitemap, /isCurrentAffairsReady/);
+  assert.match(sitemap, /isStandaloneCurrentAffairsArticle/);
+  assert.match(sitemap, /isPublishedArticleSafe\(article, \{ stream: "coverage" \}\)/);
+  assert.match(sitemap, /isAdminPdf/);
+  assert.match(sitemap, /isPublishedArticleSafe\(article, \{ stream: "news" \}\)/);
   assert.match(newsSitemap, /NextResponse\.redirect/);
   assert.match(newsSitemap, /\/sitemap\.xml/);
 });
