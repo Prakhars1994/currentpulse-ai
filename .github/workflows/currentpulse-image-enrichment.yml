@@ -15,9 +15,9 @@ on:
           - coverage
           - news
       limit:
-        description: "Maximum articles to enrich (1-30)"
+        description: "Total articles to consider (1-40); processed in safe batches"
         required: true
-        default: "30"
+        default: "40"
         type: string
 
 permissions:
@@ -30,19 +30,30 @@ concurrency:
 jobs:
   enrich:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 10
     steps:
       - name: Resolve and persist reusable real images
         shell: bash
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
           STREAM: ${{ inputs.stream || 'coverage' }}
-          LIMIT: ${{ inputs.limit || '30' }}
+          LIMIT: ${{ inputs.limit || '40' }}
         run: |
           set -euo pipefail
           [[ "${STREAM}" == "coverage" || "${STREAM}" == "news" ]] || { echo "Invalid stream"; exit 1; }
           [[ "${LIMIT}" =~ ^[0-9]+$ ]] || { echo "Invalid limit"; exit 1; }
-          (( LIMIT >= 1 && LIMIT <= 30 )) || { echo "Limit must be 1..30"; exit 1; }
-          curl --silent --show-error --fail-with-body --max-time 420 \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            "https://cp.vliab.workers.dev/api/backfill-images?stream=${STREAM}&limit=${LIMIT}&wait=1"
+          (( LIMIT >= 1 && LIMIT <= 40 )) || { echo "Limit must be 1..40"; exit 1; }
+          remaining="${LIMIT}"
+          while (( remaining > 0 )); do
+            batch=8
+            (( remaining < batch )) && batch="${remaining}"
+            echo "Enriching ${STREAM}: batch=${batch}, remaining=${remaining}"
+            response="$(curl --silent --show-error --fail-with-body --max-time 180 \
+              -H "Authorization: Bearer ${CRON_SECRET}" \
+              "https://cp.vliab.workers.dev/api/backfill-images?stream=${STREAM}&limit=${batch}&wait=1")"
+            echo "${response}"
+            selected="$(printf '%s' "${response}" | jq -r '.stats.selected // 0')"
+            (( selected == 0 )) && break
+            remaining=$(( remaining - batch ))
+            sleep 1
+          done
