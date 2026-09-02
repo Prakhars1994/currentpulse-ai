@@ -11,7 +11,7 @@ const ANSWER_CACHE_TTL_MS = 30 * 60 * 1000;
 const WIKI_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const GDELT_CACHE_TTL_MS = 30 * 60 * 1000;
 const CLIENT_WINDOW_MS = 10 * 60 * 1000;
-const MAX_UNCACHED_QUESTIONS_PER_WINDOW = 5;
+const MAX_UNCACHED_QUESTIONS_PER_WINDOW = 3;
 const answerCache = globalThis.__currentPulseAnswerCache || new Map();
 const sourceCache = globalThis.__currentPulseSourceCache || new Map();
 const clientQuestionWindows = globalThis.__currentPulseQuestionWindows || new Map();
@@ -123,7 +123,6 @@ export async function POST(request) {
     const deterministic = freeSourceAnswer(cleanQuestion, mode, wiki, gdelt);
     const freeSources = [wiki?.url ? { title: wiki.title || "Wikipedia", url: wiki.url, type: "wikipedia" } : null, ...(gdelt || []).map((item)=>({ title:item.title,url:item.url,type:"gdelt-discovery" }))].filter(Boolean);
 
-    // Explain Topic / Prelims Facts usually need no model call at all when free sources answered.
     if (deterministic && !analyticalMode(mode)) {
       return NextResponse.json(writeAnswerCache(cacheKey, { answer: deterministic, provider: "free-sources", zeroAi: true, sources: freeSources }));
     }
