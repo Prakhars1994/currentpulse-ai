@@ -48,10 +48,12 @@ test("ResultPulse User-Agent uses canonical host", () => {
 
 test("canonical sitemap preserves historical CA but limits News discovery to admin PDFs", () => {
   const sitemap = read("app/sitemap.ts");
+  const streams = read("lib/articleStreams.js");
   const newsSitemap = read("app/news-sitemap.xml/route.js");
   assert.match(sitemap, /isStandaloneCurrentAffairsArticle/);
   assert.match(sitemap, /isPublishedArticleSafe\(article, \{ stream: "coverage" \}\)/);
-  assert.match(sitemap, /isAdminPdf/);
+  assert.match(sitemap, /isPublicNewsArticle\(article\)/);
+  assert.match(streams, /isPublicNewsArticle[\s\S]{0,160}hasAdminPdfSource\(article\)[\s\S]{0,80}hasNewsSource\(article\)/);
   assert.match(sitemap, /isPublishedArticleSafe\(article, \{ stream: "news" \}\)/);
   assert.match(newsSitemap, /NextResponse\.redirect/);
   assert.match(newsSitemap, /\/sitemap\.xml/);
