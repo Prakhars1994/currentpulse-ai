@@ -10,6 +10,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 150;
 const MAX_ARTICLES_PER_REQUEST = 20;
 const MAX_ARTICLE_TEXT = 120_000;
+const IMAGE_ENRICHMENT_DEADLINE_MS = 8_000;
 
 function clean(value = "") { return String(value || "").replace(/\u0000/g, "").replace(/\r\n?/g, "\n").replace(/[ \t]+\n/g, "\n").replace(/\n{4,}/g, "\n\n\n").trim(); }
 function preserveText(value = "") { return String(value ?? "").replace(/\u0000/g, ""); }
@@ -27,16 +28,36 @@ function buildArticlePayload(article, { stream, date, fileHash } = {}) {
   return { title, slug, category, paper, why_news: whyNews || fullText.slice(0, 900), prelims, mains, question, content: fullText, static_foundation: staticFoundation, data_examples: dataExamples, india_relevance: indiaRelevance, syllabus_linkage: stream === "ca" || stream === "ca_hi" ? `- **Paper:** ${paper}\n- **Theme:** ${category}` : "", seo_title: clean(article.seo_title || title).slice(0, 180), seo_description: clean(article.seo_description || whyNews || fullText).slice(0, 160), tags: [...new Set((Array.isArray(article.tags) ? article.tags : [category, paper, "PDF Import"]).map(clean).filter(Boolean).slice(0, 16))], status: "published", language: stream === "ca_hi" ? "hi" : "en", created_at: createdAt, updated_at: createdAt, published_at: `${date}T12:00:00`, image_alt: title, image_search_query: title, image_url: imageUrl || null, map_locations: mapLocations, quality_score: 100, quality_version: 4, quality_flags: ["admin_pdf_import","zero_ai_pdf_import","full_text_preserved",stream === "ca" || stream === "ca_hi" ? "ca_pdf_import" : "news_pdf_import",...(stream === "ca_hi" ? ["hindi_ca_pdf_import"] : [])], manual_protected: true };
 }
 
-async function enrichPublishedNewsImage(supabase, inserted, payload) {
-  if (payload.image_url) return { status: "provided" };
+async function enrichPublishedArticleImage(supabase, inserted, payload) {
+  if (payload.image_url) return { status: "provided", requestsUsed: 0 };
   try {
-    const deadlineAt = Date.now() + 9000;
+    const deadlineAt = Date.now() + IMAGE_ENRICHMENT_DEADLINE_MS;
     const resolved = await resolveGovernmentArticleImage({ ...payload, id: inserted.id, slug: inserted.slug }, { deadlineAt });
-    const patch = { image_resolution: resolved.resolution, image_search_query: resolved.query || resolved.resolution?.search_query || payload.image_search_query, updated_at: new Date().toISOString() };
-    if (resolved.image) Object.assign(patch, { image: resolved.image.url, image_url: resolved.image.url, image_alt: resolved.image.alt || payload.title, image_caption: resolved.image.attribution || null, image_source_url: resolved.image.sourcePageUrl || null });
-    const { error } = await supabase.from("articles").update(patch).eq("id", inserted.id); if (error) throw error;
-    return { status: resolved.image ? "resolved" : "no_safe_image", provider: resolved.resolution?.provider || null, requestsUsed: resolved.resolution?.requests_used || 0 };
-  } catch (error) { console.error("PDF news image enrichment failed:", error?.message || error); return { status: "failed", error: error?.message || "Image enrichment failed" }; }
+    const patch = {
+      image_resolution: resolved.resolution,
+      image_search_query: resolved.query || resolved.resolution?.search_query || payload.image_search_query,
+      updated_at: new Date().toISOString(),
+    };
+    if (resolved.image) {
+      Object.assign(patch, {
+        image: resolved.image.url,
+        image_url: resolved.image.url,
+        image_alt: resolved.image.alt || payload.title,
+        image_caption: resolved.image.attribution || null,
+        image_source_url: resolved.image.sourcePageUrl || null,
+      });
+    }
+    const { error } = await supabase.from("articles").update(patch).eq("id", inserted.id);
+    if (error) throw error;
+    return {
+      status: resolved.image ? "resolved" : "no_safe_image",
+      provider: resolved.resolution?.provider || null,
+      requestsUsed: resolved.resolution?.requests_used || 0,
+    };
+  } catch (error) {
+    console.error("PDF article image enrichment failed:", error?.message || error);
+    return { status: "failed", error: error?.message || "Image enrichment failed" };
+  }
 }
 
 export async function POST(request) {
@@ -55,7 +76,7 @@ export async function POST(request) {
       const isCurrentAffairs = stream === "ca" || stream === "ca_hi"; const sourceName = isCurrentAffairs ? "CurrentPulse Admin CA PDF" : "CurrentPulse Admin News PDF"; const sourceUrl = isCurrentAffairs ? `${SITE_URL}${stream === "ca_hi" ? "/current-affairs?lang=hi" : "/current-affairs"}` : `${SITE_URL}/news`; const now = new Date().toISOString();
       const { error: sourceError } = await auth.supabase.from("article_sources").insert([{ article_id: inserted.id, event_key: hash(`${date}|${payload.title}`).slice(0, 32), source_key: item.sourceKey, source_kind: isCurrentAffairs ? "coaching" : "news", source_name: sourceName, source_title: `Imported from ${fileName}`, source_url: sourceUrl, source_published_at: publicationTimestamp(date), content_hash: hash(preserveText(item.article.fullText)), merged_at: now, updated_at: now }]);
       if (sourceError) { await auth.supabase.from("articles").delete().eq("id", inserted.id); results.push({ status: "failed", importIndex: item.importIndex, title: payload.title, error: `Source registration failed: ${sourceError.message}` }); continue; }
-      const image = stream === "news" ? await enrichPublishedNewsImage(auth.supabase, inserted, payload) : { status: payload.image_url ? "provided" : "not_requested" };
+      const image = await enrichPublishedArticleImage(auth.supabase, inserted, payload);
       results.push({ status: "published", importIndex: item.importIndex, articleId: inserted.id, slug: inserted.slug, title: inserted.title, image });
     }
     const publishedRows = results.filter((item) => item.status === "published"); const published = publishedRows.length; const duplicates = results.filter((item) => item.status === "duplicate").length; const failed = results.filter((item) => item.status === "failed").length; let readerRefreshQueued = false; let readerRefreshDurable = false; let readerRefreshWarning = "";
