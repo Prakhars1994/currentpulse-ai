@@ -20,7 +20,7 @@ async function loadResolver() {
   };
 }
 
-test("government resolver uses deterministic category priority and at most two requests", async () => {
+test("image resolver keeps deterministic official priority and searches Wikimedia before official sources", async () => {
   const { resolver, cleanup } = await loadResolver();
   try {
     assert.deepEqual(resolver.governmentImageProviderPriority("Space"), ["isro", "nasa"]);
@@ -28,11 +28,15 @@ test("government resolver uses deterministic category priority and at most two r
     let calls = 0;
     const result = await resolver.resolveGovernmentArticleImage(
       { title: "Example cyclone", category: "Environment" },
-      { fetch: async () => { calls += 1; return { ok: true, json: async () => ({ collection: { items: [] } }) }; } }
+      { fetch: async (url) => {
+        calls += 1;
+        if (String(url).includes("commons.wikimedia.org")) return { ok: true, json: async () => ({ query: { pages: {} } }) };
+        return { ok: true, json: async () => ({ collection: { items: [] } }) };
+      } }
     );
-    assert.equal(calls, 2);
+    assert.equal(calls, 3);
     assert.equal(result.resolution.status, "no_safe_image");
-    assert.equal(result.resolution.requests_used, 2);
+    assert.equal(result.resolution.requests_used, 3);
     assert.equal(result.resolution.provider, "usgs");
   } finally { cleanup(); }
 });
@@ -50,7 +54,7 @@ test("terminal resolver state prevents any repeat request", async () => {
   } finally { cleanup(); }
 });
 
-test("publication and explicit backfill use the government resolver, never Commons", () => {
+test("publication and explicit backfill share one cache-first image resolver", () => {
   const publisher = load("lib/publisher/publishArticle.js");
   const backfill = load("app/api/backfill-images/route.js");
   const publicPage = load("app/news/[slug]/page.js");
@@ -58,9 +62,8 @@ test("publication and explicit backfill use the government resolver, never Commo
 
   assert.match(publisher, /resolveGovernmentArticleImage/);
   assert.match(backfill, /resolveGovernmentArticleImage/);
-  assert.doesNotMatch(publisher, /findRelevantCommonsImage/);
-  assert.doesNotMatch(backfill, /findRelevantCommonsImage/);
   assert.match(backfill, /isTerminalImageResolution/);
+  assert.match(backfill, /storagePolicy/);
   assert.match(publicPage, /\.select\("\*,article_sources/);
   assert.match(migration, /add column if not exists image_resolution jsonb/);
 });
