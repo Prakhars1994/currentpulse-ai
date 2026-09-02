@@ -4,6 +4,7 @@ import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
+import { isPublicNewsArticle } from "@/lib/articleStreams";
 import {
   isStandaloneCurrentAffairsArticle,
   selectExamSitemapRecords,
@@ -86,7 +87,6 @@ function staticRoutes(): MetadataRoute.Sitemap {
 const loadSitemapDatabaseRows = unstable_cache(
   async () => {
     const supabase = createServerSupabase();
-
     const [articleResult, examResult] = await Promise.all([
       supabase
         .from("articles")
@@ -119,15 +119,11 @@ const loadSitemapDatabaseRows = unstable_cache(
     };
   },
   ["currentpulse-sitemap-database-v3"],
-  {
-    revalidate: 300,
-    tags: ["currentpulse-articles", "currentpulse-exams"],
-  }
+  { revalidate: 300, tags: ["currentpulse-articles", "currentpulse-exams"] }
 );
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = staticRoutes();
-
   try {
     const sitemapData = await loadSitemapDatabaseRows();
     const seen = new Set<string>();
@@ -135,18 +131,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const article of sitemapData.articles as SitemapArticle[]) {
       if (!article?.slug) continue;
-
       const sources = article.article_sources || [];
       const kinds = new Set(sources.map((source) => source?.source_kind));
       const lastModified = article.updated_at || article.created_at || undefined;
-      const isAdminPdf = sources.some((source) =>
-        String(source?.source_key || "").startsWith("pdf:")
-      );
 
-      // Preserve SEO equity for the historical Current Affairs archive even
-      // though new CA publishing is administrator-PDF-only. Removing already
-      // published, indexable URLs from the sitemap caused Google discovery and
-      // impressions to collapse. Safety/front-matter filters still apply.
       if (
         kinds.has("coaching") &&
         isStandaloneCurrentAffairsArticle(article) &&
@@ -164,12 +152,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
       }
 
-      // News remains administrator-PDF-only. Unlike the previous PB-SHABD
-      // gate, this includes the actual manual News PDFs while excluding legacy
-      // automated feeds from new sitemap discovery.
       if (
         kinds.has("news") &&
-        isAdminPdf &&
+        isPublicNewsArticle(article) &&
         isPublishedArticleSafe(article, { stream: "news" })
       ) {
         const key = `news:${article.slug}`;
