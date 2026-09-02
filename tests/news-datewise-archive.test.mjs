@@ -13,8 +13,9 @@ test("legacy queued News freshness logic remains bounded", () => {
 
 test("News archive is datewise", () => {
   const page = read("app/news/page.js");
-  assert.match(page, /const pageSize = 48/);
-  assert.match(page, /showDateHeading/);
+  assert.match(page, /const pageSize\s*=\s*48/);
+  assert.match(page, /news-date-divider/);
+  assert.match(page, /formatDate\(article\.created_at\)/);
 });
 
 test("public News visibility is based on admin PDF provenance, not automated quality re-gating", () => {
