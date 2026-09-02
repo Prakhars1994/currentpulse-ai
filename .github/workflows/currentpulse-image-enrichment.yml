@@ -1,6 +1,9 @@
 name: CurrentPulse Real Image Enrichment
 
 on:
+  push:
+    paths:
+      - ".github/workflows/currentpulse-image-enrichment.yml"
   workflow_dispatch:
     inputs:
       stream:
@@ -33,8 +36,8 @@ jobs:
         shell: bash
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          STREAM: ${{ inputs.stream }}
-          LIMIT: ${{ inputs.limit }}
+          STREAM: ${{ inputs.stream || 'coverage' }}
+          LIMIT: ${{ inputs.limit || '30' }}
         run: |
           set -euo pipefail
           [[ "${STREAM}" == "coverage" || "${STREAM}" == "news" ]] || { echo "Invalid stream"; exit 1; }
