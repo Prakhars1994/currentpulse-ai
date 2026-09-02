@@ -20,20 +20,20 @@ async function isAuthorised(request) {
 }
 async function mapWithConcurrency(items, handler) { const results = new Array(items.length); let index = 0; async function worker(){while(index<items.length){const current=index++;results[current]=await handler(items[current]);}} await Promise.all(Array.from({length:Math.min(CONCURRENCY,items.length)},()=>worker())); return results; }
 
-async function executeBackfill(limit) {
+async function executeBackfill(limit, targetStream = "news") {
   const startedAt = Date.now(); const supabase = createServerSupabase();
   const { data, error } = await supabase.from("articles").select("id,title,slug,category,why_news,content,static_foundation,image,image_url,image_source_url,image_caption,image_search_query,image_resolution,created_at,article_sources(source_kind,source_url)").eq("status","published").order("created_at",{ascending:false}).limit(SCAN_LIMIT);
   if(error) throw new Error(`Image backfill fetch failed: ${error.message}`);
-  const needsReplacement=(article)=>{const stream=(article.article_sources||[]).some((source)=>source?.source_kind==="coaching")?"coverage":"news";return isPublishedArticleSafe(article,{stream})&&!isVerifiedReusableArticleImage(article)&&!isTerminalImageResolution(article.image_resolution);};
+  const needsReplacement=(article)=>{const stream=(article.article_sources||[]).some((source)=>source?.source_kind==="coaching")?"coverage":"news";return stream===targetStream&&isPublishedArticleSafe(article,{stream})&&!isVerifiedReusableArticleImage(article)&&!isTerminalImageResolution(article.image_resolution);};
   const missing=(data||[]).filter(needsReplacement).slice(0,limit);
   const results=await mapWithConcurrency(missing,async(article)=>{try{const deadlineAt=Date.now()+10000;const resolved=await resolveGovernmentArticleImage(article,{deadlineAt});const patch={image_resolution:resolved.resolution,image_search_query:resolved.query||resolved.resolution?.search_query||article.image_search_query||article.title,updated_at:new Date().toISOString()};if(resolved.image)Object.assign(patch,{image:resolved.image.url,image_url:resolved.image.url,image_alt:resolved.image.alt||article.title,image_caption:resolved.image.attribution||null,image_source_url:resolved.image.sourcePageUrl||null});const{error:updateError}=await supabase.from("articles").update(patch).eq("id",article.id);if(updateError)throw new Error(updateError.message);return{status:resolved.image?"updated":"no_safe_image",articleId:article.id,title:article.title,provider:resolved.resolution?.provider||null,requestsUsed:resolved.resolution?.requests_used||0,storage:resolved.image?"hotlink":"none"};}catch(backfillError){console.error(`[Image backfill] Failed for ${article.id}:`,backfillError?.message||backfillError);return{status:"failed",articleId:article.id,title:article.title,error:backfillError?.message||"Image backfill failed"};}});
-  return NextResponse.json({success:true,policy:"resolve-once-persist-once-wikimedia-first",stats:{scanned:(data||[]).length,selected:missing.length,updated:results.filter((item)=>item.status==="updated").length,noSafeImage:results.filter((item)=>item.status==="no_safe_image").length,failed:results.filter((item)=>item.status==="failed").length,concurrency:CONCURRENCY,durationMs:Date.now()-startedAt},results});
+  return NextResponse.json({success:true,policy:"resolve-once-persist-once-wikimedia-first",stream:targetStream,stats:{scanned:(data||[]).length,selected:missing.length,updated:results.filter((item)=>item.status==="updated").length,noSafeImage:results.filter((item)=>item.status==="no_safe_image").length,failed:results.filter((item)=>item.status==="failed").length,concurrency:CONCURRENCY,durationMs:Date.now()-startedAt},results});
 }
 
 export async function GET(request) {
   if(!(await isAuthorised(request))) return NextResponse.json({success:false,message:"Unauthorised image backfill request."},{status:401});
-  const requestedLimit=Number.parseInt(new URL(request.url).searchParams.get("limit")||"",10);const limit=Number.isFinite(requestedLimit)?Math.min(MAX_LIMIT,Math.max(1,requestedLimit)):DEFAULT_LIMIT;
-  if(new URL(request.url).searchParams.get("wait")==="1") return executeBackfill(limit);
-  after(async()=>{try{await executeBackfill(limit);}catch(error){console.error("[Image backfill] Background run failed:",error?.message||error);}});
-  return NextResponse.json({success:true,accepted:true,message:`Optional image enrichment accepted for up to ${limit} articles.`},{status:202});
+  const url=new URL(request.url);const requestedLimit=Number.parseInt(url.searchParams.get("limit")||"",10);const limit=Number.isFinite(requestedLimit)?Math.min(MAX_LIMIT,Math.max(1,requestedLimit)):DEFAULT_LIMIT;const targetStream=url.searchParams.get("stream")==="coverage"?"coverage":"news";
+  if(url.searchParams.get("wait")==="1") return executeBackfill(limit,targetStream);
+  after(async()=>{try{await executeBackfill(limit,targetStream);}catch(error){console.error("[Image backfill] Background run failed:",error?.message||error);}});
+  return NextResponse.json({success:true,accepted:true,message:`Optional ${targetStream} image enrichment accepted for up to ${limit} articles.`},{status:202});
 }
