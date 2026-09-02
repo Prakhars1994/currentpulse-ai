@@ -3,22 +3,41 @@ import { unstable_cache } from "next/cache";
 import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
 import { createServerSupabase } from "@/lib/supabase-server";
+import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 import {
-  isCurrentAffairsReady,
-  isPublicNewsArticle,
-} from "@/lib/articleStreams";
-import { selectExamSitemapRecords } from "@/lib/sitemapQuality";
+  isStandaloneCurrentAffairsArticle,
+  selectExamSitemapRecords,
+} from "@/lib/sitemapQuality";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 type SitemapArticle = {
+  title?: string | null;
   slug: string;
   created_at?: string | null;
   updated_at?: string | null;
+  why_news?: string | null;
+  syllabus_linkage?: string | null;
+  india_relevance?: string | null;
+  static_foundation?: string | null;
+  data_examples?: string | null;
+  prelims?: string | null;
+  mains?: string | null;
+  answer_framework?: string | null;
+  question?: string | null;
+  visual_summary?: string | null;
+  memory_trick?: string | null;
+  content?: string | null;
+  seo_description?: string | null;
+  quality_score?: number | null;
+  quality_version?: number | null;
   article_sources?: Array<{
     source_kind?: string | null;
     source_name?: string | null;
+    source_url?: string | null;
+    source_published_at?: string | null;
+    source_key?: string | null;
   }> | null;
 };
 
@@ -32,6 +51,7 @@ type SitemapExam = {
   created_at?: string | null;
   updated_at?: string | null;
 };
+
 function staticRoutes(): MetadataRoute.Sitemap {
   const publicPages = [
     "current-affairs","news","categories","quiz","mock-tests","pdf","notes","pyq",
@@ -74,7 +94,7 @@ const loadSitemapDatabaseRows = unstable_cache(
           title,slug,created_at,updated_at,why_news,syllabus_linkage,india_relevance,
           static_foundation,data_examples,prelims,mains,answer_framework,question,
           visual_summary,memory_trick,content,seo_description,quality_score,quality_version,
-          article_sources(source_kind,source_name,source_url,source_published_at)
+          article_sources(source_kind,source_name,source_url,source_published_at,source_key)
         `)
         .eq("status", "published")
         .order("created_at", { ascending: false })
@@ -98,10 +118,8 @@ const loadSitemapDatabaseRows = unstable_cache(
         : null,
     };
   },
-  ["currentpulse-sitemap-database-v2"],
+  ["currentpulse-sitemap-database-v3"],
   {
-    // The Worker-first sitemap should discover publications promptly without
-    // issuing a multi-thousand-row Supabase query on every crawler request.
     revalidate: 300,
     tags: ["currentpulse-articles", "currentpulse-exams"],
   }
@@ -112,16 +130,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const sitemapData = await loadSitemapDatabaseRows();
-
     const seen = new Set<string>();
     const articleRoutes: MetadataRoute.Sitemap = [];
 
     for (const article of sitemapData.articles as SitemapArticle[]) {
       if (!article?.slug) continue;
-      const kinds = new Set((article.article_sources || []).map((s) => s?.source_kind));
-      const lastModified = article.updated_at || article.created_at || undefined;
 
-      if (kinds.has("coaching") && isCurrentAffairsReady(article)) {
+      const sources = article.article_sources || [];
+      const kinds = new Set(sources.map((source) => source?.source_kind));
+      const lastModified = article.updated_at || article.created_at || undefined;
+      const isAdminPdf = sources.some((source) =>
+        String(source?.source_key || "").startsWith("pdf:")
+      );
+
+      // Preserve SEO equity for the historical Current Affairs archive even
+      // though new CA publishing is administrator-PDF-only. Removing already
+      // published, indexable URLs from the sitemap caused Google discovery and
+      // impressions to collapse. Safety/front-matter filters still apply.
+      if (
+        kinds.has("coaching") &&
+        isStandaloneCurrentAffairsArticle(article) &&
+        isPublishedArticleSafe(article, { stream: "coverage" })
+      ) {
         const key = `ca:${article.slug}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -134,13 +164,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         }
       }
 
-      const indexableNewsSource = (article.article_sources || []).some(
-        (source) =>
-          source?.source_kind === "news" &&
-          source?.source_name === "PB-SHABD"
-      );
-
-      if (indexableNewsSource && isPublicNewsArticle(article)) {
+      // News remains administrator-PDF-only. Unlike the previous PB-SHABD
+      // gate, this includes the actual manual News PDFs while excluding legacy
+      // automated feeds from new sitemap discovery.
+      if (
+        kinds.has("news") &&
+        isAdminPdf &&
+        isPublishedArticleSafe(article, { stream: "news" })
+      ) {
         const key = `news:${article.slug}`;
         if (!seen.has(key)) {
           seen.add(key);
@@ -170,8 +201,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     return [...base, ...examRoutes, ...articleRoutes];
   } catch (error: unknown) {
     console.error("[Sitemap] dynamic data unavailable:", error instanceof Error ? error.message : String(error));
-    // Never return a 503 sitemap. Static discovery remains available while
-    // transient database errors recover.
     return base;
   }
 }
