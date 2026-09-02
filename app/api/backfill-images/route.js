@@ -9,11 +9,11 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
-// Keep this intentionally small. Image enrichment is optional and must never
-// compete with publishing, readers, or normal site traffic.
+// Optional enrichment only. Keep work tiny so it never competes with readers or publishing.
 const CONCURRENCY = 1;
-const DEFAULT_LIMIT = 5;
-const MAX_LIMIT = 10;
+const DEFAULT_LIMIT = 3;
+const MAX_LIMIT = 5;
+const SCAN_LIMIT = 80;
 
 function isAuthorised(request) {
   const secret = process.env.CRON_SECRET?.trim() || "";
@@ -41,7 +41,7 @@ async function executeBackfill(limit) {
     .select("id,title,slug,category,why_news,image,image_url,image_source_url,image_caption,image_search_query,image_resolution,created_at,article_sources(source_kind,source_url)")
     .eq("status", "published")
     .order("created_at", { ascending: false })
-    .limit(250);
+    .limit(SCAN_LIMIT);
   if (error) throw new Error(`Image backfill fetch failed: ${error.message}`);
 
   const needsReplacement = (article) => {
@@ -55,35 +55,37 @@ async function executeBackfill(limit) {
   const results = await mapWithConcurrency(missing, async (article) => {
     try {
       const deadlineAt = Date.now() + 18000;
-      const government = await resolveGovernmentArticleImage(article, { deadlineAt });
-      const stored = government.image
-        ? await persistRemoteArticleImage(supabase, government.image.url, article.slug || article.title, { deadlineAt })
+      const resolved = await resolveGovernmentArticleImage(article, { deadlineAt });
+      const shouldHotlink = resolved.image?.storagePolicy === "hotlink";
+      const finalUrl = resolved.image
+        ? (shouldHotlink
+          ? resolved.image.url
+          : await persistRemoteArticleImage(supabase, resolved.image.url, article.slug || article.title, { deadlineAt }))
         : "";
 
       const patch = {
-        image_resolution: government.resolution,
+        image_resolution: resolved.resolution,
         updated_at: new Date().toISOString(),
       };
-      // Never force a fallback visual. Only write image fields when a verified
-      // reusable candidate actually exists. A terminal no_safe_image result is
-      // cached so future runs do not search the same article again.
-      if (government.image) {
-        patch.image = stored || government.image.url;
-        patch.image_url = stored || government.image.url;
-        patch.image_alt = article.title;
-        patch.image_caption = government.image.attribution || null;
-        patch.image_source_url = government.image.sourcePageUrl || null;
+
+      if (resolved.image) {
+        patch.image = finalUrl || resolved.image.url;
+        patch.image_url = finalUrl || resolved.image.url;
+        patch.image_alt = resolved.image.alt || article.title;
+        patch.image_caption = resolved.image.attribution || null;
+        patch.image_source_url = resolved.image.sourcePageUrl || null;
+        patch.image_search_query = article.image_search_query || article.title;
       }
 
       const { error: updateError } = await supabase.from("articles").update(patch).eq("id", article.id);
       if (updateError) throw new Error(updateError.message);
       return {
-        status: government.image ? "updated" : "no_safe_image",
+        status: resolved.image ? "updated" : "no_safe_image",
         articleId: article.id,
         title: article.title,
-        provider: government.resolution?.provider || null,
-        requestsUsed: government.resolution?.requests_used || 0,
-        cached: Boolean(stored),
+        provider: resolved.resolution?.provider || null,
+        requestsUsed: resolved.resolution?.requests_used || 0,
+        storage: resolved.image ? (shouldHotlink ? "hotlink" : "cached") : "none",
       };
     } catch (backfillError) {
       console.error(`[Image backfill] Failed for ${article.id}:`, backfillError?.message || backfillError);
@@ -93,8 +95,9 @@ async function executeBackfill(limit) {
 
   return NextResponse.json({
     success: true,
-    policy: "optional-cache-first-terminal-on-miss",
+    policy: "existing-first-wikimedia-first-official-fallback-terminal-on-miss",
     stats: {
+      scanned: (data || []).length,
       selected: missing.length,
       updated: results.filter((item) => item.status === "updated").length,
       noSafeImage: results.filter((item) => item.status === "no_safe_image").length,
