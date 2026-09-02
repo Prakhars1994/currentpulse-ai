@@ -16,7 +16,8 @@ export default function AIPage() {
   const [answer, setAnswer] = useState("");
   const [mode, setMode] = useState("Explain Topic");
   const [loading, setLoading] = useState(false);
-  const [groundedFallback, setGroundedFallback] = useState(false);
+  const [provider, setProvider] = useState("");
+  const [zeroAi, setZeroAi] = useState(false);
   const [sources, setSources] = useState([]);
 
   useEffect(() => {
@@ -28,14 +29,15 @@ export default function AIPage() {
 
   async function askAI() {
     if (!question.trim()) return;
-    setLoading(true); setAnswer(""); setSources([]); setGroundedFallback(false);
+    setLoading(true); setAnswer(""); setSources([]); setProvider(""); setZeroAi(false);
     try {
       const res = await fetch("/api/ask-ai", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, mode }) });
       const data = await res.json();
-      if (!res.ok && !data.answer) throw new Error("AI request failed.");
+      if (!res.ok && !data.answer) throw new Error("Request failed.");
       setAnswer(data.answer || "No answer was generated.");
       setSources(Array.isArray(data.sources) ? data.sources : []);
-      setGroundedFallback(Boolean(data.groundedFallback));
+      setProvider(data.provider || "");
+      setZeroAi(Boolean(data.zeroAi));
     } catch (err) {
       setAnswer(err?.message || "Something went wrong. Please try again.");
     } finally { setLoading(false); }
@@ -45,9 +47,9 @@ export default function AIPage() {
     <main className="ai-lab-page min-h-screen">
       <div className="ai-lab-shell">
         <header className="ai-lab-hero">
-          <div className="ai-lab-badge">Evidence-first study assistant</div>
+          <div className="ai-lab-badge">Quota-first evidence assistant</div>
           <h1>Ask CurrentPulse <span>AI</span></h1>
-          <p>Answers now retrieve matching CurrentPulse articles first, so current facts, data and office-holders are grounded in your own source-backed knowledge base.</p>
+          <p>Static questions use Wikipedia first. Recent and current-event questions add GDELT discovery. CurrentPulse material is consulted only when needed, and AI reasoning is reserved for analytical tasks such as Mains answers and MCQs.</p>
         </header>
 
         <section className="ai-lab-console">
@@ -57,18 +59,18 @@ export default function AIPage() {
           <label className="ai-question-label" htmlFor="ai-question">Your question</label>
           <textarea id="ai-question" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Example: What changed in RBI monetary policy and what should I remember for Prelims?" rows={5} />
           <div className="ai-console-footer">
-            <p>Current facts are restricted to retrieved CurrentPulse material.</p>
-            <button onClick={askAI} disabled={loading}>{loading ? "Retrieving & reasoning…" : "Ask CurrentPulse AI →"}</button>
+            <p>Wikipedia → GDELT for current queries → bounded CurrentPulse lookup → AI only when reasoning is needed.</p>
+            <button onClick={askAI} disabled={loading}>{loading ? "Retrieving evidence…" : "Ask CurrentPulse AI →"}</button>
           </div>
         </section>
 
-        {loading && <div className="ai-thinking-card"><span></span><div><strong>Searching CurrentPulse first</strong><p>Retrieving relevant articles before generating the answer.</p></div></div>}
+        {loading && <div className="ai-thinking-card"><span></span><div><strong>Checking free sources first</strong><p>Using cached Wikipedia/GDELT evidence before any model call.</p></div></div>}
 
         {answer && !loading && (
           <section className="ai-answer-card">
-            <div className="ai-answer-head"><div><small>{groundedFallback ? "Source fallback" : "AI + CurrentPulse retrieval"}</small><h2>Answer</h2></div>{groundedFallback && <span>Provider unavailable · no invented response</span>}</div>
+            <div className="ai-answer-head"><div><small>{zeroAi ? "Zero-AI source response" : "Evidence-backed reasoning"}</small><h2>Answer</h2></div>{provider && <span>{provider}</span>}</div>
             <div className="article-rich-content"><ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown></div>
-            {sources.length > 0 && <div className="ai-source-chips"><strong>Retrieved sources</strong>{sources.slice(0,5).map((source) => <a key={source.url} href={source.url}>{source.title}</a>)}</div>}
+            {sources.length > 0 && <div className="ai-source-chips"><strong>Retrieved sources</strong>{sources.slice(0,6).map((source) => <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a>)}</div>}
           </section>
         )}
       </div>
