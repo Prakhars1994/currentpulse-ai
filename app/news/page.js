@@ -9,152 +9,21 @@ import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { rankNewsByPriority } from "@/lib/news/headlinePriority";
 import { SITE_URL } from "@/lib/siteUrl";
 
-export async function generateMetadata({ searchParams }) {
-  const params = await searchParams;
-  const page = Math.max(1, Number(params?.page) || 1);
-  const canonical = page <= 1 ? `${SITE_URL}/news` : `${SITE_URL}/news/page/${page}`;
-  const title = page <= 1 ? "Latest News Today — India, World, Science & Analysis" : `Latest News Archive - Page ${page}`;
-  const description = "Read source-attributed public-interest news and expert analysis selected for CurrentPulse, kept separate from UPSC Current Affairs.";
+export async function generateMetadata({ searchParams }) { const p=await searchParams; const page=Math.max(1,Number(p?.page)||1); const canonical=page<=1?`${SITE_URL}/news`:`${SITE_URL}/news/page/${page}`; const title=page<=1?"Latest News Today — India, World, Science & Analysis":`Latest News Archive - Page ${page}`; const description="CurrentPulse Newsroom: source-attributed India, states and world reporting with clear context and verified facts."; return {title,description,alternates:{canonical},openGraph:{title,description,url:canonical,type:"website"}}; }
+function stripHtml(v=""){return String(v||"").replace(/<[^>]*>/g," ").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/\*\*([^*]+)\*\*/g,"$1").replace(/__([^_]+)__/g,"$1").replace(/`([^`]+)`/g,"$1").replace(/(^|\s)[#>*_~-]+(?=\S)/g,"$1").replace(/\s+/g," ").trim();}
+function formatDate(v){if(!v)return"";const d=new Date(v);if(Number.isNaN(d.getTime()))return"";return d.toLocaleDateString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",year:"numeric"});}
+function pageHref(page){return page<=1?"/news":`/news/page/${page}`;}
 
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    openGraph: { title, description, url: canonical, type: "website" },
-  };
-}
-
-function stripHtml(content = "") {
-  return String(content || "")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/__([^_]+)__/g, "$1")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/(^|\s)[#>*_~-]+(?=\S)/g, "$1")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function formatDate(value) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" });
-}
-
-function pageHref(page) {
-  return page <= 1 ? "/news" : `/news/page/${page}`;
-}
-
-export default async function NewsPage({ searchParams }) {
-  const params = await searchParams;
-  const requestedPage = Math.max(1, Number(params?.page) || 1);
-  const pageSize = 48;
-  const offset = (requestedPage - 1) * pageSize;
-  const { articles, total, hasMore, error } = await loadNewsArticles({ limit: pageSize, offset });
-  if (error) console.error("News stream error:", error);
-
-  const totalPages = Number.isFinite(total) ? Math.max(1, Math.ceil(total / pageSize)) : null;
-  const currentPage = requestedPage;
-  const topStories = currentPage === 1 ? rankNewsByPriority(articles).slice(0, 5) : [];
-
-  return (
-    <main className="newsroom-page min-h-screen py-10 sm:py-14">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <header className="newsroom-hero">
-          <div>
-            <p className="newsroom-kicker">CurrentPulse Newsroom</p>
-            <h1>News, without the exam-template clutter.</h1>
-            <p>Fast, neutral India and world coverage with a clear summary, essential context and verified key facts.</p>
-          </div>
-          <div className="newsroom-hero-actions">
-            <Link href="/current-affairs" className="newsroom-primary-action">UPSC Current Affairs →</Link>
-            <Link href="/categories" className="newsroom-secondary-action">Browse topics</Link>
-          </div>
-        </header>
-
-        <div className="newsroom-meta-row">
-          <strong>{total ?? (hasMore ? "Growing" : articles.length)}</strong> news archive
-          <span>•</span>
-          <span>Page {currentPage}{totalPages ? ` of ${totalPages}` : ""}</span>
-          <span>•</span>
-          <span>All retained stories stay in chronological archive; Top Stories are impact-ranked separately.</span>
-        </div>
-
-        {topStories.length > 0 && (
-          <section className="mb-9 rounded-3xl border border-red-200 bg-white p-5 shadow-sm sm:p-7" aria-label="Top stories">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[.2em] text-red-700">Top Stories</p>
-                <h2 className="mt-1 text-2xl font-black text-stone-950">High-impact developments first</h2>
-              </div>
-              <span className="text-xs font-semibold text-stone-500">Archive remains complete below</span>
-            </div>
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {topStories.map((article, index) => (
-                <Link key={article.id} href={`/news/${article.slug}`} className="rounded-2xl border border-stone-200 p-4 transition hover:border-red-300 hover:bg-red-50/60">
-                  <p className="text-xs font-black uppercase tracking-wide text-red-700">#{index + 1} · {article.category || "News"}</p>
-                  <h3 className="mt-2 font-black leading-6 text-stone-950">{article.title}</h3>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {articles.length ? (
-          <section className="newsroom-grid" aria-label="Latest news">
-            {articles.map((article, index) => {
-              const image = resolveDisplayImage(article);
-              const categorySlug = createCategorySlug(article.category);
-              const description = stripHtml(article.why_news).slice(0, 220) || "Open the story for the latest verified details.";
-              const dateLabel = formatDate(article.created_at) || "Undated";
-              const previousDateLabel = index > 0
-                ? (formatDate(articles[index - 1]?.created_at) || "Undated")
-                : "";
-              const showDateHeading = index === 0 || dateLabel !== previousDateLabel;
-              return (
-                <Fragment key={article.id}>
-                  {showDateHeading && (
-                    <div className="col-span-full mt-3 border-b border-stone-300 pb-2 pt-4">
-                      <h2 className="text-xl font-black text-stone-950">{dateLabel}</h2>
-                    </div>
-                  )}
-                  <article className="newsroom-card">
-                  {image ? (
-                    <Link href={`/news/${article.slug}`} className="newsroom-card-image-wrap">
-                      <img src={image} alt={article.image_alt || article.title} loading="lazy" decoding="async" className="newsroom-card-image" />
-                    </Link>
-                  ) : (
-                    <div className="newsroom-card-noimage" aria-hidden="true"><span>{article.category || "News"}</span></div>
-                  )}
-                  <div className="newsroom-card-body">
-                    <div className="newsroom-card-meta">
-                      <Link href={`/category/${categorySlug}`}>{article.category || "News"}</Link>
-                      <time>{formatDate(article.created_at)}</time>
-                    </div>
-                    <Link href={`/news/${article.slug}`}><h2>{article.title}</h2></Link>
-                    <p>{description}</p>
-                    <Link href={`/news/${article.slug}`} className="newsroom-read-link">Read story →</Link>
-                  </div>
-                  </article>
-                </Fragment>
-              );
-            })}
-          </section>
-        ) : (
-          <div className="newsroom-empty"><h2>No stories on this page</h2><p>Try the previous archive page.</p></div>
-        )}
-
-        {(currentPage > 1 || hasMore) && (
-          <nav className="mt-10 flex flex-wrap items-center justify-center gap-3" aria-label="News archive pagination">
-            {currentPage > 1 ? <Link href={pageHref(currentPage - 1)} className="newsroom-secondary-action">← Newer stories</Link> : <span />}
-            <span className="text-sm font-bold text-stone-600">Page {currentPage}{totalPages ? ` / ${totalPages}` : ""}</span>
-            {hasMore ? <Link href={pageHref(currentPage + 1)} className="newsroom-primary-action">Older stories →</Link> : <span />}
-          </nav>
-        )}
-      </div>
-    </main>
-  );
+export default async function NewsPage({searchParams}){
+ const params=await searchParams; const currentPage=Math.max(1,Number(params?.page)||1); const pageSize=48; const {articles,total,hasMore,error}=await loadNewsArticles({limit:pageSize,offset:(currentPage-1)*pageSize}); if(error)console.error("News stream error:",error);
+ const totalPages=Number.isFinite(total)?Math.max(1,Math.ceil(total/pageSize)):null; const ranked=currentPage===1?rankNewsByPriority(articles):articles; const lead=ranked[0]; const secondary=ranked.slice(1,5); const leadIds=new Set([lead?.id,...secondary.map(a=>a.id)].filter(Boolean)); const archive=articles.filter(a=>!leadIds.has(a.id));
+ return <main className="newsroom-page min-h-screen"><div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-10">
+   <header className="news-paper-head"><div className="news-paper-date">CURRENT PULSE · DIGITAL EDITION <span>{formatDate(new Date())}</span></div><div className="news-paper-brand"><span>THE</span><h1>CURRENTPULSE NEWS</h1><em>India · States · World</em></div><div className="news-paper-nav"><Link href="/current-affairs">Current Affairs</Link><Link href="/categories">Topics</Link><strong>{total??articles.length} STORIES</strong></div></header>
+   {lead&&<section className="news-front-grid"><article className="news-front-lead">{resolveDisplayImage(lead)&&<Link href={`/news/${lead.slug}`} className="news-front-lead-image"><img src={resolveDisplayImage(lead)} alt={lead.title}/></Link>}<div className="news-front-label">TOP STORY · {lead.category||"NEWS"}</div><Link href={`/news/${lead.slug}`}><h2>{lead.title}</h2></Link><p>{stripHtml(lead.why_news).slice(0,360)||"Open the story for the latest verified details."}</p><div className="news-front-byline"><span>CurrentPulse Newsroom</span><time>{formatDate(lead.created_at)}</time><Link href={`/news/${lead.slug}`}>Continue reading →</Link></div></article>
+     <aside className="news-front-rail">{secondary.map((a,i)=><article key={a.id}>{resolveDisplayImage(a)&&<Link href={`/news/${a.slug}`} className="news-rail-image"><img src={resolveDisplayImage(a)} alt={a.title}/></Link>}<div><small>{i===0?"BREAKING / LEAD":"TOP STORY"} · {a.category||"News"}</small><Link href={`/news/${a.slug}`}><h3>{a.title}</h3></Link><p>{stripHtml(a.why_news).slice(0,130)}</p><time>{formatDate(a.created_at)}</time></div></article>)}</aside>
+   </section>}
+   <div className="news-section-rule"><span>LATEST EDITION</span><p>Chronological archive · source-attributed reporting</p></div>
+   {archive.length?<section className="news-paper-grid">{archive.map((article,index)=>{const image=resolveDisplayImage(article);const dateLabel=formatDate(article.created_at);const prev=index>0?formatDate(archive[index-1]?.created_at):"";return <Fragment key={article.id}>{(index===0||dateLabel!==prev)&&<div className="news-date-divider"><span>{dateLabel}</span></div>}<article className={`news-paper-card ${index%7===0?"news-paper-card--feature":""}`}>{image&&<Link href={`/news/${article.slug}`} className="news-paper-card-image"><img src={image} alt={article.title} loading="lazy"/></Link>}<div className="news-paper-card-copy"><div className="news-paper-meta"><Link href={`/category/${createCategorySlug(article.category)}`}>{article.category||"News"}</Link><time>{dateLabel}</time></div><Link href={`/news/${article.slug}`}><h2>{article.title}</h2></Link><p>{stripHtml(article.why_news).slice(0,220)||"Open the story for verified details and context."}</p><Link href={`/news/${article.slug}`} className="news-paper-read">Full story →</Link></div></article></Fragment>})}</section>:!lead&&<div className="newsroom-empty"><h2>No stories on this page</h2><p>Published News stories will appear here.</p></div>}
+   {(currentPage>1||hasMore)&&<nav className="news-paper-pagination">{currentPage>1?<Link href={pageHref(currentPage-1)}>← Newer</Link>:<span/>}<strong>Page {currentPage}{totalPages?` / ${totalPages}`:""}</strong>{hasMore?<Link href={pageHref(currentPage+1)}>Older →</Link>:<span/>}</nav>}
+ </div></main>;
 }
