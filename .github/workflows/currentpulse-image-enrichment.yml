@@ -1,0 +1,45 @@
+name: CurrentPulse Real Image Enrichment
+
+on:
+  workflow_dispatch:
+    inputs:
+      stream:
+        description: "coverage for Current Affairs or news"
+        required: true
+        default: "coverage"
+        type: choice
+        options:
+          - coverage
+          - news
+      limit:
+        description: "Maximum articles to enrich (1-30)"
+        required: true
+        default: "30"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: currentpulse-real-image-enrichment
+  cancel-in-progress: false
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Resolve and persist reusable real images
+        shell: bash
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          STREAM: ${{ inputs.stream }}
+          LIMIT: ${{ inputs.limit }}
+        run: |
+          set -euo pipefail
+          [[ "${STREAM}" == "coverage" || "${STREAM}" == "news" ]] || { echo "Invalid stream"; exit 1; }
+          [[ "${LIMIT}" =~ ^[0-9]+$ ]] || { echo "Invalid limit"; exit 1; }
+          (( LIMIT >= 1 && LIMIT <= 30 )) || { echo "Limit must be 1..30"; exit 1; }
+          curl --silent --show-error --fail-with-body --max-time 420 \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "https://cp.vliab.workers.dev/api/backfill-images?stream=${STREAM}&limit=${LIMIT}&wait=1"
