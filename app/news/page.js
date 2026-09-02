@@ -15,7 +15,11 @@ function formatDate(v){if(!v)return"";const d=new Date(v);if(Number.isNaN(d.getT
 function pageHref(page){return page<=1?"/news":`/news/page/${page}`;}
 
 export default async function NewsPage({searchParams}){
- const params=await searchParams; const currentPage=Math.max(1,Number(params?.page)||1); const pageSize=48; const {articles,total,hasMore,error}=await loadNewsArticles({limit:pageSize,offset:(currentPage-1)*pageSize}); if(error)console.error("News stream error:",error);
+ const params=await searchParams;
+ const currentPage=Math.max(1,Number(params?.page)||1);
+ const pageSize = 48;
+ const {articles,total,hasMore,error}=await loadNewsArticles({limit:pageSize,offset:(currentPage-1)*pageSize});
+ if(error)console.error("News stream error:",error);
  const totalPages=Number.isFinite(total)?Math.max(1,Math.ceil(total/pageSize)):null; const ranked=currentPage===1?rankNewsByPriority(articles):articles; const lead=ranked[0]; const secondary=ranked.slice(1,5); const leadIds=new Set([lead?.id,...secondary.map(a=>a.id)].filter(Boolean)); const archive=articles.filter(a=>!leadIds.has(a.id));
  return <main className="newsroom-page min-h-screen"><div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-10">
    <header className="news-paper-head"><div className="news-paper-date">CURRENT PULSE · DIGITAL EDITION <span>{formatDate(new Date())}</span></div><div className="news-paper-brand"><span>THE</span><h1>CURRENTPULSE NEWS</h1><em>India · States · World</em></div><div className="news-paper-nav"><Link href="/current-affairs">Current Affairs</Link><Link href="/categories">Topics</Link><strong>{total??articles.length} STORIES</strong></div></header>
