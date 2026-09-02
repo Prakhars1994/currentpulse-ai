@@ -11,10 +11,12 @@ test("Conversation review date logic remains IST-aware", () => {
   assert.equal(isConversationReviewDay("2026-08-22T18:29:59Z", now), false);
 });
 
-test("legacy automatic News is disabled and absent from scheduled production", () => {
+test("legacy automatic News is fail-closed and absent from scheduled production", () => {
   const route = load("app/api/auto-publish/route.js");
   const workflow = load(".github/workflows/currentpulse-background.yml");
-  assert.match(route, /process\.env\.AUTOMATED_NEWS_ENABLED \|\| "false"/);
+  assert.match(route, /manual_publishing_only/);
+  assert.match(route, /status:\s*410/);
+  assert.doesNotMatch(route, /NEWS_SOURCES|fetchSourceRss|queueCoverageImport|publishArticle/);
   assert.doesNotMatch(workflow, /auto-publish/);
   assert.doesNotMatch(workflow, /fetch-all-news|fetch-todays-news/);
 });
