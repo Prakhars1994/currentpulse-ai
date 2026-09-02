@@ -42,52 +42,16 @@ test("News fallback measures real whitespace and produces rendered sections", ()
 });
 
 test("deterministic News gate removes obvious junk without narrowing public affairs", () => {
-  assert.equal(
-    assessNewsEditorialValue({
-      title: "Cardiologist shares 5 healthy heart habits she never ignores",
-      url: "https://example.com/lifestyle/heart-habits",
-    }).allowed,
-    false
-  );
-
-  assert.equal(
-    assessNewsEditorialValue({
-      title: "Today's ePaper digital edition",
-      url: "https://example.com/epaper/today",
-    }).allowed,
-    false
-  );
-
-  assert.equal(
-    assessNewsEditorialValue({
-      title: "Stocks to buy today: brokerage gives five share price targets",
-      url: "https://example.com/markets/stocks-to-buy",
-    }).allowed,
-    false
-  );
-
-  assert.equal(
-    assessNewsEditorialValue({
-      title: "Supreme Court directs Union government to file response on data protection rules",
-      description: "The court asked the ministry to respond before the next hearing.",
-      url: "https://example.com/india/supreme-court-data-protection",
-    }).allowed,
-    true
-  );
-
-  assert.equal(
-    assessNewsEditorialValue({
-      title: "Iran and Oman work to finalise Strait of Hormuz shipping agreement",
-      description: "Officials discussed an agreement affecting regional shipping and diplomacy.",
-      url: "https://example.com/world/hormuz-agreement",
-    }).allowed,
-    true
-  );
+  assert.equal(assessNewsEditorialValue({ title: "Cardiologist shares 5 healthy heart habits she never ignores", url: "https://example.com/lifestyle/heart-habits" }).allowed, false);
+  assert.equal(assessNewsEditorialValue({ title: "Today's ePaper digital edition", url: "https://example.com/epaper/today" }).allowed, false);
+  assert.equal(assessNewsEditorialValue({ title: "Stocks to buy today: brokerage gives five share price targets", url: "https://example.com/markets/stocks-to-buy" }).allowed, false);
+  assert.equal(assessNewsEditorialValue({ title: "Supreme Court directs Union government to file response on data protection rules", description: "The court asked the ministry to respond before the next hearing.", url: "https://example.com/india/supreme-court-data-protection" }).allowed, true);
+  assert.equal(assessNewsEditorialValue({ title: "Iran and Oman work to finalise Strait of Hormuz shipping agreement", description: "Officials discussed an agreement affecting regional shipping and diplomacy.", url: "https://example.com/world/hormuz-agreement" }).allowed, true);
 });
 
-test("auto-publish applies the editorial gate before direct publication", () => {
+test("legacy auto-publish cannot collect, evaluate or publish anything", () => {
   const route = load("app/api/auto-publish/route.js");
-  assert.match(route, /assessNewsEditorialValue/);
-  assert.match(route, /editorialNoiseRejected/);
-  assert.match(route, /Passed the deterministic public-news gate/);
+  assert.match(route, /manual_publishing_only/);
+  assert.match(route, /status:\s*410/);
+  assert.doesNotMatch(route, /assessNewsEditorialValue|fetchSourceRss|publishArticle|queueCoverageImport/);
 });

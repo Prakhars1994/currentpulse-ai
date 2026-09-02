@@ -4,14 +4,15 @@ import test from "node:test";
 
 const read = (path) => readFileSync(path, "utf8");
 
-test("expensive news collectors require the configured cron credential", () => {
+test("legacy News collectors are fail-closed and perform no external work", () => {
   for (const path of [
     "app/api/fetch-all-news/route.js",
     "app/api/fetch-todays-news/route.js",
   ]) {
     const source = read(path);
-    assert.match(source, /isCronAuthorized/);
-    assert.match(source, /Unauthorized/);
+    assert.match(source, /manual_publishing_only/);
+    assert.match(source, /status:\s*410/);
+    assert.doesNotMatch(source, /fetchSourceRss|isCronAuthorized|cheerio|fetch\s*\(/);
   }
 });
 

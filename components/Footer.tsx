@@ -36,8 +36,8 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <h2 className="text-2xl font-black text-cyan-400">CurrentPulse AI</h2>
             <p className="mt-4 max-w-xl leading-7 text-slate-400">
-              Automated, exam-focused current affairs with source-backed analysis,
-              prelims facts, mains perspectives and daily revision tools.
+              Administrator-published current affairs and news, preserved from source PDFs/content,
+              with exam-focused study tools and ResultPulse exam updates.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Link

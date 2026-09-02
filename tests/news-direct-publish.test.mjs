@@ -4,9 +4,11 @@ import fs from "node:fs";
 
 const load = (path) => fs.readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 
-test("legacy auto-publish is disabled by default", () => {
+test("legacy auto-publish is permanently disabled", () => {
   const route = load("app/api/auto-publish/route.js");
-  assert.match(route, /process\.env\.AUTOMATED_NEWS_ENABLED \|\| "false"/);
+  assert.match(route, /manual_publishing_only/);
+  assert.match(route, /status:\s*410/);
+  assert.doesNotMatch(route, /AUTOMATED_NEWS_ENABLED|publishArticle|queueCoverageImport/);
 });
 
 test("production background is ResultPulse-only and does not run CA or News pipelines", () => {
