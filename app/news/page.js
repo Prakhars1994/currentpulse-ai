@@ -1,10 +1,89 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
-import Link from "next/link";import{Fragment}from"react";import{loadNewsArticles}from"@/lib/articleStreams";import{createCategorySlug}from"@/lib/categoryRouting";import{resolveCardImage}from"@/lib/news/categoryImage";import{rankNewsByPriority}from"@/lib/news/headlinePriority";import{cleanPublicExcerpt,normalizedPublicCategory,repairedNewsTitle}from"@/lib/publicArticleRepair";import{SITE_URL}from"@/lib/siteUrl";
-export async function generateMetadata({searchParams}){const p=await searchParams;const page=Math.max(1,Number(p?.page)||1);const canonical=page<=1?`${SITE_URL}/news`:`${SITE_URL}/news/page/${page}`;const title=page<=1?"Latest News Today — India, World, Science & Analysis":`Latest News Archive - Page ${page}`;const description="CurrentPulse Newsroom: administrator-published news with concise context, dates and categories.";return{title,description,alternates:{canonical},openGraph:{title,description,url:canonical,type:"website"}};}
-function formatDate(v){if(!v)return"";const d=new Date(v);if(Number.isNaN(d.getTime()))return"";return d.toLocaleDateString("en-IN",{timeZone:"Asia/Kolkata",day:"numeric",month:"short",year:"numeric"});}function pageHref(page){return page<=1?"/news":`/news/page/${page}`;}function storyDek(article,title,limit=220){return cleanPublicExcerpt(article?.why_news||article?.seo_description||"",title,limit);}
-function uniqueImageMap(items=[]){const seen=new Set();const map=new Map();for(const article of items){const image=resolveCardImage(article);if(!image)continue;let key=image;try{const url=new URL(image);key=`${url.hostname}${url.pathname}`.toLowerCase();}catch{}if(seen.has(key))continue;seen.add(key);map.set(article.id,image);}return map;}
-export default async function NewsPage({searchParams}){const params=await searchParams;const currentPage=Math.max(1,Number(params?.page)||1);const pageSize=48;const{articles,total,hasMore,error}=await loadNewsArticles({limit:pageSize,offset:(currentPage-1)*pageSize});if(error)console.error("News stream error:",error);const totalPages=Number.isFinite(total)?Math.max(1,Math.ceil(total/pageSize)):null;const ranked=currentPage===1?rankNewsByPriority(articles):articles;const imageMap=uniqueImageMap(ranked);const lead=ranked[0];const secondary=ranked.slice(1,5);const leadIds=new Set([lead?.id,...secondary.map(a=>a.id)].filter(Boolean));const archive=articles.filter(a=>!leadIds.has(a.id));const leadImage=lead?imageMap.get(lead.id)||"":"";const leadTitle=lead?repairedNewsTitle(lead):"";const leadCategory=lead?normalizedPublicCategory(lead.category,`${leadTitle} ${lead.why_news||""}`):"";
-return <main className="newsroom-page min-h-screen"><div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 sm:py-10"><header className="news-paper-head"><div className="news-paper-date">CURRENT PULSE · DIGITAL EDITION <span>{formatDate(new Date())}</span></div><div className="news-paper-brand"><span>THE</span><h1>CURRENTPULSE NEWS</h1><em>India · States · World</em></div><div className="news-paper-nav"><Link href="/current-affairs">Current Affairs</Link><Link href="/categories">Topics</Link><strong>{total??articles.length} STORIES</strong></div></header>
-{lead&&<section className={`news-front-grid ${!leadImage?"news-front-grid--text":""}`}><article className="news-front-lead">{leadImage&&<Link href={`/news/${lead.slug}`} className="news-front-lead-image news-image-compact"><img src={leadImage} alt={leadTitle}/></Link>}<div className="news-front-label">TOP STORY · {leadCategory||"NEWS"}</div><Link href={`/news/${lead.slug}`}><h2>{leadTitle}</h2></Link><p>{storyDek(lead,leadTitle,300)||"Open the story for the latest verified details."}</p><div className="news-front-byline"><span>CurrentPulse Newsroom</span><time>{formatDate(lead.created_at)}</time><Link href={`/news/${lead.slug}`}>Continue reading →</Link></div></article><aside className="news-front-rail">{secondary.map((a,i)=>{const image=imageMap.get(a.id)||"";const title=repairedNewsTitle(a);const category=normalizedPublicCategory(a.category,`${title} ${a.why_news||""}`);return <article key={a.id} className={!image?"news-rail-text":""}>{image&&<Link href={`/news/${a.slug}`} className="news-rail-image news-image-compact"><img src={image} alt={title} loading="lazy"/></Link>}<div><small>{i===0?"BREAKING / LEAD":"TOP STORY"} · {category||"News"}</small><Link href={`/news/${a.slug}`}><h3>{title}</h3></Link><p>{storyDek(a,title,150)}</p><time>{formatDate(a.created_at)}</time></div></article>})}</aside></section>}
-<div className="news-section-rule"><span>LATEST EDITION</span><p>Chronological archive · administrator-published stories</p></div>{archive.length?<section className="news-paper-grid">{archive.map((article,index)=>{const image=imageMap.get(article.id)||"";const title=repairedNewsTitle(article);const category=normalizedPublicCategory(article.category,`${title} ${article.why_news||""}`);const dateLabel=formatDate(article.created_at);const prev=index>0?formatDate(archive[index-1]?.created_at):"";return <Fragment key={article.id}>{(index===0||dateLabel!==prev)&&<div className="news-date-divider"><span>{dateLabel}</span></div>}<article className={`news-paper-card ${!image?"news-paper-card--text":""}`}>{image&&<Link href={`/news/${article.slug}`} className="news-paper-card-image news-image-compact"><img src={image} alt={title} loading="lazy"/></Link>}<div className="news-paper-card-copy"><div className="news-paper-meta"><Link href={`/category/${createCategorySlug(category)}`}>{category||"News"}</Link><time>{dateLabel}</time></div><Link href={`/news/${article.slug}`}><h2>{title}</h2></Link><p>{storyDek(article,title,180)||"Open the story for verified details and context."}</p><Link href={`/news/${article.slug}`} className="news-paper-read">Full story →</Link></div></article></Fragment>})}</section>:!lead&&<div className="newsroom-empty"><h2>No stories on this page</h2><p>Published News stories will appear here.</p></div>}{(currentPage>1||hasMore)&&<nav className="news-paper-pagination">{currentPage>1?<Link href={pageHref(currentPage-1)}>← Newer</Link>:<span/>}<strong>Page {currentPage}{totalPages?` / ${totalPages}`:""}</strong>{hasMore?<Link href={pageHref(currentPage+1)}>Older →</Link>:<span/>}</nav>}</div><style>{`.news-image-compact{max-width:280px}.news-image-compact img{width:100%;max-height:160px;object-fit:cover}`}</style></main>}
+
+import Link from "next/link";
+import { loadNewsArticles } from "@/lib/articleStreams";
+import { createCategorySlug } from "@/lib/categoryRouting";
+import { resolveCardImage } from "@/lib/news/categoryImage";
+import { rankNewsByPriority } from "@/lib/news/headlinePriority";
+import { cleanPublicExcerpt, normalizedPublicCategory, repairedNewsTitle } from "@/lib/publicArticleRepair";
+import { SITE_URL } from "@/lib/siteUrl";
+
+export async function generateMetadata({ searchParams }) {
+  const p = await searchParams;
+  const page = Math.max(1, Number(p?.page) || 1);
+  const canonical = page <= 1 ? `${SITE_URL}/news` : `${SITE_URL}/news/page/${page}`;
+  const title = page <= 1 ? "Latest News Today — India, World, Science & Analysis" : `Latest News Archive - Page ${page}`;
+  const description = "CurrentPulse Newsroom: administrator-published news with concise context, dates and categories.";
+  return { title, description, alternates: { canonical }, openGraph: { title, description, url: canonical, type: "website" } };
+}
+
+function formatDate(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" });
+}
+function pageHref(page) { return page <= 1 ? "/news" : `/news/page/${page}`; }
+function storyDek(article, title, limit = 190) { return cleanPublicExcerpt(article?.why_news || article?.seo_description || "", title, limit); }
+
+export default async function NewsPage({ searchParams }) {
+  const params = await searchParams;
+  const currentPage = Math.max(1, Number(params?.page) || 1);
+  const pageSize = 48;
+  const { articles, total, hasMore, error } = await loadNewsArticles({ limit: pageSize, offset: (currentPage - 1) * pageSize });
+  if (error) console.error("News stream error:", error);
+  const totalPages = Number.isFinite(total) ? Math.max(1, Math.ceil(total / pageSize)) : null;
+  const stories = currentPage === 1 ? rankNewsByPriority(articles) : articles;
+
+  return <main className="min-h-screen bg-[#171713] text-[#f4f0e8]">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+      <header className="mb-8 border-y border-[#8d7765]/45 py-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="mb-2 text-xs font-bold uppercase tracking-[0.24em] text-[#f09a7c]">CurrentPulse · Newsroom · {formatDate(new Date())}</p>
+            <h1 className="font-serif text-4xl font-bold tracking-tight sm:text-5xl">CurrentPulse News</h1>
+            <p className="mt-2 max-w-2xl text-sm text-[#bcb7ae]">India · States · World · concise reporting with article-specific visuals</p>
+          </div>
+          <div className="flex items-center gap-4 text-sm">
+            <Link className="text-[#6fe7ee] hover:underline" href="/current-affairs">Current Affairs</Link>
+            <Link className="text-[#6fe7ee] hover:underline" href="/categories">Topics</Link>
+            <strong className="rounded-full border border-[#f09a7c]/45 px-3 py-1 text-[#f09a7c]">{total ?? stories.length} stories</strong>
+          </div>
+        </div>
+      </header>
+
+      {stories.length ? <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        {stories.map((article, index) => {
+          const title = repairedNewsTitle(article);
+          const category = normalizedPublicCategory(article.category, `${title} ${article.why_news || ""}`);
+          const image = resolveCardImage({ ...article, title, category });
+          const href = `/news/${article.slug}`;
+          return <article key={article.id} className={`overflow-hidden rounded-xl border border-white/10 bg-[#211f1a] shadow-sm ${index === 0 ? "md:col-span-2 xl:col-span-2" : ""}`}>
+            <Link href={href} className={`block overflow-hidden bg-[#101827] ${index === 0 ? "aspect-[16/7]" : "aspect-[16/9]"}`}>
+              <img src={image} alt={title} loading={index < 3 ? "eager" : "lazy"} className="h-full w-full object-cover" />
+            </Link>
+            <div className="p-5">
+              <div className="mb-3 flex items-center justify-between gap-3 text-[11px] font-bold uppercase tracking-[0.12em]">
+                <Link href={`/category/${createCategorySlug(category)}`} className="text-[#f09a7c] hover:underline">{category || "News"}</Link>
+                <time className="text-[#8e8a82]">{formatDate(article.created_at)}</time>
+              </div>
+              <Link href={href}><h2 className={`font-serif font-bold leading-tight text-[#f8f5ee] ${index === 0 ? "text-3xl sm:text-4xl" : "text-xl"}`}>{title}</h2></Link>
+              <p className="mt-3 text-sm leading-6 text-[#c7c2b8]">{storyDek(article, title, index === 0 ? 280 : 180) || "Open the story for verified details and context."}</p>
+              <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-xs">
+                <span className="text-[#8e8a82]">CurrentPulse Newsroom</span>
+                <Link href={href} className="font-bold text-[#6fe7ee]">Read full story →</Link>
+              </div>
+            </div>
+          </article>;
+        })}
+      </section> : <div className="rounded-xl border border-white/10 p-10 text-center"><h2 className="text-xl font-bold">No stories on this page</h2><p className="mt-2 text-[#aaa59c]">Published News stories will appear here.</p></div>}
+
+      {(currentPage > 1 || hasMore) && <nav className="mt-10 flex items-center justify-between border-t border-white/10 pt-6 text-sm">
+        {currentPage > 1 ? <Link href={pageHref(currentPage - 1)} className="text-[#6fe7ee]">← Newer</Link> : <span />}
+        <strong>Page {currentPage}{totalPages ? ` / ${totalPages}` : ""}</strong>
+        {hasMore ? <Link href={pageHref(currentPage + 1)} className="text-[#6fe7ee]">Older →</Link> : <span />}
+      </nav>}
+    </div>
+  </main>;
+}
