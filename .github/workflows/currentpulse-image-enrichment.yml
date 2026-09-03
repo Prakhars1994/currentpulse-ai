@@ -1,20 +1,23 @@
 name: CurrentPulse Real Image Enrichment
 
 on:
+  schedule:
+    - cron: "23 * * * *"
   workflow_dispatch:
     inputs:
       stream:
-        description: "coverage for Current Affairs or news"
+        description: "coverage, news, or all"
         required: true
-        default: "coverage"
+        default: "all"
         type: choice
         options:
+          - all
           - coverage
           - news
       limit:
-        description: "Total unresolved articles to consider (1-8)"
+        description: "Maximum unresolved articles per stream in this run (1-40)"
         required: true
-        default: "6"
+        default: "40"
         type: string
 
 permissions:
@@ -27,19 +30,36 @@ concurrency:
 jobs:
   enrich:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 12
     steps:
       - name: Resolve and persist reusable real images
         shell: bash
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          STREAM: ${{ inputs.stream || 'coverage' }}
-          LIMIT: ${{ inputs.limit || '6' }}
+          STREAM: ${{ inputs.stream || 'all' }}
+          LIMIT: ${{ inputs.limit || '40' }}
         run: |
           set -euo pipefail
-          [[ "${STREAM}" == "coverage" || "${STREAM}" == "news" ]] || { echo "Invalid stream"; exit 1; }
+          [[ "${STREAM}" == "all" || "${STREAM}" == "coverage" || "${STREAM}" == "news" ]] || { echo "Invalid stream"; exit 1; }
           [[ "${LIMIT}" =~ ^[0-9]+$ ]] || { echo "Invalid limit"; exit 1; }
-          (( LIMIT >= 1 && LIMIT <= 8 )) || { echo "Limit must be 1..8"; exit 1; }
-          curl --silent --show-error --fail-with-body --max-time 180 \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            "https://cp.vliab.workers.dev/api/backfill-images?stream=${STREAM}&limit=${LIMIT}&wait=1"
+          (( LIMIT >= 1 && LIMIT <= 40 )) || { echo "Limit must be 1..40"; exit 1; }
+
+          enrich_stream() {
+            local stream="$1"
+            local remaining="${LIMIT}"
+            while (( remaining > 0 )); do
+              local batch=8
+              (( remaining < batch )) && batch="${remaining}"
+              echo "Enriching ${stream}: batch=${batch}, remaining=${remaining}"
+              response="$(curl --silent --show-error --fail-with-body --max-time 180 \
+                -H "Authorization: Bearer ${CRON_SECRET}" \
+                "https://cp.vliab.workers.dev/api/backfill-images?stream=${stream}&limit=${batch}&wait=1")"
+              echo "${response}"
+              selected="$(printf '%s' "${response}" | jq -r '.stats.selected // 0')"
+              (( selected == 0 )) && break
+              remaining=$(( remaining - batch ))
+            done
+          }
+
+          if [[ "${STREAM}" == "all" || "${STREAM}" == "coverage" ]]; then enrich_stream coverage; fi
+          if [[ "${STREAM}" == "all" || "${STREAM}" == "news" ]]; then enrich_stream news; fi
