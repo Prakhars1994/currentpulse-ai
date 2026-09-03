@@ -29,7 +29,7 @@ function htmlToMarkdown(value = "") {
     .replace(/<[^>]+>/g, " ");
 }
 
-const MAJOR_SECTION = "(?:Why in News\\?|Top Data \\& Facts for UPSC|Top Data and Facts for UPSC|Data \\& Facts for UPSC|Data and Facts for UPSC|Historical Perspective|History|Economic Perspective|Geographical Perspective|Environmental Perspective|Social Perspective|Political Perspective|Pros|Cons|Advantages|Disadvantages|Challenges|Issues|Way Forward|Conclusion|Static Foundation|Prelims Quick Revision|Probable Prelims Question|Probable Mains Question|UPSC\\/?BPSC Syllabus Linkage|Sources|Sources Consulted)";
+const MAJOR_SECTION = "(?:Why in News\\?|Top Data \\& Facts for UPSC|Top Data and Facts for UPSC|Data \\& Facts for UPSC|Data and Facts for UPSC|Historical Perspective|History|Economic Perspective|Geographical Perspective|Environmental Perspective|Social Perspective|Political Perspective|Political and Governance Perspective|Economic, Geographical \\& Environmental Perspective|Economic, Geographical and Environmental Perspective|Examples, Case Studies \\& Answer-Writing Value|Examples, Case Studies and Answer-Writing Value|Pros|Cons|Advantages|Disadvantages|Challenges|Issues|Way Forward|Conclusion|Static Foundation|Prelims Quick Revision|Probable Prelims Question|Probable Mains Question|UPSC\\/?BPSC Syllabus Linkage|Sources|Sources Consulted)";
 
 function normalizeMarkdown(value = "") {
   const withoutHtml = /<\/?[a-z][\s\S]*>/i.test(value)
@@ -42,11 +42,15 @@ function normalizeMarkdown(value = "") {
     .replace(/^\s*CurrentPulse AI\s*\|\s*STRICT CA UPLOAD FORMAT.*$/gim, "")
     .replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "")
     .replace(/\r\n?/g, "\n")
+    // PDF text frequently splits visual bold spans into fragments such as **AFFAI****RS.
+    .replace(/\*\*/g, "")
+    // Preserve the short fact markers used in the approved PDF template as real list items.
+    .replace(/\s+[u•●▪◦]\s+(?=[A-Z0-9])/g, "\n- ")
     .replace(/[ \t]*[•●▪◦][ \t]*/g, "\n\n- ")
     .replace(/\s+[-–—]\s+(?=[A-Z][A-Za-z])/g, "\n\n- ")
     .replace(/[ \t]+(#{2,4})[ \t]+/g, "\n\n$1 ")
     .replace(/\s+(\d{1,2}[.)])[ \t]+(?=[A-Z])/g, "\n\n$1 ")
-    .replace(new RegExp(`(^|\\n|\\s{2,})(${MAJOR_SECTION})\\s*:?[ \\t]*(?=(?:[-•●▪◦]|[A-Z0-9]))`, "gim"), "$1\n\n## $2\n\n")
+    .replace(new RegExp(`(^|\\n|\\s+)(${MAJOR_SECTION})\\s*:?[ \\t]*(?=(?:[-•●▪◦]|[A-Z0-9]))`, "gim"), "$1\n\n## $2\n\n")
     .replace(new RegExp(`(^|\\n)\\s*(${MAJOR_SECTION})\\s*:?[ \\t]*(?=\\n|$)`, "gim"), "$1## $2\n")
     .replace(
       /(?:^|\n|\.\s+)(Background|Context|Significance|Key Developments|Key Issues(?: or Challenges)?|Issues and Challenges|Issues|Challenges|Impact|Implications|Opportunities|Recommendations|Dimensions|Key Features|Key Provisions|Concerns|Limitations)\s*:?\s+(?=[A-Z])/gi,
