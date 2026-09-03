@@ -90,7 +90,7 @@ jobs:
 
       - name: Materialize static reader
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --reuse-base https://cp.vliab.workers.dev --fresh-days 30 --out .open-next/assets --max-pages 1200 --concurrency 3 --timeout-ms 10000 --budget-seconds 720
+        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --out .open-next/assets --max-pages 1200 --concurrency 3 --timeout-ms 10000 --budget-seconds 720
 
       - name: Stop production reader renderer
         if: always() && steps.deploy-ready.outputs.ready == 'true'
