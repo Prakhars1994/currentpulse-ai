@@ -115,4 +115,12 @@ function normalizeMarkdown(value="") {
   cleaned=structureMicroHeadings(cleaned).replace(/\n{3,}/g,"\n\n");
   return highlightMarkdownFacts(cleaned);
 }
-export default function ArticleContent({content,fallback}) { const source=content||fallback||""; const strictPdf=isStrictPdfSource(source); const value=normalizeMarkdown(source); return <div className={`article-rich-content${strictPdf?" strict-pdf-content":""}`}><ReactMarkdown remarkPlugins={[remarkGfm]} components={{h2:({children})=><h2>{children}</h2>,h3:({children})=><h3>{children}</h3>,h4:({children})=><h4>{children}</h4>,p:({children})=><p>{children}</p>,ul:({children})=><ul>{children}</ul>,ol:({children})=><ol>{children}</ol>,li:({children})=><li>{children}</li>,strong:({children})=><strong>{children}</strong>,blockquote:({children})=><blockquote>{children}</blockquote>,a:({href,children})=><a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,table:({children})=><div className="article-table-wrap"><table>{children}</table></div>}}>{value}</ReactMarkdown></div>; }
+export default function ArticleContent({content,fallback}) {
+  const source=content||fallback||"";
+  const strictPdf=isStrictPdfSource(source);
+  if (strictPdf) {
+    return <div className="article-rich-content strict-pdf-content"><pre className="strict-pdf-verbatim">{String(source)}</pre></div>;
+  }
+  const value=normalizeMarkdown(source);
+  return <div className="article-rich-content"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{h2:({children})=><h2>{children}</h2>,h3:({children})=><h3>{children}</h3>,h4:({children})=><h4>{children}</h4>,p:({children})=><p>{children}</p>,ul:({children})=><ul>{children}</ul>,ol:({children})=><ol>{children}</ol>,li:({children})=><li>{children}</li>,strong:({children})=><strong>{children}</strong>,blockquote:({children})=><blockquote>{children}</blockquote>,a:({href,children})=><a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,table:({children})=><div className="article-table-wrap"><table>{children}</table></div>}}>{value}</ReactMarkdown></div>;
+}
