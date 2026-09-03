@@ -29,6 +29,21 @@ function htmlToMarkdown(value = "") {
     .replace(/<[^>]+>/g, " ");
 }
 
+function repairPdfBoldArtifacts(value = "") {
+  return String(value)
+    // PDF extraction can split one visually bold word into adjacent markdown spans,
+    // e.g. **AFFAI****RS. Join only that malformed intra-word boundary.
+    .replace(/([\p{L}\p{N}])\*{4}(?=[\p{L}\p{N}])/gu, "$1")
+    // If a PDF line is left with a single orphan ** delimiter, remove only that
+    // orphan instead of destroying valid paired markdown bold everywhere.
+    .split("\n")
+    .map((line) => {
+      const markers = line.match(/\*\*/g) || [];
+      return markers.length === 1 ? line.replace(/\*\*/, "") : line;
+    })
+    .join("\n");
+}
+
 const MAJOR_SECTION = "(?:Why in News\\?|Top Data \\& Facts for UPSC|Top Data and Facts for UPSC|Data \\& Facts for UPSC|Data and Facts for UPSC|Historical Perspective|History|Economic Perspective|Geographical Perspective|Environmental Perspective|Social Perspective|Political Perspective|Political and Governance Perspective|Economic, Geographical \\& Environmental Perspective|Economic, Geographical and Environmental Perspective|Examples, Case Studies \\& Answer-Writing Value|Examples, Case Studies and Answer-Writing Value|Pros / Significance|Cons / Challenges|Advantages and Significance|Limitations and Challenges|Issues and Challenges|Way Forward|Conclusion|Static Foundation|Prelims Quick Revision|Probable Prelims Question|Probable Mains Question|UPSC\\/?BPSC Syllabus Linkage|Sources|Sources Consulted)";
 
 function normalizeMarkdown(value = "") {
@@ -36,14 +51,12 @@ function normalizeMarkdown(value = "") {
     ? htmlToMarkdown(value)
     : String(value);
 
-  return highlightMarkdownFacts(withoutHtml
+  return highlightMarkdownFacts(repairPdfBoldArtifacts(withoutHtml
     .replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim, "")
     .replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim, "")
     .replace(/^\s*CurrentPulse AI\s*\|\s*STRICT CA UPLOAD FORMAT.*$/gim, "")
     .replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "")
-    .replace(/\r\n?/g, "\n")
-    // PDF text frequently splits visual bold spans into fragments such as **AFFAI****RS.
-    .replace(/\*\*/g, "")
+    .replace(/\r\n?/g, "\n"))
     // Preserve the short fact markers used in the approved PDF template as real list items.
     .replace(/\s+[u•●▪◦]\s+(?=[A-Z0-9])/g, "\n- ")
     .replace(/[ \t]*[•●▪◦][ \t]*/g, "\n\n- ")
