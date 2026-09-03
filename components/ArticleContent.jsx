@@ -8,28 +8,28 @@ function htmlToMarkdown(value = "") { return decodeHtmlEntities(value).replace(/
 function repairPdfBoldArtifacts(value = "") { return String(value).replace(/\*{4,}/g,"**").replace(/([\p{L}\p{N}])\*\*(?=[\p{L}\p{N}])/gu,"$1").split("\n").map(line=>{const markers=line.match(/\*\*/g)||[];return markers.length%2===1?line.replace(/\*\*(?![\s\S]*\*\*)/,""):line;}).join("\n"); }
 
 const STRICT_SECTIONS = [
-  "WHY IN NEWS",
-  "TOP DATA & FACTS FOR UPSC",
-  "TOP DATA AND FACTS FOR UPSC",
-  "DATA & FACTS FOR UPSC",
-  "DATA AND FACTS FOR UPSC",
-  "HISTORICAL PERSPECTIVE",
-  "ECONOMIC PERSPECTIVE",
-  "GEOGRAPHICAL PERSPECTIVE",
-  "ENVIRONMENTAL PERSPECTIVE",
-  "SOCIAL PERSPECTIVE",
-  "POLITICAL PERSPECTIVE",
-  "POLITICAL AND GOVERNANCE PERSPECTIVE",
-  "PROS",
-  "CONS",
-  "WAY FORWARD",
-  "PRELIMS QUICK REVISION",
-  "PROBABLE PRELIMS QUESTION",
-  "PROBABLE MAINS QUESTION",
-  "SOURCES",
-  "SOURCES CONSULTED",
+  "WHY IN NEWS","TOP DATA & FACTS FOR UPSC","TOP DATA AND FACTS FOR UPSC","DATA & FACTS FOR UPSC","DATA AND FACTS FOR UPSC",
+  "HISTORICAL PERSPECTIVE","ECONOMIC PERSPECTIVE","GEOGRAPHICAL PERSPECTIVE","ENVIRONMENTAL PERSPECTIVE","SOCIAL PERSPECTIVE",
+  "POLITICAL PERSPECTIVE","POLITICAL AND GOVERNANCE PERSPECTIVE","PROS","CONS","WAY FORWARD","PRELIMS QUICK REVISION",
+  "PROBABLE PRELIMS QUESTION","PROBABLE MAINS QUESTION","SOURCES","SOURCES CONSULTED",
 ];
 const STRICT_SECTION_SET = new Set(STRICT_SECTIONS);
+const STRICT_MONTHS="January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec";
+
+function strictFactHighlight(value="") {
+  let text=String(value||"");
+  const protectedValues=[];
+  const protect=(match)=>{const token=`§§strict${protectedValues.length}§§`;protectedValues.push(`**${match}**`);return token;};
+  const patterns=[
+    /(?:₹|Rs\.?|INR|US\$|\$|€|£)\s*\d[\d,.]*(?:\.\d+)?\s*(?:lakh\s+crore|crore|lakh|million|billion|trillion|thousand)?/gi,
+    /\b\d+(?:\.\d+)?\s*(?:%|per\s+cent|crore|lakh|million|billion|trillion|GW|MW|kW|km²|sq\.?\s*km|km|metres?|meters?|tonnes?|MT|LMT|kg|hectares?|years?|months?|days?|hours?)\b/gi,
+    new RegExp(`\\b(?:\\d{1,2}\\s+)?(?:${STRICT_MONTHS})\\s+(?:17|18|19|20)\\d{2}\\b`,"gi"),
+    /\b(?:17|18|19|20)\d{2}\b/g,
+    /\b\d+(?:st|nd|rd|th)\b/gi,
+  ];
+  for(const pattern of patterns) text=text.replace(pattern,protect);
+  return text.replace(/§§strict(\d+)§§/g,(_,i)=>protectedValues[Number(i)]||"");
+}
 
 function isStrictPdfSource(value = "") {
   const raw = String(value || "");
@@ -39,47 +39,23 @@ function isStrictPdfSource(value = "") {
 
 function normalizeStrictPdfMarkdown(value = "") {
   let raw = String(value || "").replace(/\r\n?/g, "\n");
-  raw = raw
-    .replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim, "")
-    .replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim, "")
-    .replace(/^\s*CurrentPulse AI\s*\|.*$/gim, "")
-    .replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "");
-
-  // The importer preserves PDF line wrapping. For the strict template, the first
-  // meaningful public block is always WHY IN NEWS. Discard the repeated PDF title/
-  // metadata area above it instead of trying to infer it with loose regexes.
+  raw = raw.replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim, "").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim, "").replace(/^\s*CurrentPulse AI\s*\|.*$/gim, "").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "");
   const whyIndex = raw.search(/(^|\n)\s*WHY\s+IN\s+NEWS\s*(?=\n|$)/i);
   if (whyIndex >= 0) raw = raw.slice(whyIndex).replace(/^\s+/, "");
-
   const lines = raw.split("\n").map((line) => line.trim()).filter(Boolean);
   const out = [];
   let bulletIndex = -1;
-
   for (const original of lines) {
     const upper = original.replace(/\s+/g, " ").toUpperCase();
-    if (STRICT_SECTION_SET.has(upper)) {
-      out.push("", `## ${original.replace(/\s+/g, " ")}`, "");
-      bulletIndex = -1;
-      continue;
-    }
-
+    if (STRICT_SECTION_SET.has(upper)) { out.push("", `## ${original.replace(/\s+/g, " ")}`, ""); bulletIndex = -1; continue; }
     if (/^[•●▪◦◎]\s*/.test(original) || /^[-*]\s+/.test(original)) {
       const text = original.replace(/^(?:[•●▪◦◎]|[-*])\s*/, "").trim();
-      out.push(`- ${text}`);
-      bulletIndex = out.length - 1;
-      continue;
+      out.push(`- ${text}`); bulletIndex = out.length - 1; continue;
     }
-
-    // Wrapped PDF text belongs to the preceding bullet. Joining it here prevents
-    // ReactMarkdown from turning one bullet into a dense unbulleted paragraph.
-    if (bulletIndex >= 0 && out[bulletIndex]?.startsWith("- ")) {
-      out[bulletIndex] += ` ${original}`;
-    } else {
-      out.push(original);
-    }
+    if (bulletIndex >= 0 && out[bulletIndex]?.startsWith("- ")) out[bulletIndex] += ` ${original}`;
+    else out.push(original);
   }
-
-  return highlightMarkdownFacts(repairPdfBoldArtifacts(out.join("\n")).replace(/\n{3,}/g, "\n\n").trim());
+  return strictFactHighlight(repairPdfBoldArtifacts(out.join("\n")).replace(/\n{3,}/g, "\n\n").trim());
 }
 
 function stripPdfHeader(value = "") { return String(value).replace(/^\s*(?:\*{0,2})?CURRENT\s+(?:\*{0,2})?AFFAI\*{0,6}RS\s*\d+.*?(?=(?:WHY\s+IN\s+NEWS|##|\n[-•]))/is,"").replace(/^\s*(?:CURRENT\s+AFFAIRS|CURRENT AFFAIRS)\s*\d*\s*$/gim,"").replace(/^\s*(?:Category|GS|Date)\s*:\s*.*$/gim,""); }
