@@ -46,15 +46,27 @@ test("ResultPulse User-Agent uses canonical host", () => {
   assert.doesNotMatch(collector, /currentpulse-ai\.vercel\.app/);
 });
 
-test("canonical sitemap preserves historical CA but limits News discovery to admin PDFs", () => {
+test("canonical sitemap and public archives preserve historical published CA and News", () => {
   const sitemap = read("app/sitemap.ts");
   const streams = read("lib/articleStreams.js");
   const newsSitemap = read("app/news-sitemap.xml/route.js");
+
   assert.match(sitemap, /isStandaloneCurrentAffairsArticle/);
   assert.match(sitemap, /isPublishedArticleSafe\(article, \{ stream: "coverage" \}\)/);
   assert.match(sitemap, /isPublicNewsArticle\(article\)/);
-  assert.match(streams, /isPublicNewsArticle[\s\S]{0,160}hasAdminPdfSource\(article\)[\s\S]{0,80}hasNewsSource\(article\)/);
   assert.match(sitemap, /isPublishedArticleSafe\(article, \{ stream: "news" \}\)/);
+
+  // Read-side visibility must not be restricted to new admin-PDF provenance.
+  assert.match(streams, /isCurrentAffairsReady\(article = \{\}\)[\s\S]{0,100}hasCoachingSource\(article\)/);
+  assert.match(streams, /isPublicNewsArticle\(article = \{\}\)[\s\S]{0,100}hasNewsSource\(article\)/);
+  assert.doesNotMatch(streams, /\.like\("article_sources\.source_key",\s*"pdf:%"\)/);
+
+  // Historical visibility must not re-enable any collection or publication pipeline.
+  const background = read(".github/workflows/currentpulse-background.yml");
+  const autoPublish = read("app/api/auto-publish/route.js");
+  assert.doesNotMatch(background, /fetch-todays-news|fetch-all-news|auto-publish|coverage-import/);
+  assert.match(autoPublish, /disabled/i);
+
   assert.match(newsSitemap, /NextResponse\.redirect/);
   assert.match(newsSitemap, /\/sitemap\.xml/);
 });
