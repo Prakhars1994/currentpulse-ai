@@ -145,7 +145,7 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail
-          curl --silent --show-error --fail-with-body --max-time 180 \
+          curl --silent --show-error --fail-with-body --retry 4 --retry-all-errors --retry-delay 5 --max-time 180 \
             -H "Authorization: Bearer ${CRON_SECRET}" \
             "https://cp.vliab.workers.dev/api/backfill-images?stream=coverage&limit=8&wait=1"
 
