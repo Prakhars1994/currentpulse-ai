@@ -21,6 +21,9 @@ function stripPdfHeader(value = "") {
     .replace(/^\s*(?:Category|GS|Date)\s*:\s*.*$/gim, "");
 }
 const MAJOR_SECTION = "(?:Why in News\\?|Top Data \\& Facts for UPSC|Top Data and Facts for UPSC|Data \\& Facts for UPSC|Data and Facts for UPSC|Historical Perspective|History|Economic Perspective|Geographical Perspective|Environmental Perspective|Social Perspective|Political Perspective|Political and Governance Perspective|Economic, Geographical \\& Environmental Perspective|Economic, Geographical and Environmental Perspective|Examples, Case Studies \\& Answer-Writing Value|Examples, Case Studies and Answer-Writing Value|Pros / Significance|Cons / Challenges|Advantages and Significance|Limitations and Challenges|Issues and Challenges|Way Forward|Conclusion|Static Foundation|Prelims Quick Revision|Probable Prelims Question|Probable Mains Question|UPSC\\/?BPSC Syllabus Linkage|Sources|Sources Consulted)";
+function promotePerspectiveMicroHeadings(value = "") {
+  return String(value).replace(/(^|\n)\s*[-*]\s+\*\*([A-Z][A-Za-z0-9 /&()'’-]{2,60}\s+perspective):\*\*\s*([^\n]+)/gim, (_,lead,heading,body)=>`${lead}\n\n### ${heading}\n\n- ${body.trim()}`);
+}
 function normalizeMarkdown(value = "") {
   const withoutHtml=/<\/?[a-z][\s\S]*>/i.test(value)?htmlToMarkdown(value):String(value);
   let cleaned=stripPdfHeader(withoutHtml.replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim,"").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim,"").replace(/^\s*CurrentPulse AI\s*\|\s*STRICT CA UPLOAD FORMAT.*$/gim,"").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim,"").replace(/\r\n?/g,"\n"));
@@ -39,6 +42,7 @@ function normalizeMarkdown(value = "") {
     .replace(/\bq\s+UAN\s+tities\b/g,"quantities").replace(/\s+u\s+(?=[a-z])/g,"; ")
     .replace(/\n-\s+(\d{1,4})\s*\.\s*(?=\n|$)/g,"")
     .replace(/\n{3,}/g,"\n\n").trim();
+  cleaned=promotePerspectiveMicroHeadings(cleaned);
   return highlightMarkdownFacts(cleaned);
 }
 export default function ArticleContent({content,fallback}) {
