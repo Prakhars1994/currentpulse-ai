@@ -6,7 +6,11 @@ import "./ArticleContent.css";
 function decodeHtmlEntities(value = "") { return String(value).replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/&lt;/gi,"<").replace(/&gt;/gi,">").replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'"); }
 function htmlToMarkdown(value = "") { return decodeHtmlEntities(value).replace(/<\s*br\s*\/?>/gi,"\n").replace(/<\s*\/p\s*>/gi,"\n\n").replace(/<\s*p(?:\s[^>]*)?>/gi,"").replace(/<\s*h2(?:\s[^>]*)?>([\s\S]*?)<\s*\/h2\s*>/gi,"\n\n## $1\n\n").replace(/<\s*h3(?:\s[^>]*)?>([\s\S]*?)<\s*\/h3\s*>/gi,"\n\n### $1\n\n").replace(/<\s*h4(?:\s[^>]*)?>([\s\S]*?)<\s*\/h4\s*>/gi,"\n\n#### $1\n\n").replace(/<\s*li(?:\s[^>]*)?>([\s\S]*?)<\s*\/li\s*>/gi,"\n- $1").replace(/<\s*\/?(?:ul|ol)(?:\s[^>]*)?>/gi,"\n").replace(/<\s*(?:strong|b)(?:\s[^>]*)?>([\s\S]*?)<\s*\/(?:strong|b)\s*>/gi,"**$1**").replace(/<\s*(?:em|i)(?:\s[^>]*)?>([\s\S]*?)<\s*\/(?:em|i)\s*>/gi,"*$1*").replace(/<[^>]+>/g," "); }
 function repairPdfBoldArtifacts(value = "") { return String(value).replace(/\*{4,}/g,"**").replace(/([\p{L}\p{N}])\*\*(?=[\p{L}\p{N}])/gu,"$1").split("\n").map(line=>{const markers=line.match(/\*\*/g)||[];return markers.length%2===1?line.replace(/\*\*(?![\s\S]*\*\*)/,""):line;}).join("\n"); }
-function stripPdfHeader(value = "") { return String(value).replace(/^\s*(?:\*{0,2})?CURRENT\s+(?:\*{0,2})?AFFAI\*{0,6}RS\s*\d+.*?(?=(?:WHY\s+IN\s+NEWS|##|\n[-•]))/is,"").replace(/^\s*(?:CURRENT\s+AFFAIRS|CURRENT AFFAIRS)\s*\d*\s*$/gim,"").replace(/^\s*(?:Category|GS|Date)\s*:\s*.*$/gim,""); }
+function stripPdfHeader(value = "", strictPdf = false) {
+  let text=String(value);
+  if (strictPdf) text=text.replace(/^[\s\S]*?(?=WHY\s+IN\s+NEWS\b)/i,"");
+  return text.replace(/^\s*(?:\*{0,2})?CURRENT\s+(?:\*{0,2})?AFFAI\*{0,6}RS\s*\d+.*?(?=(?:WHY\s+IN\s+NEWS|##|\n[-•]))/is,"").replace(/^\s*(?:CURRENT\s+AFFAIRS|CURRENT AFFAIRS)\s*\d*\s*$/gim,"").replace(/^\s*(?:Category|GS|Date)\s*:\s*.*$/gim,"");
+}
 const MAJOR_SECTION="(?:Why in News\\?|Top Data \\& Facts for UPSC|Top Data and Facts for UPSC|Data \\& Facts for UPSC|Data and Facts for UPSC|Historical Perspective|History|Economic Perspective|Geographical Perspective|Environmental Perspective|Social Perspective|Political Perspective|Political and Governance Perspective|Economic, Geographical \\& Environmental Perspective|Economic, Geographical and Environmental Perspective|Examples, Case Studies \\& Answer-Writing Value|Examples, Case Studies and Answer-Writing Value|Pros / Significance|Cons / Challenges|Advantages and Significance|Limitations and Challenges|Issues and Challenges|Way Forward|Conclusion|Static Foundation|Prelims Quick Revision|Probable Prelims Question|Probable Mains Question|UPSC\\/?BPSC Syllabus Linkage|Sources|Sources Consulted)";
 const MICRO_HEADING_ENDING="(?:perspective|dimension|angle|lens|linkage|challenge|challenges|concern|concerns|opportunity|opportunities|implication|implications|recommendation|recommendations|case study|case studies|exam relevance|answer-writing value|policy takeaway|governance takeaway|strategic takeaway)";
 function structureMicroHeadings(value="") {
@@ -19,11 +23,12 @@ function structureMicroHeadings(value="") {
   return text;
 }
 function normalizeMarkdown(value="") {
-  const withoutHtml=/<\/?[a-z][\s\S]*>/i.test(value)?htmlToMarkdown(value):String(value);
-  let cleaned=stripPdfHeader(withoutHtml.replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim,"").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim,"").replace(/^\s*CurrentPulse AI\s*\|\s*STRICT CA UPLOAD FORMAT.*$/gim,"").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim,"").replace(/\r\n?/g,"\n"));
+  const raw=String(value||"");
+  const strictPdf=/\[\[CA_START\]\]|^\s*CA_TITLE\s*:/im.test(raw);
+  const withoutHtml=/<\/?[a-z][\s\S]*>/i.test(raw)?htmlToMarkdown(raw):raw;
+  const strippedMarkers=withoutHtml.replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim,"").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim,"").replace(/^\s*CurrentPulse AI\s*\|\s*STRICT CA UPLOAD FORMAT.*$/gim,"").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim,"").replace(/\r\n?/g,"\n");
+  let cleaned=stripPdfHeader(strippedMarkers,strictPdf);
   cleaned=repairPdfBoldArtifacts(cleaned)
-    // Preserve every source bullet. Earlier logic removed bullets that began with a capital letter,
-    // which flattened PDF-imported CA into long paragraphs on the live reader.
     .replace(/(^|\n)\s*[•◎●▪◦]\s*/g,"$1- ")
     .replace(/[ \t]*[•●▪◦][ \t]*/g,"\n\n- ")
     .replace(/\s+[-–—]\s+(?=[A-Z][A-Za-z])/g,"\n\n- ").replace(/[ \t]+(#{2,4})[ \t]+/g,"\n\n$1 ").replace(/\s+(\d{1,2}[.)])[ \t]+(?=[A-Z])/g,"\n\n$1 ")
@@ -35,4 +40,4 @@ function normalizeMarkdown(value="") {
   cleaned=structureMicroHeadings(cleaned).replace(/\n{3,}/g,"\n\n");
   return highlightMarkdownFacts(cleaned);
 }
-export default function ArticleContent({content,fallback}) { const value=normalizeMarkdown(content||fallback||""); return <div className="article-rich-content"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{h2:({children})=><h2>{children}</h2>,h3:({children})=><h3>{children}</h3>,h4:({children})=><h4>{children}</h4>,p:({children})=><p>{children}</p>,ul:({children})=><ul>{children}</ul>,ol:({children})=><ol>{children}</ol>,li:({children})=><li>{children}</li>,strong:({children})=><strong>{children}</strong>,blockquote:({children})=><blockquote>{children}</blockquote>,a:({href,children})=><a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,table:({children})=><div className="article-table-wrap"><table>{children}</table></div>}}>{value}</ReactMarkdown></div>; }
+export default function ArticleContent({content,fallback}) { const source=content||fallback||""; const strictPdf=/\[\[CA_START\]\]|^\s*CA_TITLE\s*:/im.test(String(source)); const value=normalizeMarkdown(source); return <div className={`article-rich-content${strictPdf?" strict-pdf-content":""}`}><ReactMarkdown remarkPlugins={[remarkGfm]} components={{h2:({children})=><h2>{children}</h2>,h3:({children})=><h3>{children}</h3>,h4:({children})=><h4>{children}</h4>,p:({children})=><p>{children}</p>,ul:({children})=><ul>{children}</ul>,ol:({children})=><ol>{children}</ol>,li:({children})=><li>{children}</li>,strong:({children})=><strong>{children}</strong>,blockquote:({children})=><blockquote>{children}</blockquote>,a:({href,children})=><a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,table:({children})=><div className="article-table-wrap"><table>{children}</table></div>}}>{value}</ReactMarkdown></div>; }
