@@ -15,6 +15,24 @@ const STRICT_SECTIONS = [
 ];
 const STRICT_SECTION_SET = new Set(STRICT_SECTIONS);
 const STRICT_MONTHS="January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec";
+const STRICT_SECTION_PATTERN = new RegExp(`\\b(${STRICT_SECTIONS.map(s=>s.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")).join("|")})\\b`,"gi");
+
+function cleanStrictPdfText(value="") {
+  return String(value||"")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g,"")
+    .replace(/(^|\s)[uU]\s+(?=[A-Z0-9])/g,"$1")
+    .replace(/\beliGIble\b/g,"eligible").replace(/\bdiGItal/gi,"digital").replace(/\bforGIv/gi,"forgiv").replace(/\breGIon/gi,"region")
+    .replace(/\bstrateGIc\b/g,"strategic").replace(/\btechnoloGIcal\b/g,"technological").replace(/\benGIneering\b/g,"engineering").replace(/\becoloGIcal\b/g,"ecological").replace(/\bStrateGIc\b/g,"Strategic").replace(/\bforGIngs\b/g,"forgings")
+    .replace(/\b(\d+)\s+(st|nd|rd|th)\b/gi,"$1$2")
+    .replace(/\b(\d+)\s+-\s+(year|month|day|km|GW|MW|MT|LMT)\b/gi,"$1-$2")
+    .replace(/\b(FY)\s+(\d{4})\s+-\s+(\d{2})\b/g,"$1 $2-$3")
+    .replace(/\*\*Rs\s+(\d+)\s*\*\*\s*,\s*\*\*(\d[\d,]*)\s*\*\*/gi,"**Rs $1,$2**")
+    .replace(/\*\*Rs\s+(\d+)\s*\*\*\s*,\s*(\d[\d,]*)/gi,"**Rs $1,$2**")
+    .replace(/\*\*([^*]+)\*\*\s*\*\*([^*]+)\*\*/g,"**$1$2**")
+    .replace(/\s+([,.;:!?])/g,"$1")
+    .replace(/\s{2,}/g," ")
+    .trim();
+}
 
 function strictFactHighlight(value="") {
   let text=String(value||"");
@@ -42,16 +60,28 @@ function normalizeStrictPdfMarkdown(value = "") {
   raw = raw.replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim, "").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim, "").replace(/^\s*CurrentPulse AI\s*\|.*$/gim, "").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "");
   const whyIndex = raw.search(/(^|\n)\s*WHY\s+IN\s+NEWS\s*(?=\n|$)/i);
   if (whyIndex >= 0) raw = raw.slice(whyIndex).replace(/^\s+/, "");
-  const lines = raw.split("\n").map((line) => line.trim()).filter(Boolean);
+  const lines = raw.split("\n").map((line) => cleanStrictPdfText(line)).filter(Boolean);
   const out = [];
   let bulletIndex = -1;
+  const pushSectionAwareBullet=(text)=>{
+    let rest=text.trim();
+    const pieces=[];
+    let last=0; STRICT_SECTION_PATTERN.lastIndex=0; let m;
+    while((m=STRICT_SECTION_PATTERN.exec(rest))!==null){ if(m.index>last) pieces.push({type:"text",value:rest.slice(last,m.index).trim()}); pieces.push({type:"section",value:m[1].toUpperCase()}); last=STRICT_SECTION_PATTERN.lastIndex; }
+    if(last<rest.length) pieces.push({type:"text",value:rest.slice(last).trim()});
+    if(!pieces.some(p=>p.type==="section")){ out.push(`- ${rest}`); bulletIndex=out.length-1; return; }
+    for(const p of pieces){ if(!p.value) continue; if(p.type==="section"){ out.push("",`## ${p.value}`,""); bulletIndex=-1; } else { out.push(`- ${p.value}`); bulletIndex=out.length-1; } }
+  };
   for (const original of lines) {
     const upper = original.replace(/\s+/g, " ").toUpperCase();
-    if (STRICT_SECTION_SET.has(upper)) { out.push("", `## ${original.replace(/\s+/g, " ")}`, ""); bulletIndex = -1; continue; }
-    if (/^[•●▪◦◎]\s*/.test(original) || /^[-*]\s+/.test(original)) {
-      const text = original.replace(/^(?:[•●▪◦◎]|[-*])\s*/, "").trim();
-      out.push(`- ${text}`); bulletIndex = out.length - 1; continue;
+    if (STRICT_SECTION_SET.has(upper)) { out.push("", `## ${upper}`, ""); bulletIndex = -1; continue; }
+    if (/^[•●▪◦◎u]\s*/i.test(original) || /^[-*]\s+/.test(original)) {
+      const text = original.replace(/^(?:[•●▪◦◎u]|[-*])\s*/i, "").trim();
+      pushSectionAwareBullet(text); continue;
     }
+    const inlineSection=original.match(STRICT_SECTION_PATTERN);
+    STRICT_SECTION_PATTERN.lastIndex=0;
+    if(inlineSection){ pushSectionAwareBullet(original); continue; }
     if (bulletIndex >= 0 && out[bulletIndex]?.startsWith("- ")) out[bulletIndex] += ` ${original}`;
     else out.push(original);
   }
