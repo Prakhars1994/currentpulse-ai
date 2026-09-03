@@ -138,18 +138,8 @@ jobs:
           done
           echo "Production smoke test passed."
 
-      - name: Enrich newly published article images
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        shell: bash
-        env:
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: |
-          set -euo pipefail
-          if ! curl --silent --show-error --fail-with-body --retry 2 --retry-all-errors --retry-delay 5 --max-time 120 \
-            -H "Authorization: Bearer ${CRON_SECRET}" \
-            "https://cp.vliab.workers.dev/api/backfill-images?stream=coverage&limit=4&wait=1"; then
-            echo "::warning title=Image enrichment deferred::The site is deployed; a transient image retry will run on the next safe release."
-          fi
+      # PDF publication already performs bounded, persist-once image enrichment.
+      # Do not trigger historical external-provider searches on every code deploy.
 
       - name: Save validated release snapshot
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
