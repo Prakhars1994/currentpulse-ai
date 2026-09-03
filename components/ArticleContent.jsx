@@ -21,8 +21,14 @@ function stripPdfHeader(value = "") {
     .replace(/^\s*(?:Category|GS|Date)\s*:\s*.*$/gim, "");
 }
 const MAJOR_SECTION = "(?:Why in News\\?|Top Data \\& Facts for UPSC|Top Data and Facts for UPSC|Data \\& Facts for UPSC|Data and Facts for UPSC|Historical Perspective|History|Economic Perspective|Geographical Perspective|Environmental Perspective|Social Perspective|Political Perspective|Political and Governance Perspective|Economic, Geographical \\& Environmental Perspective|Economic, Geographical and Environmental Perspective|Examples, Case Studies \\& Answer-Writing Value|Examples, Case Studies and Answer-Writing Value|Pros / Significance|Cons / Challenges|Advantages and Significance|Limitations and Challenges|Issues and Challenges|Way Forward|Conclusion|Static Foundation|Prelims Quick Revision|Probable Prelims Question|Probable Mains Question|UPSC\\/?BPSC Syllabus Linkage|Sources|Sources Consulted)";
-function promotePerspectiveMicroHeadings(value = "") {
-  return String(value).replace(/(^|\n)\s*[-*]\s+\*\*([A-Z][A-Za-z0-9 /&()'’-]{2,60}\s+perspective):\*\*\s*([^\n]+)/gim, (_,lead,heading,body)=>`${lead}\n\n### ${heading}\n\n- ${body.trim()}`);
+const MICRO_HEADING_ENDING = "(?:perspective|dimension|angle|challenge|challenges|concern|concerns|opportunity|opportunities|implication|implications|recommendation|recommendations|case study|case studies|exam relevance|answer-writing value|policy takeaway|governance takeaway|strategic takeaway)";
+function promoteSuitableMicroHeadings(value = "") {
+  let text=String(value);
+  const boldPattern=new RegExp(`(^|\\n)\\s*[-*]\\s+\\*\\*([A-Z][A-Za-z0-9 /&()'’–—-]{2,70}\\s+${MICRO_HEADING_ENDING}):\\*\\*\\s*([^\\n]+)`,`gim`);
+  const plainPattern=new RegExp(`(^|\\n)\\s*[-*]\\s+([A-Z][A-Za-z0-9 /&()'’–—-]{2,70}\\s+${MICRO_HEADING_ENDING}):\\s*([^\\n]+)`,`gim`);
+  text=text.replace(boldPattern,(_,lead,heading,body)=>`${lead}\n\n### ${heading}\n\n- ${body.trim()}`);
+  text=text.replace(plainPattern,(_,lead,heading,body)=>`${lead}\n\n### ${heading}\n\n- ${body.trim()}`);
+  return text;
 }
 function normalizeMarkdown(value = "") {
   const withoutHtml=/<\/?[a-z][\s\S]*>/i.test(value)?htmlToMarkdown(value):String(value);
@@ -42,7 +48,7 @@ function normalizeMarkdown(value = "") {
     .replace(/\bq\s+UAN\s+tities\b/g,"quantities").replace(/\s+u\s+(?=[a-z])/g,"; ")
     .replace(/\n-\s+(\d{1,4})\s*\.\s*(?=\n|$)/g,"")
     .replace(/\n{3,}/g,"\n\n").trim();
-  cleaned=promotePerspectiveMicroHeadings(cleaned);
+  cleaned=promoteSuitableMicroHeadings(cleaned);
   return highlightMarkdownFacts(cleaned);
 }
 export default function ArticleContent({content,fallback}) {
