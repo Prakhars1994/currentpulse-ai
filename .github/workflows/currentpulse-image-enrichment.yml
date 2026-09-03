@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - ".github/workflows/currentpulse-image-enrichment.yml"
+      - "lib/news/governmentImageResolver.js"
   workflow_dispatch:
     inputs:
       stream:
