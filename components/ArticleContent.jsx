@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { highlightMarkdownFacts } from "@/lib/study/highlightFacts";
+import "./ArticleContent.css";
 
 function decodeHtmlEntities(value = "") { return String(value).replace(/&nbsp;/gi," ").replace(/&amp;/gi,"&").replace(/&lt;/gi,"<").replace(/&gt;/gi,">").replace(/&quot;/gi,'"').replace(/&#39;|&apos;/gi,"'"); }
 function htmlToMarkdown(value = "") { return decodeHtmlEntities(value).replace(/<\s*br\s*\/?>/gi,"\n").replace(/<\s*\/p\s*>/gi,"\n\n").replace(/<\s*p(?:\s[^>]*)?>/gi,"").replace(/<\s*h2(?:\s[^>]*)?>([\s\S]*?)<\s*\/h2\s*>/gi,"\n\n## $1\n\n").replace(/<\s*h3(?:\s[^>]*)?>([\s\S]*?)<\s*\/h3\s*>/gi,"\n\n### $1\n\n").replace(/<\s*h4(?:\s[^>]*)?>([\s\S]*?)<\s*\/h4\s*>/gi,"\n\n#### $1\n\n").replace(/<\s*li(?:\s[^>]*)?>([\s\S]*?)<\s*\/li\s*>/gi,"\n- $1").replace(/<\s*\/?(?:ul|ol)(?:\s[^>]*)?>/gi,"\n").replace(/<\s*(?:strong|b)(?:\s[^>]*)?>([\s\S]*?)<\s*\/(?:strong|b)\s*>/gi,"**$1**").replace(/<\s*(?:em|i)(?:\s[^>]*)?>([\s\S]*?)<\s*\/(?:em|i)\s*>/gi,"*$1*").replace(/<[^>]+>/g," "); }
@@ -10,13 +11,10 @@ const MAJOR_SECTION="(?:Why in News\\?|Top Data \\& Facts for UPSC|Top Data and 
 const MICRO_HEADING_ENDING="(?:perspective|dimension|angle|lens|linkage|challenge|challenges|concern|concerns|opportunity|opportunities|implication|implications|recommendation|recommendations|case study|case studies|exam relevance|answer-writing value|policy takeaway|governance takeaway|strategic takeaway)";
 function structureMicroHeadings(value="") {
   let text=String(value);
-  // Convert suitable bold labels anywhere in a paragraph/list into a real H3 followed by a bullet.
   const inlineBold=new RegExp(`(?:^|\\s+)\\*\\*([A-Z][A-Za-z0-9 /&()'’–—-]{1,70}\\s+${MICRO_HEADING_ENDING}):\\*\\*\\s*`,"gim");
   text=text.replace(inlineBold,(_,heading)=>`\n\n### ${heading}\n\n- `);
-  // Also handle plain labels that already begin a bullet.
   const plainBullet=new RegExp(`(^|\\n)\\s*[-*]\\s+([A-Z][A-Za-z0-9 /&()'’–—-]{1,70}\\s+${MICRO_HEADING_ENDING}):\\s*`,`gim`);
   text=text.replace(plainBullet,(_,lead,heading)=>`${lead}\n\n### ${heading}\n\n- `);
-  // Once a dense paragraph has been split by micro-headings, make sentence boundaries beneath them scannable bullets.
   text=text.replace(/(^|\n)(### [^\n]+\n\n- [^\n]+?\.)(?=\s+[A-Z][^\n]{25,})/g,(_,lead,first)=>`${lead}${first.replace(/\.\s+/g,".\n- ")}`);
   return text;
 }
@@ -24,7 +22,11 @@ function normalizeMarkdown(value="") {
   const withoutHtml=/<\/?[a-z][\s\S]*>/i.test(value)?htmlToMarkdown(value):String(value);
   let cleaned=stripPdfHeader(withoutHtml.replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim,"").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim,"").replace(/^\s*CurrentPulse AI\s*\|\s*STRICT CA UPLOAD FORMAT.*$/gim,"").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim,"").replace(/\r\n?/g,"\n"));
   cleaned=repairPdfBoldArtifacts(cleaned)
-    .replace(/(^|\n)\s*[•◎●▪◦]\s*(?=[A-Z])/g,"$1").replace(/[ \t]*[•●▪◦][ \t]*/g,"\n\n- ").replace(/\s+[-–—]\s+(?=[A-Z][A-Za-z])/g,"\n\n- ").replace(/[ \t]+(#{2,4})[ \t]+/g,"\n\n$1 ").replace(/\s+(\d{1,2}[.)])[ \t]+(?=[A-Z])/g,"\n\n$1 ")
+    // Preserve every source bullet. Earlier logic removed bullets that began with a capital letter,
+    // which flattened PDF-imported CA into long paragraphs on the live reader.
+    .replace(/(^|\n)\s*[•◎●▪◦]\s*/g,"$1- ")
+    .replace(/[ \t]*[•●▪◦][ \t]*/g,"\n\n- ")
+    .replace(/\s+[-–—]\s+(?=[A-Z][A-Za-z])/g,"\n\n- ").replace(/[ \t]+(#{2,4})[ \t]+/g,"\n\n$1 ").replace(/\s+(\d{1,2}[.)])[ \t]+(?=[A-Z])/g,"\n\n$1 ")
     .replace(new RegExp(`(^|\\n|\\s+)(${MAJOR_SECTION})\\s*:?[ \\t]*(?=(?:[-•●▪◦]|[A-Z0-9]))`,"gim"),"$1\n\n## $2\n\n").replace(new RegExp(`(^|\\n)\\s*(${MAJOR_SECTION})\\s*:?[ \\t]*(?=\\n|$)`,"gim"),"$1## $2\n")
     .replace(/(?:^|\n|\.\s+)(Background|Context|Significance|Key Developments|Key Issues(?: or Challenges)?|Issues and Challenges|Issues|Challenges|Impact|Implications|Opportunities|Recommendations|Dimensions|Key Features|Key Provisions|Concerns|Limitations)\s*:?\s+(?=[A-Z])/gi,(_,heading)=>`\n\n### ${heading}\n\n`)
     .replace(/(^|\n)([-*]\s+)?([A-Z][A-Za-z0-9 /&()'-]{2,45}):\s+/g,"$1$2**$3:** ").replace(/\s+-[ \t]+/g,"\n- ")
