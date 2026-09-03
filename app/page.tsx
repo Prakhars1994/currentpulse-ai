@@ -8,6 +8,7 @@ import Categories from "@/components/Categories";
 import LatestNews from "@/components/LatestNews";
 import { loadHomepageSnapshot } from "@/lib/siteStats";
 import { SITE_URL } from "@/lib/siteUrl";
+import { cleanPublicExcerpt, repairedCaTitle, repairedNewsTitle } from "@/lib/publicArticleRepair";
 
 export const metadata = {
   title: "CurrentPulse AI - UPSC Current Affairs, PYQs, Quiz & News",
@@ -40,12 +41,26 @@ const EMPTY_STATS = {
   lastUpdated: null, date: null, error: null,
 };
 
+function cleanHomepageArticle(article: HomepageArticle, stream: "ca" | "news") {
+  const title = stream === "ca" ? repairedCaTitle(article) : repairedNewsTitle(article);
+  return {
+    ...article,
+    title,
+    why_news: cleanPublicExcerpt(article.why_news || "", title, 520),
+  };
+}
+
 export default async function Home() {
   let streams = EMPTY_STREAMS;
   let stats = EMPTY_STATS;
   try {
     const snapshot = await loadHomepageSnapshot(18);
-    streams = snapshot?.streams || EMPTY_STREAMS;
+    const raw = snapshot?.streams || EMPTY_STREAMS;
+    streams = {
+      currentAffairs: (raw.currentAffairs || []).map((item: HomepageArticle) => cleanHomepageArticle(item, "ca")),
+      news: (raw.news || []).map((item: HomepageArticle) => cleanHomepageArticle(item, "news")),
+      error: raw.error || null,
+    };
     stats = snapshot?.stats || EMPTY_STATS;
   } catch (error: unknown) {
     console.error("[Homepage] snapshot unavailable:", error instanceof Error ? error.message : String(error));
