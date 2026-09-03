@@ -5,55 +5,47 @@ import SiteShell from "@/components/SiteShell";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
 import { SITE_URL } from "@/lib/siteUrl";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   applicationName: "CurrentPulse AI",
   title: {
-    default: "UPSC Current Affairs Today, PYQs, Quiz & News — CurrentPulse AI",
+    default: "CurrentPulse AI - UPSC Current Affairs, PYQs, Quiz & News",
     template: "%s | CurrentPulse AI",
   },
   description:
-    "Daily UPSC current affairs for Prelims and Mains from trusted coaching sources, plus PYQs, quizzes, PDFs, exam updates and source-attributed news.",
+    "CurrentPulse AI is an exam-focused platform for administrator-published UPSC current affairs, Prelims facts, Mains analysis, PYQs, quizzes, revision PDFs and source-attributed news.",
   keywords: [
+    "CurrentPulse AI",
+    "Current Pulse AI",
     "UPSC current affairs",
-    "daily current affairs for UPSC",
     "UPSC current affairs today",
+    "daily current affairs for UPSC",
     "UPSC Prelims current affairs",
     "UPSC Mains current affairs",
+    "UPSC PYQ",
     "UPSC current affairs quiz",
-    "UPSC notes",
-    "civil services examination",
   ],
   authors: [{ name: "CurrentPulse Editorial Desk", url: SITE_URL }],
   creator: "CurrentPulse AI",
   publisher: "CurrentPulse AI",
-  alternates: {
-    types: { "application/rss+xml": `${SITE_URL}/feed.xml` },
-  },
+  alternates: { types: { "application/rss+xml": `${SITE_URL}/feed.xml` } },
   openGraph: {
     type: "website",
     locale: "en_IN",
     url: SITE_URL,
     siteName: "CurrentPulse AI",
-    title: "UPSC Current Affairs Today, PYQs & Quiz — CurrentPulse AI",
+    title: "CurrentPulse AI - UPSC Current Affairs, PYQs, Quiz & News",
     description:
-      "Daily UPSC current affairs with trusted-source coverage, Prelims facts, Mains analysis, PYQs, quizzes and exam updates.",
+      "Administrator-published UPSC current affairs with Prelims facts, Mains analysis, PYQs, quizzes, revision tools and source-attributed news.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "UPSC Current Affairs Today — CurrentPulse AI",
+    title: "CurrentPulse AI - UPSC Current Affairs",
     description:
-      "Daily UPSC current affairs, PYQs, quizzes, exam updates and source-attributed news.",
+      "UPSC current affairs, PYQs, quizzes, revision tools and source-attributed news.",
   },
   robots: {
     index: true,
@@ -71,17 +63,9 @@ export const metadata: Metadata = {
     : undefined,
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en"
-      data-scroll-behavior="smooth"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <script
           type="application/ld+json"
@@ -93,14 +77,17 @@ export default function RootLayout({
                   "@type": "Organization",
                   "@id": `${SITE_URL}/#organization`,
                   name: "CurrentPulse AI",
+                  alternateName: ["Current Pulse AI", "CurrentPulseAI"],
                   url: SITE_URL,
                   logo: `${SITE_URL}/icon.svg`,
+                  description: "Exam-focused UPSC current affairs, PYQs, quizzes and revision tools.",
                 },
                 {
                   "@type": "WebSite",
                   "@id": `${SITE_URL}/#website`,
                   url: SITE_URL,
                   name: "CurrentPulse AI",
+                  alternateName: ["Current Pulse AI", "CurrentPulseAI"],
                   publisher: { "@id": `${SITE_URL}/#organization` },
                   inLanguage: "en-IN",
                   potentialAction: {
