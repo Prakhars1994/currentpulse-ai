@@ -35,6 +35,7 @@ concurrency:
   group: currentpulse-reader-release
   # Every successful run advances a durable database watermark. Cancelling an
   # older valid release can otherwise lose the only refresh for its mutation.
+  # Keep this workflow as the durable fallback when direct dispatch is unavailable.
   cancel-in-progress: false
 
 env:
