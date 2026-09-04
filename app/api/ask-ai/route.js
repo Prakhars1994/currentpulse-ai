@@ -92,6 +92,94 @@ function freeSourceAnswer(question, mode, wiki, gdelt) {
 }
 
 function isCoaching(article = {}) { return (article.article_sources || []).some((source) => source?.source_kind === "coaching"); }
+function articlePath(article) { return `${isCoaching(article) ? "/current-affairs" : "/news"}/${article.slug}`; }
+
+function compactKey(value = "") {
+  return String(value || "").toLowerCase().replace(/<[^>]+>/g, " ").replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+}
+function stripControlLine(value = "", articleTitle = "") {
+  const line = normalize(String(value || "").replace(/^\s*[•▪◦*-]\s*/, ""));
+  if (!line) return "";
+  const key = compactKey(line);
+  if (!key) return "";
+  if (articleTitle && key === compactKey(articleTitle)) return "";
+  if (/^\[\[ca_(?:start|end)\]\]$/i.test(line)) return "";
+  if (/^ca_(?:title|category|gs|date|image)\s*:/i.test(line)) return "";
+  if (/^current\s+affairs\s+\d+$/i.test(line)) return "";
+  if (/^(?:category|gs|date|quick rule|data rule)$/i.test(line)) return "";
+  if (/^(?:read highlighted facts first|30\+ numerical facts)$/i.test(line)) return "";
+  if (/^(?:static|data|prelims|mains)\s*:\s*$/i.test(line)) return "";
+  if (/^(?:source|sources)\s*\d*\s*:?$/i.test(line)) return "";
+  if (/^url\s*:/i.test(line)) return "";
+  return line;
+}
+
+const SECTION_HEADINGS = [
+  ["fast", /^(?:⚡\s*)?fast\s+read\b/i],
+  ["why", /^why\s+in\s+news\b/i],
+  ["facts", /^(?:top\s+)?data\s*&\s*facts(?:\s+for\s+upsc)?\b|^top\s+data\s*&\s*facts\b|^key\s+facts\b/i],
+  ["history", /^historical\s+perspective\b/i],
+  ["economy", /^economic\s+perspective\b/i],
+  ["geography", /^geographical\s+perspective\b/i],
+  ["environment", /^environmental\s+perspective\b/i],
+  ["social", /^social\s+perspective\b/i],
+  ["governance", /^(?:political(?:\s*\/\s*|\s*&\s*)governance|political)\s+perspective\b/i],
+  ["pros", /^pros\b/i],
+  ["cons", /^cons\b/i],
+  ["way", /^way\s+forward\b/i],
+  ["revision", /^(?:prelims\s+quick\s+revision|quick\s+revision)\b/i],
+  ["objective", /^(?:probable\s+)?(?:prelims|objective)\s+question\b/i],
+  ["descriptive", /^(?:probable\s+)?(?:mains|descriptive)\s+question\b/i],
+  ["sources", /^sources?\b/i],
+];
+function sectionName(line = "") {
+  return SECTION_HEADINGS.find(([, pattern]) => pattern.test(normalize(line)))?.[0] || "";
+}
+function splitSentences(text = "") {
+  return String(text || "").split(/(?<=[.!?])\s+(?=[A-Z0-9])/).map(normalize).filter((item) => item.length >= 25);
+}
+function uniqueLines(lines = [], limit = 8) {
+  const seen = [];
+  const out = [];
+  for (const raw of lines) {
+    const line = normalize(raw);
+    const key = compactKey(line);
+    if (!key || key.length < 12) continue;
+    const duplicate = seen.some((prior) => prior === key || (key.length > 45 && prior.includes(key)) || (prior.length > 45 && key.includes(prior)));
+    if (duplicate) continue;
+    seen.push(key);
+    out.push(line);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+function parseArticleSections(article = {}) {
+  const sections = { fast: [], why: [], facts: [], history: [], economy: [], geography: [], environment: [], social: [], governance: [], pros: [], cons: [], way: [], revision: [], objective: [], descriptive: [], unassigned: [] };
+  const raw = [article.why_news, article.static_foundation, article.data_examples, article.prelims, article.mains].filter(Boolean).join("\n");
+  let active = "unassigned";
+  for (const rawLine of String(raw || "").split(/\r?\n/)) {
+    const line = stripControlLine(rawLine, article.title);
+    if (!line) continue;
+    const next = sectionName(line);
+    if (next) { active = next; continue; }
+    if (active === "sources" || active === "objective" || active === "descriptive") continue;
+    sections[active].push(line);
+  }
+  if (!sections.why.length) sections.why = splitSentences(stripControlLine(article.why_news, article.title)).slice(0,4);
+  if (!sections.facts.length && article.data_examples) sections.facts = splitSentences(article.data_examples);
+  if (!sections.revision.length && article.prelims) sections.revision = splitSentences(article.prelims);
+  if (!sections.way.length && article.mains) {
+    const mains = splitSentences(article.mains);
+    sections.governance.push(...mains.slice(0,4));
+  }
+  for (const key of Object.keys(sections)) sections[key] = uniqueLines(sections[key], key === "facts" ? 12 : 8);
+  return sections;
+}
+function scoreArticle(article, terms = []) {
+  const title = compactKey(article.title);
+  const body = compactKey([article.why_news,article.static_foundation,article.data_examples,article.prelims,article.mains].join(" "));
+  return terms.reduce((score, term) => score + (title.includes(term) ? 8 : 0) + (body.includes(term) ? 2 : 0), 0);
+}
 async function retrieveArticles(question) {
   const terms = keywords(question); if (!terms.length) return [];
   const client = createServerSupabase();
@@ -99,10 +187,53 @@ async function retrieveArticles(question) {
   const orFilter = safeTerms.flatMap((term) => [`title.ilike.%${term}%`,`why_news.ilike.%${term}%`,`static_foundation.ilike.%${term}%`]).join(",");
   const { data, error } = await client.from("articles").select("id,title,slug,category,why_news,static_foundation,data_examples,prelims,mains,updated_at,article_sources(source_kind)").eq("status","published").or(orFilter).order("updated_at",{ascending:false}).limit(12);
   if (error) return [];
-  return (data || []).filter((article) => { const stream = isCoaching(article) ? "coverage" : "news"; return stream === "news" ? isDisplayWorthyNews(article) : isPublishedArticleSafe(article,{stream}); }).slice(0,4);
+  return (data || [])
+    .filter((article) => { const stream = isCoaching(article) ? "coverage" : "news"; return stream === "news" ? isDisplayWorthyNews(article) : isPublishedArticleSafe(article,{stream}); })
+    .sort((a,b) => scoreArticle(b, safeTerms) - scoreArticle(a, safeTerms))
+    .slice(0,4);
 }
-function articlePath(article) { return `${isCoaching(article) ? "/current-affairs" : "/news"}/${article.slug}`; }
-function buildContext(articles) { return articles.map((a,i)=>`SOURCE ${i+1}: ${a.title}\nURL: ${SITE_URL}${articlePath(a)}\nWHY: ${String(a.why_news||"").slice(0,1000)}\nSTATIC: ${String(a.static_foundation||"").slice(0,800)}\nDATA: ${String(a.data_examples||"").slice(0,900)}\nPRELIMS: ${String(a.prelims||"").slice(0,700)}\nMAINS: ${String(a.mains||"").slice(0,900)}`).join("\n\n---\n\n"); }
+function emphasize(line = "") {
+  return String(line || "")
+    .replace(/\b(\d[\d,.]*(?:\s*(?:%|crore|lakh|million|billion|MMT|MW|GW|km|years?|days?|FIRs?))?)\b/g, "**$1**")
+    .replace(/\b(NCPCR|CARA|NABARD|IMD|ISRO|UNEP|SEBI|RBI|CFT|AML|BRICS|GSLV-F17|EOS-05|PM-JANMAN|AgriStack|NAMASTE)\b/g, "**$1**");
+}
+function bullets(lines = [], limit = 5) {
+  return uniqueLines(lines, limit).map((line) => `- ${emphasize(line)}`).join("\n");
+}
+function composeCurrentPulseAnswer(question, mode, articles = []) {
+  if (!articles.length) return "";
+  const primary = articles[0];
+  const s = parseArticleSections(primary);
+  const parts = [];
+  const direct = uniqueLines([...s.why, ...s.fast, ...s.unassigned], 3);
+  if (direct.length) parts.push(`### Direct answer\n\n${direct.map(emphasize).join(" ")}`);
+
+  const facts = uniqueLines([...s.fast, ...s.facts, ...s.revision], mode === "Prelims Facts" ? 8 : 6);
+  if (facts.length) parts.push(`### Key facts\n\n${bullets(facts, mode === "Prelims Facts" ? 8 : 6)}`);
+
+  const q = normalize(question).toLowerCase();
+  if (/\b(pros?|advantages?|benefits?)\b/.test(q) && s.pros.length) parts.push(`### Benefits\n\n${bullets(s.pros,6)}`);
+  if (/\b(cons?|disadvantages?|limitations?|challenges?|risks?)\b/.test(q) && s.cons.length) parts.push(`### Challenges\n\n${bullets(s.cons,6)}`);
+  if (/\b(way forward|solution|solutions|reform|reforms|what should|next steps?)\b/.test(q) && s.way.length) parts.push(`### Way forward\n\n${bullets(s.way,6)}`);
+
+  const whyMatters = uniqueLines([...s.economy, ...s.social, ...s.environment, ...s.governance], 4);
+  if (whyMatters.length && mode !== "Prelims Facts") parts.push(`### Why it matters\n\n${bullets(whyMatters,4)}`);
+
+  if (mode === "Prelims Facts" && s.revision.length) parts.push(`### Quick revision\n\n${bullets(s.revision,6)}`);
+
+  if (articles.length > 1) {
+    const related = articles.slice(1,3).map((a) => `- **${a.title}**`).join("\n");
+    if (related) parts.push(`### Related CurrentPulse coverage\n\n${related}`);
+  }
+  return parts.join("\n\n");
+}
+function buildContext(articles) {
+  return articles.map((a,i) => {
+    const s = parseArticleSections(a);
+    const evidence = uniqueLines([...s.why,...s.fast,...s.facts,...s.economy,...s.social,...s.governance,...s.way], 16).join("\n");
+    return `SOURCE ${i+1}: ${a.title}\n${evidence}`;
+  }).join("\n\n---\n\n");
+}
 function buildInstruction(mode) { if (mode === "Mains Answer") return "Write a concise UPSC GS Mains answer with Introduction, analytical Body, examples, Way Forward and Conclusion."; if (mode === "MCQs") return "Generate 5 UPSC-style MCQs with answers and brief explanations, using only supplied evidence."; return "Explain clearly with compact headings and bullets."; }
 
 export async function POST(request) {
@@ -123,18 +254,17 @@ export async function POST(request) {
     const deterministic = freeSourceAnswer(cleanQuestion, mode, wiki, gdelt);
     const freeSources = [wiki?.url ? { title: wiki.title || "Wikipedia", url: wiki.url, type: "wikipedia" } : null, ...(gdelt || []).map((item)=>({ title:item.title,url:item.url,type:"gdelt-discovery" }))].filter(Boolean);
 
-    if (deterministic && !analyticalMode(mode)) {
-      return NextResponse.json(writeAnswerCache(cacheKey, { answer: deterministic, provider: "free-sources", zeroAi: true, sources: freeSources }));
-    }
-
-    // Only now touch CurrentPulse DB; this is bounded to one query and 12 rows.
-    const articles = await retrieveArticles(cleanQuestion).catch(() => []);
+    // Current topics should prefer CurrentPulse's own published evidence instead of dumping raw DB fields.
+    const articles = (wantsCurrent || !deterministic || analyticalMode(mode)) ? await retrieveArticles(cleanQuestion).catch(() => []) : [];
     const cpSources = articles.map((a)=>({ title:a.title,url:`${SITE_URL}${articlePath(a)}`,type:"currentpulse" }));
-    const context = [deterministic ? `FREE SOURCE MATERIAL:\n${deterministic}` : "", buildContext(articles)].filter(Boolean).join("\n\n===\n\n");
+    const composed = composeCurrentPulseAnswer(cleanQuestion, mode, articles);
 
-    if (!analyticalMode(mode) && context) {
-      return NextResponse.json(writeAnswerCache(cacheKey, { answer: context, provider: "free-sources-currentpulse", zeroAi: true, sources: [...freeSources,...cpSources] }));
+    if (!analyticalMode(mode)) {
+      if (composed) return NextResponse.json(writeAnswerCache(cacheKey, { answer: composed, provider: "CurrentPulse sources", zeroAi: true, sources: cpSources.slice(0,3) }));
+      if (deterministic) return NextResponse.json(writeAnswerCache(cacheKey, { answer: deterministic, provider: "Free reference", zeroAi: true, sources: freeSources.slice(0,3) }));
     }
+
+    const context = [deterministic ? `FREE SOURCE MATERIAL:\n${deterministic}` : "", buildContext(articles)].filter(Boolean).join("\n\n===\n\n");
 
     if (!getConfiguredAiProviders().length) {
       return NextResponse.json(writeAnswerCache(cacheKey, { answer: context || "I could not verify enough material for this query.", provider: "deterministic-fallback", zeroAi: true, sources: [...freeSources,...cpSources] }));
