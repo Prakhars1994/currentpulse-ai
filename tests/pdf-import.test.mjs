@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { normalizePdfExtractionArtifacts } from "../lib/pdf/clientExtract.js";
 
 function load(relative) {
   return fs.readFileSync(
@@ -19,6 +20,14 @@ function page(pageNumber, lines) {
     lines,
   };
 }
+
+test("PDF extraction repairs only deterministic glyph artifacts", () => {
+  const source = "India has the 2 nd-largest network. Action Plan s improve loGIstics and brinGIng. GI tags remain protected.";
+  assert.equal(
+    normalizePdfExtractionArtifacts(source),
+    "India has the 2nd-largest network. Action Plans improve logistics and bringing. GI tags remain protected."
+  );
+});
 
 test("PDF importer exposes separate English CA, Hindi CA and News PDF lanes", () => {
   const pageSource = load("components/admin/PdfImportWorkspace.jsx");
