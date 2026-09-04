@@ -136,6 +136,7 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
       let published = 0;
       let duplicates = 0;
       let failed = 0;
+      let lastMessage = "";
       const failures = [];
 
       for (let offset = 0; offset < selectedDrafts.length; offset += 20) {
@@ -154,6 +155,7 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
         });
 
         const data = await response.json();
+        lastMessage = data?.message || lastMessage;
 
         if (!response.ok && !data?.results) {
           throw new Error(data?.message || "PDF publish batch failed.");
@@ -174,7 +176,7 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
 
       setErrors(failures.slice(0, 8));
       setMessage(
-        data?.message ||
+        lastMessage ||
           `Published ${published}; duplicates ${duplicates}; failed ${failed}.`
       );
     } catch (error) {
