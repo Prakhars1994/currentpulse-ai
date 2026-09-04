@@ -19,6 +19,16 @@ const STRICT_SECTIONS = [
 ];
 const STRICT_SECTION_SET = new Set(STRICT_SECTIONS.map((section) => section.toUpperCase()));
 const STRICT_INLINE_SECTIONS = STRICT_SECTIONS.filter((section) => !["PROS", "CONS", "SOURCES", "SOURCES CONSULTED", "पेशेवरों", "विपक्ष", "स्रोत"].includes(section));
+const STRICT_REPEATED_BOILERPLATE = [
+  /^Governance lens: durable success requires clear responsibility, capable institutions, transparent data, auditability and periodic independent evaluation\.?$/i,
+  /^Data-quality lens: every headline number needs a definition, denominator, time period and source\.?$/i,
+  /^Outcome lens: money, meetings, registrations, MoUs and infrastructure are inputs or outputs; final outcomes matter more\.?$/i,
+  /^Risk lens: identify second-order cyber, distributional, fiscal, environmental or institutional effects early\.?$/i,
+  /^UPSC answer technique: begin with the current trigger, add one static concept, use numerical anchors, present a balanced limitation and end with an implementable reform\.?$/i,
+  /^Institutional lens: name the responsible institution and its legal or policy role; UPSC rewards institutional precision\.?$/i,
+  /^Prelims anchor: remember the institution, location, date and one distinctive numerical fact together\.?$/i,
+  /^Mains linkage: use 2-3 numbers as evidence inside an argument, not as a substitute for causal explanation\.?$/i,
+];
 const STRICT_MONTHS="January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec";
 const STRICT_SECTION_PATTERN = new RegExp(`(?<![\\p{L}\\p{N}])(${STRICT_INLINE_SECTIONS.map(s=>s.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")).join("|")})(?![\\p{L}\\p{N}])`,"giu");
 
@@ -79,6 +89,7 @@ function normalizeStrictPdfMarkdown(value = "") {
     for(const p of pieces){ if(!p.value) continue; if(p.type==="section"){ out.push("",`## ${p.value}`,""); bulletIndex=-1; } else { out.push(`- ${p.value}`); bulletIndex=out.length-1; } }
   };
   for (const original of lines) {
+    if (STRICT_REPEATED_BOILERPLATE.some((pattern) => pattern.test(original))) continue;
     const upper = original.replace(/\s+/g, " ").toUpperCase();
     if (STRICT_SECTION_SET.has(upper)) { out.push("", `## ${original}`, ""); bulletIndex = -1; continue; }
     if (/^[•●▪◦◎u]\s*/i.test(original) || /^[-*]\s+/.test(original)) {
