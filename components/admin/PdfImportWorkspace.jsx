@@ -174,10 +174,8 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
 
       setErrors(failures.slice(0, 8));
       setMessage(
-        `Published ${published}; duplicates ${duplicates}; failed ${failed}. ` +
-        (published > 0
-          ? "Structured articles are in Supabase; the public static reader still needs its incremental release."
-          : "")
+        data?.message ||
+          `Published ${published}; duplicates ${duplicates}; failed ${failed}.`
       );
     } catch (error) {
       setMessage(error?.message || "Could not publish the selected articles.");
