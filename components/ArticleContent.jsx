@@ -85,7 +85,7 @@ function normalizeStrictPdfMarkdown(value = "") {
     if (bulletIndex >= 0 && out[bulletIndex]?.startsWith("- ")) out[bulletIndex] += ` ${original}`;
     else out.push(original);
   }
-  return strictFactHighlight(repairPdfBoldArtifacts(out.join("\n")).replace(/\n{3,}/g, "\n\n").trim());
+  return repairPdfBoldArtifacts(out.join("\n")).replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function stripPdfHeader(value = "") { return String(value).replace(/^\s*(?:\*{0,2})?CURRENT\s+(?:\*{0,2})?AFFAI\*{0,6}RS\s*\d+.*?(?=(?:WHY\s+IN\s+NEWS|##|\n[-•]))/is,"").replace(/^\s*(?:CURRENT\s+AFFAIRS|CURRENT AFFAIRS)\s*\d*\s*$/gim,"").replace(/^\s*(?:Category|GS|Date)\s*:\s*.*$/gim,""); }
@@ -118,9 +118,6 @@ function normalizeMarkdown(value="") {
 export default function ArticleContent({content,fallback}) {
   const source=content||fallback||"";
   const strictPdf=isStrictPdfSource(source);
-  if (strictPdf) {
-    return <div className="article-rich-content strict-pdf-content"><pre className="strict-pdf-verbatim">{String(source)}</pre></div>;
-  }
-  const value=normalizeMarkdown(source);
-  return <div className="article-rich-content"><ReactMarkdown remarkPlugins={[remarkGfm]} components={{h2:({children})=><h2>{children}</h2>,h3:({children})=><h3>{children}</h3>,h4:({children})=><h4>{children}</h4>,p:({children})=><p>{children}</p>,ul:({children})=><ul>{children}</ul>,ol:({children})=><ol>{children}</ol>,li:({children})=><li>{children}</li>,strong:({children})=><strong>{children}</strong>,blockquote:({children})=><blockquote>{children}</blockquote>,a:({href,children})=><a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,table:({children})=><div className="article-table-wrap"><table>{children}</table></div>}}>{value}</ReactMarkdown></div>;
+  const value=strictPdf?normalizeStrictPdfMarkdown(source):normalizeMarkdown(source);
+  return <div className={`article-rich-content${strictPdf?" strict-pdf-content":""}`}><ReactMarkdown remarkPlugins={[remarkGfm]} components={{h2:({children})=><h2>{children}</h2>,h3:({children})=><h3>{children}</h3>,h4:({children})=><h4>{children}</h4>,p:({children})=><p>{children}</p>,ul:({children})=><ul>{children}</ul>,ol:({children})=><ol>{children}</ol>,li:({children})=><li>{children}</li>,strong:({children})=><strong>{children}</strong>,blockquote:({children})=><blockquote>{children}</blockquote>,a:({href,children})=><a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,table:({children})=><div className="article-table-wrap"><table>{children}</table></div>}}>{value}</ReactMarkdown></div>;
 }

@@ -208,6 +208,8 @@ test("CA display headings are renderer-only and import safeguards remain intact"
   assert.ok(renderer.includes("CA_(?:START|END)"));
   assert.ok(renderer.includes("CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)"));
   assert.match(renderer, /remarkGfm/);
+  assert.match(renderer, /strictPdf\?normalizeStrictPdfMarkdown\(source\):normalizeMarkdown\(source\)/);
+  assert.doesNotMatch(renderer, /<pre className="strict-pdf-verbatim">/);
   assert.match(route, /existing\.has\(item\.sourceKey\)/);
   assert.match(route, /status: "duplicate"/);
   assert.match(route, /manual_protected: true/);
