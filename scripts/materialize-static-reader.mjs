@@ -67,8 +67,9 @@ const generatedAt = new Date().toISOString();
 // routing still lets the framework asset resolver return a matching file from
 // ASSETS, so merely listing them in wrangler.jsonc is not enough. Never leave
 // materialized copies of these exact paths in the deployment bundle.
+// The homepage is intentionally asset-first in wrangler.jsonc, so it must NOT
+// be pruned here; it is refreshed as a tiny core page on every reader release.
 const WORKER_FIRST_DYNAMIC_PATHS = new Set([
-  "/",
   "/current-affairs",
   "/news",
   "/pdf",
@@ -78,6 +79,7 @@ const WORKER_FIRST_DYNAMIC_PATHS = new Set([
 ]);
 
 const CORE_PATHS = [
+  "/",
   "/exams",
   "/quiz",
   "/contact",
