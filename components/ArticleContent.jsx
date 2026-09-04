@@ -12,10 +12,14 @@ const STRICT_SECTIONS = [
   "HISTORICAL PERSPECTIVE","ECONOMIC PERSPECTIVE","GEOGRAPHICAL PERSPECTIVE","ENVIRONMENTAL PERSPECTIVE","SOCIAL PERSPECTIVE",
   "POLITICAL PERSPECTIVE","POLITICAL AND GOVERNANCE PERSPECTIVE","PROS","CONS","WAY FORWARD","PRELIMS QUICK REVISION",
   "PROBABLE PRELIMS QUESTION","PROBABLE MAINS QUESTION","SOURCES","SOURCES CONSULTED",
+  "खबरों में क्यों?","यूपीएससी के लिए शीर्ष डेटा और तथ्य","ऐतिहासिक परिप्रेक्ष्य","आर्थिक परिप्रेक्ष्य",
+  "भौगोलिक परिप्रेक्ष्य","पर्यावरणीय परिप्रेक्ष्य","सामाजिक परिप्रेक्ष्य","राजनीतिक परिप्रेक्ष्य",
+  "पेशेवरों","विपक्ष","आगे का रास्ता","प्रारंभिक परीक्षा त्वरित पुनरीक्षण","संभावित प्रारंभिक प्रश्न",
+  "संभावित मुख्य प्रश्न","स्रोत",
 ];
-const STRICT_SECTION_SET = new Set(STRICT_SECTIONS);
+const STRICT_SECTION_SET = new Set(STRICT_SECTIONS.map((section) => section.toUpperCase()));
 const STRICT_MONTHS="January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec";
-const STRICT_SECTION_PATTERN = new RegExp(`\\b(${STRICT_SECTIONS.map(s=>s.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")).join("|")})\\b`,"gi");
+const STRICT_SECTION_PATTERN = new RegExp(`(${STRICT_SECTIONS.map(s=>s.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")).join("|")})`,"gi");
 
 function cleanStrictPdfText(value="") {
   return String(value||"")
@@ -52,13 +56,14 @@ function strictFactHighlight(value="") {
 function isStrictPdfSource(value = "") {
   const raw = String(value || "");
   return /\[\[CA_START\]\]|^\s*CA_TITLE\s*:/im.test(raw) ||
-    (/^\s*CURRENT\s+AFFAIRS\s+\d+\s*$/im.test(raw) && /(^|\n)\s*WHY\s+IN\s+NEWS\s*($|\n)/im.test(raw));
+    (/^\s*(?:CURRENT\s+AFFAIRS|समसामयिकी)\s+\d+\s*$/im.test(raw) && /(^|\n)\s*(?:WHY\s+IN\s+NEWS|खबरों\s+में\s+क्यों\?)\s*($|\n)/im.test(raw));
 }
 
 function normalizeStrictPdfMarkdown(value = "") {
   let raw = String(value || "").replace(/\r\n?/g, "\n");
-  raw = raw.replace(/^\s*\[\[CA_(?:START|END)\]\]\s*$/gim, "").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim, "").replace(/^\s*CurrentPulse AI\s*\|.*$/gim, "").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "");
-  const whyIndex = raw.search(/(^|\n)\s*WHY\s+IN\s+NEWS\s*(?=\n|$)/i);
+  raw = raw.replace(/^\s*\[\[(?:CA_(?:START|END)|सीपी_बुलेट)\]\]\s*$/gim, "").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim, "").replace(/^\s*CurrentPulse AI\s*\|.*$/gim, "").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "");
+  raw = raw.replace(/\s*\[\[(?:CP_BULLET|सीपी_बुलेट)\]\]\s*/gi, "\n• ");
+  const whyIndex = raw.search(/(^|\n)\s*(?:WHY\s+IN\s+NEWS|खबरों\s+में\s+क्यों\?)\s*(?=\n|$)/i);
   if (whyIndex >= 0) raw = raw.slice(whyIndex).replace(/^\s+/, "");
   const lines = raw.split("\n").map((line) => cleanStrictPdfText(line)).filter(Boolean);
   const out = [];
@@ -74,7 +79,7 @@ function normalizeStrictPdfMarkdown(value = "") {
   };
   for (const original of lines) {
     const upper = original.replace(/\s+/g, " ").toUpperCase();
-    if (STRICT_SECTION_SET.has(upper)) { out.push("", `## ${upper}`, ""); bulletIndex = -1; continue; }
+    if (STRICT_SECTION_SET.has(upper)) { out.push("", `## ${original}`, ""); bulletIndex = -1; continue; }
     if (/^[•●▪◦◎u]\s*/i.test(original) || /^[-*]\s+/.test(original)) {
       const text = original.replace(/^(?:[•●▪◦◎u]|[-*])\s*/i, "").trim();
       pushSectionAwareBullet(text); continue;
