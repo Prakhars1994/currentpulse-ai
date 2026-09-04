@@ -217,6 +217,10 @@ test("CA display headings are renderer-only and import safeguards remain intact"
   }
   assert.match(renderer, /const fastReadIndex = raw\.search/);
   assert.match(renderer, /const fastRead = original\.match/);
+  assert.match(renderer, /STRICT_BIBLIOGRAPHIC_REFERENCE_LINES/);
+  assert.match(renderer, /published\\s\+\(\?:on\\s\+\)\?/);
+  assert.match(renderer, /volume\\s\+\\d\+/);
+  assert.match(renderer, /pages\?\\s\+\\d\+/);
   assert.match(renderer, /\|u\\s\+\|/);
   assert.doesNotMatch(renderer, /\[•●▪◦◎u\]/);
   assert.doesNotMatch(renderer, /<pre className="strict-pdf-verbatim">/);

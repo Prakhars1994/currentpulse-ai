@@ -24,6 +24,11 @@ const STRICT_REPEATED_BOILERPLATE = [
   /^(?:Governance|Data-quality|Outcome|Risk|Institutional|Scale) lens:\s+/i,
   /^(?:Prelims anchor|Mains linkage|Implementation test|Trend use|UPSC answer technique):\s+/i,
 ];
+const STRICT_BIBLIOGRAPHIC_REFERENCE_LINES = [
+  /^published\s+(?:on\s+)?\d{1,2}\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d{4}\.?$/i,
+  /^(?:[a-z][a-z .'-]+\s+)?volume\s+\d+(?:\s*,?\s*issue\s+\d+)?\.?$/i,
+  /^pages?\s+\d+\s*(?:-|–|—|to)\s*\d+\.?$/i,
+];
 const STRICT_MONTHS="January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec";
 const STRICT_SECTION_PATTERN = new RegExp(`(?<![\\p{L}\\p{N}])(${STRICT_INLINE_SECTIONS.map(s=>s.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")).join("|")})(?![\\p{L}\\p{N}])`,"giu");
 
@@ -90,6 +95,7 @@ function normalizeStrictPdfMarkdown(value = "") {
     if (fastRead) { out.push("", "## FAST READ", "", fastRead[1]); bulletIndex = -1; continue; }
     const unbulleted = original.replace(/^(?:[•●▪◦◎]|u\s+|[-*])\s*/i, "").trim();
     if (STRICT_REPEATED_BOILERPLATE.some((pattern) => pattern.test(unbulleted))) continue;
+    if (STRICT_BIBLIOGRAPHIC_REFERENCE_LINES.some((pattern) => pattern.test(unbulleted))) continue;
     const upper = original.replace(/\s+/g, " ").toUpperCase();
     if (STRICT_SECTION_SET.has(upper)) { out.push("", `## ${original}`, ""); bulletIndex = -1; continue; }
     if (/^[•●▪◦◎]\s*/.test(original) || /^u\s+/i.test(original) || /^[-*]\s+/.test(original)) {
