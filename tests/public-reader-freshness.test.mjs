@@ -22,10 +22,13 @@ test("reader release has durable retry", () => {
 
 test("production builds static sitemap shards outside the Worker", () => {
   const config = read("wrangler.jsonc");
-  const workflow = read(".github/workflows/currentpulse-production.yml");
+  const productionWorkflow = read(".github/workflows/currentpulse-production.yml");
+  const readerWorkflow = read(".github/workflows/currentpulse-reader-release.yml");
   const generator = read("scripts/build-static-sitemaps.mjs");
   assert.doesNotMatch(config, /"\/sitemap\.xml"/);
-  assert.match(workflow, /build-static-sitemaps\.mjs/);
+  assert.match(productionWorkflow, /build-static-sitemaps\.mjs/);
+  assert.match(readerWorkflow, /build-static-sitemaps\.mjs/);
   assert.match(generator, /SHARD_SIZE = 45_000/);
   assert.match(generator, /\.gt\("id", cursor\)/);
+  assert.doesNotMatch(generator, /visual_summary,memory_trick,content,seo_description/);
 });

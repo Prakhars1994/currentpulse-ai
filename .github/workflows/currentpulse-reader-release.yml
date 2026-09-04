@@ -231,6 +231,9 @@ jobs:
             --budget-seconds 720 \
             "${changed_args[@]}"
 
+      - name: Build static sitemap shards
+        run: node scripts/build-static-sitemaps.mjs --out .open-next/assets
+
       - name: Stop reader renderer
         if: always()
         shell: bash

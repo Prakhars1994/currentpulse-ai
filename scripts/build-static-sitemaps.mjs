@@ -3,7 +3,6 @@ import path from "node:path";
 import process from "node:process";
 import { createClient } from "@supabase/supabase-js";
 import { CATEGORY_ROUTES } from "../lib/categoryRouting.js";
-import { isPublishedArticleSafe } from "../lib/editorial/publicationSafety.js";
 import { isStandaloneCurrentAffairsArticle } from "../lib/sitemapQuality.js";
 import { selectExamSitemapRecords } from "../lib/sitemapQuality.js";
 
@@ -42,11 +41,10 @@ function articleRoute(article) {
   const sources = article.article_sources || [];
   const hasCoaching = sources.some((source) => source?.source_kind === "coaching");
   const hasNews = sources.some((source) => source?.source_kind === "news");
-  if (hasCoaching && isStandaloneCurrentAffairsArticle(article) &&
-      isPublishedArticleSafe(article, { stream: "coverage" })) {
+  if (hasCoaching && isStandaloneCurrentAffairsArticle(article)) {
     return "/current-affairs/" + article.slug;
   }
-  if (hasNews && isPublishedArticleSafe(article, { stream: "news" })) {
+  if (hasNews) {
     return "/news/" + article.slug;
   }
   return "";
@@ -70,7 +68,7 @@ const entries = [
 for (;;) {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,slug,title,updated_at,created_at,why_news,syllabus_linkage,india_relevance,static_foundation,data_examples,prelims,mains,answer_framework,question,visual_summary,memory_trick,content,seo_description,quality_score,quality_version,article_sources(source_kind,source_name,source_url,source_published_at,source_key)")
+    .select("id,slug,title,updated_at,created_at,article_sources(source_kind)")
     .eq("status", "published")
     .gt("id", cursor)
     .order("id", { ascending: true })
