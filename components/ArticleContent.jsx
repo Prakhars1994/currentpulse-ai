@@ -8,10 +8,10 @@ function htmlToMarkdown(value = "") { return decodeHtmlEntities(value).replace(/
 function repairPdfBoldArtifacts(value = "") { return String(value).replace(/\*{4,}/g,"**").replace(/([\p{L}\p{N}])\*\*(?=[\p{L}\p{N}])/gu,"$1").split("\n").map(line=>{const markers=line.match(/\*\*/g)||[];return markers.length%2===1?line.replace(/\*\*(?![\s\S]*\*\*)/,""):line;}).join("\n"); }
 
 const STRICT_SECTIONS = [
-  "WHY IN NEWS","TOP DATA & FACTS FOR UPSC","TOP DATA AND FACTS FOR UPSC","DATA & FACTS FOR UPSC","DATA AND FACTS FOR UPSC",
+  "FAST READ","WHY IN NEWS","TOP DATA & FACTS","TOP DATA AND FACTS","TOP DATA & FACTS FOR UPSC","TOP DATA AND FACTS FOR UPSC","DATA & FACTS FOR UPSC","DATA AND FACTS FOR UPSC",
   "HISTORICAL PERSPECTIVE","ECONOMIC PERSPECTIVE","GEOGRAPHICAL PERSPECTIVE","ENVIRONMENTAL PERSPECTIVE","SOCIAL PERSPECTIVE",
-  "POLITICAL PERSPECTIVE","POLITICAL AND GOVERNANCE PERSPECTIVE","PROS","CONS","WAY FORWARD","PRELIMS QUICK REVISION",
-  "PROBABLE PRELIMS QUESTION","PROBABLE MAINS QUESTION","SOURCES","SOURCES CONSULTED",
+  "POLITICAL PERSPECTIVE","POLITICAL / GOVERNANCE PERSPECTIVE","POLITICAL AND GOVERNANCE PERSPECTIVE","PROS","CONS","WAY FORWARD","QUICK REVISION","PRELIMS QUICK REVISION",
+  "PROBABLE OBJECTIVE QUESTION","PROBABLE DESCRIPTIVE QUESTION","PROBABLE PRELIMS QUESTION","PROBABLE MAINS QUESTION","SOURCES","SOURCES CONSULTED",
   "खबरों में क्यों?","यूपीएससी के लिए शीर्ष डेटा और तथ्य","ऐतिहासिक परिप्रेक्ष्य","आर्थिक परिप्रेक्ष्य",
   "भौगोलिक परिप्रेक्ष्य","पर्यावरणीय परिप्रेक्ष्य","सामाजिक परिप्रेक्ष्य","राजनीतिक परिप्रेक्ष्य",
   "पेशेवरों","विपक्ष","आगे का रास्ता","प्रारंभिक परीक्षा त्वरित पुनरीक्षण","संभावित प्रारंभिक प्रश्न",
@@ -69,8 +69,10 @@ function normalizeStrictPdfMarkdown(value = "") {
   let raw = String(value || "").replace(/\r\n?/g, "\n");
   raw = raw.replace(/^\s*\[\[(?:CA_(?:START|END)|सीपी_बुलेट)\]\]\s*$/gim, "").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim, "").replace(/^\s*CurrentPulse AI\s*\|.*$/gim, "").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "");
   raw = raw.replace(/\s*\[\[(?:CP_BULLET|सीपी_बुलेट)\]\]\s*/gi, "\n• ");
+  const fastReadIndex = raw.search(/(^|\n)\s*FAST\s+READ\b[^\n]*(?=\n|$)/i);
   const whyIndex = raw.search(/(^|\n)\s*(?:WHY\s+IN\s+NEWS|खबरों\s+में\s+क्यों\?)\s*(?=\n|$)/i);
-  if (whyIndex >= 0) raw = raw.slice(whyIndex).replace(/^\s+/, "");
+  const contentIndex = fastReadIndex >= 0 ? fastReadIndex : whyIndex;
+  if (contentIndex >= 0) raw = raw.slice(contentIndex).replace(/^\s+/, "");
   const lines = raw.split("\n").map((line) => cleanStrictPdfText(line)).filter(Boolean);
   const out = [];
   let bulletIndex = -1;

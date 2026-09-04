@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
+  ExternalLink,
   FileUp,
   Loader2,
 } from "lucide-react";
@@ -41,6 +42,13 @@ function todayIst() {
     month: "2-digit",
     day: "2-digit",
   }).format(new Date());
+}
+
+function creativeCommonsImageSearch(title = "") {
+  const url = new URL("https://images.google.com/advanced_search");
+  url.searchParams.set("q", title);
+  url.searchParams.set("as_rights", "cc_publicdomain|cc_attribute|cc_sharealike");
+  return url.toString();
 }
 
 function ImportPanel({ stream, title, subtitle, publishedAt }) {
@@ -372,8 +380,15 @@ function ImportPanel({ stream, title, subtitle, publishedAt }) {
                     </div>
 
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      <input value={article.image_url || ""} onChange={(event) => updateDraft(article.importIndex, "image_url", event.target.value)} placeholder="Reusable image URL (optional)" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                      <div className="flex gap-2">
+                        <input value={article.image_url || ""} onChange={(event) => updateDraft(article.importIndex, "image_url", event.target.value)} placeholder="Direct reusable image URL" className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                        <a href={creativeCommonsImageSearch(article.title)} target="_blank" rel="noreferrer" title="Search Creative Commons and public-domain images" className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-300 px-3 text-slate-700 hover:bg-slate-50"><ExternalLink className="h-4 w-4" aria-hidden="true" /><span className="sr-only">Search Creative Commons images</span></a>
+                      </div>
                       <input value={Array.isArray(article.map_locations) ? article.map_locations.join(", ") : (article.map_locations || "")} onChange={(event) => updateDraft(article.importIndex, "map_locations", event.target.value)} placeholder="Map places, comma separated" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                    </div>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                      <input value={article.image_source_url || ""} onChange={(event) => updateDraft(article.importIndex, "image_source_url", event.target.value)} placeholder="Image source page URL" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                      <input value={article.image_caption || ""} onChange={(event) => updateDraft(article.importIndex, "image_caption", event.target.value)} placeholder="Creator credit and license" className="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
                     </div>
 
                     <details className="mt-3 rounded-lg bg-slate-50 p-3">
