@@ -24,7 +24,7 @@ function cleanStrictPdfText(value="") {
     .replace(/\beliGIble\b/g,"eligible").replace(/\bdiGItal/gi,"digital").replace(/\bforGIv/gi,"forgiv").replace(/\breGIon/gi,"region")
     .replace(/\bstrateGIc\b/g,"strategic").replace(/\btechnoloGIcal\b/g,"technological").replace(/\benGIneering\b/g,"engineering").replace(/\becoloGIcal\b/g,"ecological").replace(/\bStrateGIc\b/g,"Strategic").replace(/\bforGIngs\b/g,"forgings")
     .replace(/\b(\d+)\s+(st|nd|rd|th)\b/gi,"$1$2")
-    .replace(/\b(\d+)\s+-\s+(year|month|day|km|GW|MW|MT|LMT)\b/gi,"$1-$2")
+    .replace(/\b(\d+)\s+-\s*(year|month|day|category|km|GW|MW|MT|LMT)\b/gi,"$1-$2")
     .replace(/\b(FY)\s+(\d{4})\s+-\s+(\d{2})\b/g,"$1 $2-$3")
     .replace(/\*\*Rs\s+(\d+)\s*\*\*\s*,\s*\*\*(\d[\d,]*)\s*\*\*/gi,"**Rs $1,$2**")
     .replace(/\*\*Rs\s+(\d+)\s*\*\*\s*,\s*(\d[\d,]*)/gi,"**Rs $1,$2**")
