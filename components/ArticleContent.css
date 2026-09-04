@@ -19,10 +19,10 @@
 
 #manual-import-content .article-rich-content h2 {
   margin: 22px 0 8px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #111111;
+  padding: 3px 8px;
+  border: 1px solid #9dc3e6;
+  background: #d9eaf7;
+  color: #1f5f8b;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 17px;
   font-weight: 800;
@@ -37,8 +37,8 @@
 #manual-import-content .article-rich-content ul { list-style: disc; }
 #manual-import-content .article-rich-content li { margin: 7px 0; padding-left: 1px; color: #1a1a1a; }
 #manual-import-content .article-rich-content li::marker { color: #111111; font-weight: 700; }
-#manual-import-content .article-rich-content strong { color: inherit; background: transparent; font-weight: 800; }
-#manual-import-content .article-rich-content li > strong:first-child:not(:only-child) { color: inherit; }
+#manual-import-content .article-rich-content strong { color: #173f5d; background: transparent; font-weight: 800; }
+#manual-import-content .article-rich-content li > strong:first-child:not(:only-child) { color: #173f5d; }
 #manual-import-content .article-rich-content a { color: inherit; text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
 #manual-import-content .article-rich-content blockquote { margin: 10px 0; padding: 0 0 0 12px; border-left: 2px solid #555555; background: transparent; color: #1a1a1a; }
 #manual-import-content .article-table-wrap { margin: 8px 0 12px; }

@@ -211,7 +211,7 @@ test("CA display headings are renderer-only and import safeguards remain intact"
   assert.ok(renderer.includes("CA_(?:START|END)"));
   assert.ok(renderer.includes("CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)"));
   assert.match(renderer, /remarkGfm/);
-  assert.match(renderer, /strictPdf\?normalizeStrictPdfMarkdown\(source\):normalizeMarkdown\(source\)/);
+  assert.match(renderer, /strictPdf\?highlightMarkdownFacts\(strictFactHighlight\(normalizeStrictPdfMarkdown\(source\)\)\):normalizeMarkdown\(source\)/);
   for (const heading of ["FAST READ", "TOP DATA & FACTS", "POLITICAL / GOVERNANCE PERSPECTIVE", "QUICK REVISION", "PROBABLE OBJECTIVE QUESTION", "PROBABLE DESCRIPTIVE QUESTION"]) {
     assert.ok(renderer.includes(`\"${heading}\"`), `Strict renderer is missing ${heading}`);
   }
@@ -225,6 +225,9 @@ test("CA display headings are renderer-only and import safeguards remain intact"
   assert.doesNotMatch(renderer, /\[•●▪◦◎u\]/);
   assert.doesNotMatch(renderer, /<pre className="strict-pdf-verbatim">/);
   assert.match(renderer, /year\|month\|day\|category\|km\|GW\|MW\|MT\|LMT/);
+  assert.match(load("lib/pdf/clientExtract.js"), /const hasMixedWeight = runs\.some/);
+  assert.match(load("lib/pdf/clientExtract.js"), /\*\*\$\{run\.text\}\*\*/);
+  assert.match(load("components/ArticleContent.css"), /background: #d9eaf7/);
   assert.match(route, /existing\.has\(item\.sourceKey\)/);
   assert.match(route, /status: "duplicate"/);
   assert.match(route, /manual_license_review/);
