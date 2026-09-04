@@ -33,9 +33,9 @@
 #manual-import-content .article-rich-content h3 { margin: 16px 0 5px; color: #111111; font-family: Arial, Helvetica, sans-serif; font-size: 15px; font-weight: 800; line-height: 1.25; }
 #manual-import-content .article-rich-content h4 { margin: 12px 0 4px; color: #111111; font-size: 14px; font-weight: 800; }
 #manual-import-content .article-rich-content p { margin: 8px 0; color: #1a1a1a; }
-#manual-import-content .article-rich-content ul,#manual-import-content .article-rich-content ol { margin: 5px 0 8px; padding-left: 24px; }
+#manual-import-content .article-rich-content ul,#manual-import-content .article-rich-content ol { margin: 8px 0 12px; padding-left: 24px; }
 #manual-import-content .article-rich-content ul { list-style: disc; }
-#manual-import-content .article-rich-content li { margin: 5px 0; padding-left: 1px; color: #1a1a1a; }
+#manual-import-content .article-rich-content li { margin: 7px 0; padding-left: 1px; color: #1a1a1a; }
 #manual-import-content .article-rich-content li::marker { color: #111111; font-weight: 700; }
 #manual-import-content .article-rich-content strong { color: inherit; background: transparent; font-weight: 800; }
 #manual-import-content .article-rich-content li > strong:first-child:not(:only-child) { color: inherit; }

@@ -91,7 +91,10 @@ function normalizeStrictPdfMarkdown(value = "") {
     if (bulletIndex >= 0 && out[bulletIndex]?.startsWith("- ")) out[bulletIndex] += ` ${original}`;
     else out.push(original);
   }
-  return repairPdfBoldArtifacts(out.join("\n")).replace(/\n{3,}/g, "\n\n").trim();
+  return repairPdfBoldArtifacts(out.join("\n"))
+    .replace(/\s+(Answer:)\s*/g, "\n\n**$1** ")
+    .replace(/\s+(Explanation:)\s*/g, "\n\n**$1** ")
+    .replace(/\n{3,}/g, "\n\n").trim();
 }
 
 function stripPdfHeader(value = "") { return String(value).replace(/^\s*(?:\*{0,2})?CURRENT\s+(?:\*{0,2})?AFFAI\*{0,6}RS\s*\d+.*?(?=(?:WHY\s+IN\s+NEWS|##|\n[-•]))/is,"").replace(/^\s*(?:CURRENT\s+AFFAIRS|CURRENT AFFAIRS)\s*\d*\s*$/gim,"").replace(/^\s*(?:Category|GS|Date)\s*:\s*.*$/gim,""); }
