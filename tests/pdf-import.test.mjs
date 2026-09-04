@@ -216,6 +216,9 @@ test("CA display headings are renderer-only and import safeguards remain intact"
     assert.ok(renderer.includes(`\"${heading}\"`), `Strict renderer is missing ${heading}`);
   }
   assert.match(renderer, /const fastReadIndex = raw\.search/);
+  assert.match(renderer, /const fastRead = original\.match/);
+  assert.match(renderer, /\|u\\s\+\|/);
+  assert.doesNotMatch(renderer, /\[•●▪◦◎u\]/);
   assert.doesNotMatch(renderer, /<pre className="strict-pdf-verbatim">/);
   assert.match(renderer, /year\|month\|day\|category\|km\|GW\|MW\|MT\|LMT/);
   assert.match(route, /existing\.has\(item\.sourceKey\)/);

@@ -86,12 +86,14 @@ function normalizeStrictPdfMarkdown(value = "") {
     for(const p of pieces){ if(!p.value) continue; if(p.type==="section"){ out.push("",`## ${p.value}`,""); bulletIndex=-1; } else { out.push(`- ${p.value}`); bulletIndex=out.length-1; } }
   };
   for (const original of lines) {
-    const unbulleted = original.replace(/^(?:[•●▪◦◎u]|[-*])\s*/i, "").trim();
+    const fastRead = original.match(/^FAST\s+READ\s*[-:]\s*(.+)$/i);
+    if (fastRead) { out.push("", "## FAST READ", "", fastRead[1]); bulletIndex = -1; continue; }
+    const unbulleted = original.replace(/^(?:[•●▪◦◎]|u\s+|[-*])\s*/i, "").trim();
     if (STRICT_REPEATED_BOILERPLATE.some((pattern) => pattern.test(unbulleted))) continue;
     const upper = original.replace(/\s+/g, " ").toUpperCase();
     if (STRICT_SECTION_SET.has(upper)) { out.push("", `## ${original}`, ""); bulletIndex = -1; continue; }
-    if (/^[•●▪◦◎u]\s*/i.test(original) || /^[-*]\s+/.test(original)) {
-      const text = original.replace(/^(?:[•●▪◦◎u]|[-*])\s*/i, "").trim();
+    if (/^[•●▪◦◎]\s*/.test(original) || /^u\s+/i.test(original) || /^[-*]\s+/.test(original)) {
+      const text = original.replace(/^(?:[•●▪◦◎]|u\s+|[-*])\s*/i, "").trim();
       pushSectionAwareBullet(text); continue;
     }
     const inlineSection=original.match(STRICT_SECTION_PATTERN);
