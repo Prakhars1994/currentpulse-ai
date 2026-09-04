@@ -92,6 +92,10 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --out .open-next/assets --max-pages 1200 --concurrency 3 --timeout-ms 10000 --budget-seconds 720
 
+      - name: Build static sitemap index and shards
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: node scripts/build-static-sitemaps.mjs --out .open-next/assets
+
       - name: Stop production reader renderer
         if: always() && steps.deploy-ready.outputs.ready == 'true'
         shell: bash
