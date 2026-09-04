@@ -18,8 +18,9 @@ const STRICT_SECTIONS = [
   "संभावित मुख्य प्रश्न","स्रोत",
 ];
 const STRICT_SECTION_SET = new Set(STRICT_SECTIONS.map((section) => section.toUpperCase()));
+const STRICT_INLINE_SECTIONS = STRICT_SECTIONS.filter((section) => !["PROS", "CONS", "SOURCES", "SOURCES CONSULTED", "पेशेवरों", "विपक्ष", "स्रोत"].includes(section));
 const STRICT_MONTHS="January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec";
-const STRICT_SECTION_PATTERN = new RegExp(`(?<![\\p{L}\\p{N}])(${STRICT_SECTIONS.map(s=>s.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")).join("|")})(?![\\p{L}\\p{N}])`,"giu");
+const STRICT_SECTION_PATTERN = new RegExp(`(?<![\\p{L}\\p{N}])(${STRICT_INLINE_SECTIONS.map(s=>s.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")).join("|")})(?![\\p{L}\\p{N}])`,"giu");
 
 function cleanStrictPdfText(value="") {
   return String(value||"")
