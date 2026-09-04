@@ -211,7 +211,7 @@ test("CA display headings are renderer-only and import safeguards remain intact"
   assert.ok(renderer.includes("CA_(?:START|END)"));
   assert.ok(renderer.includes("CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)"));
   assert.match(renderer, /remarkGfm/);
-  assert.match(renderer, /strictPdf\?highlightMarkdownFacts\(strictFactHighlight\(normalizeStrictPdfMarkdown\(source\)\)\):normalizeMarkdown\(source\)/);
+  assert.match(renderer, /strictPdf\?highlightMarkdownFacts\(normalizeStrictPdfMarkdown\(source\)\):normalizeMarkdown\(source\)/);
   for (const heading of ["FAST READ", "TOP DATA & FACTS", "POLITICAL / GOVERNANCE PERSPECTIVE", "QUICK REVISION", "PROBABLE OBJECTIVE QUESTION", "PROBABLE DESCRIPTIVE QUESTION"]) {
     assert.ok(renderer.includes(`\"${heading}\"`), `Strict renderer is missing ${heading}`);
   }

@@ -144,6 +144,6 @@ function normalizeMarkdown(value="") {
 export default function ArticleContent({content,fallback}) {
   const source=content||fallback||"";
   const strictPdf=isStrictPdfSource(source);
-  const value=strictPdf?highlightMarkdownFacts(strictFactHighlight(normalizeStrictPdfMarkdown(source))):normalizeMarkdown(source);
+  const value=strictPdf?highlightMarkdownFacts(normalizeStrictPdfMarkdown(source)):normalizeMarkdown(source);
   return <div className={`article-rich-content${strictPdf?" strict-pdf-content":""}`}><ReactMarkdown remarkPlugins={[remarkGfm]} components={{h2:({children})=><h2>{children}</h2>,h3:({children})=><h3>{children}</h3>,h4:({children})=><h4>{children}</h4>,p:({children})=><p>{children}</p>,ul:({children})=><ul>{children}</ul>,ol:({children})=><ol>{children}</ol>,li:({children})=><li>{children}</li>,strong:({children})=><strong>{children}</strong>,blockquote:({children})=><blockquote>{children}</blockquote>,a:({href,children})=><a href={href} target="_blank" rel="noopener noreferrer">{children}</a>,table:({children})=><div className="article-table-wrap"><table>{children}</table></div>}}>{value}</ReactMarkdown></div>;
 }
