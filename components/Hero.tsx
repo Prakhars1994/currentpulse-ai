@@ -51,7 +51,7 @@ export default function Hero({
   latestCurrentAffairs?: FeaturedArticle | null;
 }) {
   const latestDate = latestCurrentAffairs?.published_at || null;
-  const latestDateKey = latestDate ? indiaDate(latestDate) : "";
+  const latestDateKey = latestDate ? indiaDate(new Date(latestDate)) : "";
 
   const featuredImage = resolveDisplayImage(featured || {});
   const featuredIsCurrentAffairs = hasCoachingSource(featured || {});
