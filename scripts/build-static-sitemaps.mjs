@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { CATEGORY_ROUTES } from "../lib/categoryRouting.js";
 import { isStandaloneCurrentAffairsArticle } from "../lib/sitemapQuality.js";
 import { selectExamSitemapRecords } from "../lib/sitemapQuality.js";
+import { isIndexableNewsArticle } from "../lib/newsIndexability.js";
 
 const SITE_URL = "https://cp.vliab.workers.dev";
 const SHARD_SIZE = 45_000;
@@ -44,7 +45,7 @@ function articleRoute(article) {
   if (hasCoaching && isStandaloneCurrentAffairsArticle(article)) {
     return "/current-affairs/" + article.slug;
   }
-  if (hasNews) {
+  if (hasNews && isIndexableNewsArticle(article)) {
     return "/news/" + article.slug;
   }
   return "";
@@ -68,7 +69,7 @@ const entries = [
 for (;;) {
   const { data, error } = await supabase
     .from("articles")
-    .select("id,slug,title,updated_at,created_at,article_sources(source_kind)")
+    .select("id,slug,title,quality_flags,updated_at,created_at,article_sources(source_kind)")
     .eq("status", "published")
     .gt("id", cursor)
     .order("id", { ascending: true })
