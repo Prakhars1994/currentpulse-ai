@@ -5,6 +5,7 @@ import { SITE_URL } from "@/lib/siteUrl";
 import { createServerSupabase } from "@/lib/supabase-server";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 import { isPublicNewsArticle } from "@/lib/articleStreams";
+import { isIndexableNewsArticle } from "@/lib/newsIndexability";
 import {
   isStandaloneCurrentAffairsArticle,
   selectExamSitemapRecords,
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 type SitemapArticle = {
+  quality_flags?: string[] | null;
   title?: string | null;
   slug: string;
   created_at?: string | null;
@@ -93,7 +95,7 @@ const loadSitemapDatabaseRows = unstable_cache(
         .select(`
           title,slug,created_at,updated_at,why_news,syllabus_linkage,india_relevance,
           static_foundation,data_examples,prelims,mains,answer_framework,question,
-          visual_summary,memory_trick,content,seo_description,quality_score,quality_version,
+          visual_summary,memory_trick,content,seo_description,quality_score,quality_version,quality_flags,
           article_sources(source_kind,source_name,source_url,source_published_at,source_key)
         `)
         .eq("status", "published")
@@ -155,6 +157,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (
         kinds.has("news") &&
         isPublicNewsArticle(article) &&
+        isIndexableNewsArticle(article) &&
         isPublishedArticleSafe(article, { stream: "news" })
       ) {
         const key = `news:${article.slug}`;

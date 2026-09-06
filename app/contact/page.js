@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Mail, MessageSquareText } from "lucide-react";
 
 export const metadata = {
+  alternates: { canonical: "/contact" },
   title: "Contact",
   description: "Contact CurrentPulse AI for support, corrections or partnerships.",
 };

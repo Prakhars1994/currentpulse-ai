@@ -31,7 +31,22 @@ function internalPaths(html = "", prefix = "") {
 const headers = { "user-agent": "CurrentPulseMigrationAudit/1.0" };
 const sitemapResponse = await fetch(`${CANONICAL_ORIGIN}/sitemap.xml`, { headers });
 const sitemapXml = await sitemapResponse.text();
-const sitemapUrls = locations(sitemapXml);
+if (!sitemapResponse.ok) throw new Error(`Sitemap HTTP ${sitemapResponse.status}`);
+const visitedSitemaps = new Set([`${CANONICAL_ORIGIN}/sitemap.xml`]);
+async function pageLocations(xml) {
+  if (!/<sitemapindex\b/i.test(xml)) return locations(xml);
+  const pages = [];
+  for (const url of locations(xml)) {
+    if (new URL(url).origin !== CANONICAL_ORIGIN) throw new Error(`Unexpected sitemap origin: ${url}`);
+    if (visitedSitemaps.has(url)) continue;
+    visitedSitemaps.add(url);
+    const response = await fetch(url, { headers, signal: AbortSignal.timeout(25000) });
+    if (!response.ok) throw new Error(`Sitemap HTTP ${response.status}: ${url}`);
+    pages.push(...await pageLocations(await response.text()));
+  }
+  return pages;
+}
+const sitemapUrls = [...new Set(await pageLocations(sitemapXml))];
 const newsHtml = await (await fetch(`${CANONICAL_ORIGIN}/news`, { headers })).text();
 const caPaths = sitemapUrls.filter((url) => new URL(url).pathname.startsWith("/current-affairs/")).slice(0, 5).map((url) => new URL(url).pathname);
 const examPath = sitemapUrls.map((url) => new URL(url).pathname).find((value) => /^\/exams\/[^/]+$/.test(value) && !["/exams/results", "/exams/notifications", "/exams/applications", "/exams/deadlines", "/exams/counselling", "/exams/answer-keys", "/exams/admit-cards", "/exams/exam-dates", "/exams/cut-offs"].includes(value));
