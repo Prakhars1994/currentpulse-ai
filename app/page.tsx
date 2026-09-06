@@ -28,18 +28,13 @@ type HomepageArticleSource = { source_kind?: string | null; source_name?: string
 type HomepageArticle = {
   id: number | string; slug: string; title?: string | null; category?: string | null;
   paper?: string | null; why_news?: string | null; image?: string | null;
-  image_url?: string | null; image_source_url?: string | null; created_at?: string | null;
+  image_url?: string | null; image_source_url?: string | null; published_at?: string | null; created_at?: string | null;
   updated_at?: string | null; article_sources?: HomepageArticleSource[];
 };
 type HomepageStreamError = { message?: string } | null;
 type HomepageStreams = { currentAffairs: HomepageArticle[]; news: HomepageArticle[]; error: HomepageStreamError };
 
 const EMPTY_STREAMS: HomepageStreams = { currentAffairs: [], news: [], error: null };
-const EMPTY_STATS = {
-  todayCurrentAffairs: 0, todayNews: 0, totalCurrentAffairs: 0, totalNews: 0,
-  totalCurrentAffairsTruncated: false, totalNewsTruncated: false,
-  lastUpdated: null, date: null, error: null,
-};
 
 function cleanHomepageArticle(article: HomepageArticle, stream: "ca" | "news") {
   const title = stream === "ca" ? repairedCaTitle(article) : repairedNewsTitle(article);
@@ -52,7 +47,6 @@ function cleanHomepageArticle(article: HomepageArticle, stream: "ca" | "news") {
 
 export default async function Home() {
   let streams = EMPTY_STREAMS;
-  let stats = EMPTY_STATS;
   try {
     const snapshot = await loadHomepageSnapshot(18);
     const raw = snapshot?.streams || EMPTY_STREAMS;
@@ -61,7 +55,6 @@ export default async function Home() {
       news: (raw.news || []).map((item: HomepageArticle) => cleanHomepageArticle(item, "news")),
       error: raw.error || null,
     };
-    stats = snapshot?.stats || EMPTY_STATS;
   } catch (error: unknown) {
     console.error("[Homepage] snapshot unavailable:", error instanceof Error ? error.message : String(error));
   }
@@ -72,7 +65,7 @@ export default async function Home() {
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <BreakingNews newsStream={streams.news} error={streams.error} />
-      <Hero featured={featured} stats={stats} />
+      <Hero featured={featured} latestCurrentAffairs={streams.currentAffairs[0] || null} />
       <Features />
       <Categories />
       <LatestNews streams={streams} />
