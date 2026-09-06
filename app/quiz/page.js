@@ -12,7 +12,7 @@ export const metadata = {
   alternates: { canonical: "/quiz" },
 };
 
-async function loadQuizRows(timeoutMs = 8000) {
+async function loadQuizRows(date, timeoutMs = 8000) {
   let timer;
 
   try {
@@ -22,7 +22,7 @@ async function loadQuizRows(timeoutMs = 8000) {
       supabase
         .from("quiz_questions")
         .select("id,quiz_date,prompt,options,correct_index,explanation,difficulty,category,paper,source_slug,source_title,generation_provider,created_at")
-        .order("quiz_date", { ascending: false })
+        .eq("quiz_date", date)
         .order("created_at", { ascending: true })
         .limit(36),
 
@@ -44,18 +44,19 @@ async function loadQuizRows(timeoutMs = 8000) {
   }
 }
 
-export default async function QuizPage() {
-  const today = indiaDate();
+export default async function QuizPage({ searchParams }) {
+  const params = await searchParams;
+  const selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(String(params?.date || "")) ? params.date : indiaDate();
   let data = [];
   let error = null;
 
-  const result = await loadQuizRows();
+  const result = await loadQuizRows(selectedDate);
   data = result?.data || [];
   error = result?.error || null;
 
   if (error) console.error("Stored quiz fetch failed:", error?.message || error);
   const approved = data.filter((question) => String(question.generation_provider || "").includes("upsc-v2"));
-  const todayRows = approved.filter((question) => question.quiz_date === today);
+  const todayRows = approved.filter((question) => question.quiz_date === selectedDate);
   const storedQuestions = mapStoredQuiz(todayRows);
   const questions = storedQuestions.length >= 10 ? storedQuestions : UPSC_FOUNDATION_FALLBACK;
   const usingFallback = storedQuestions.length < 10;
@@ -64,7 +65,7 @@ export default async function QuizPage() {
     <main className="quiz-page-theme min-h-screen px-6 py-14 text-white">
       <div className="mx-auto max-w-4xl">
         <p className="font-bold uppercase tracking-[0.24em] text-violet-300">
-          {usingFallback ? `UPSC foundation practice · ${today}` : `Daily set · ${today}`}
+          {usingFallback ? `UPSC foundation practice · ${selectedDate}` : `Current Affairs set · ${selectedDate}`}
         </p>
         <h1 className="mt-3 text-4xl font-black sm:text-5xl">Daily current-affairs quiz</h1>
         <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-400">
@@ -74,9 +75,8 @@ export default async function QuizPage() {
         </p>
         {usingFallback && (
           <div className="mt-6 rounded-xl border border-amber-400/25 bg-amber-400/10 px-5 py-4 text-sm leading-6 text-amber-100">
-            Today&apos;s verified current-affairs set is not ready yet. A curated UPSC
-            foundation set is shown instead. CurrentPulse never presents an older
-            dated quiz as today&apos;s quiz.
+            A verified quiz is not available for this Current Affairs date. A curated UPSC
+            foundation set is shown instead and is clearly not presented as a dated quiz.
           </div>
         )}
         <div className="mt-10">

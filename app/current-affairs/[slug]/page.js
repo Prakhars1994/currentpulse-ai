@@ -140,8 +140,8 @@ export async function generateMetadata({ params }) {
       url: `${SITE_URL}${canonicalPath}`,
       ...(image ? { images: [{ url: image, width: 1200, height: 630 }] } : {}),
       type: "article",
-      publishedTime: article.created_at,
-      modifiedTime: article.updated_at || article.created_at,
+      publishedTime: article.published_at || article.created_at,
+      modifiedTime: article.updated_at || article.published_at || article.created_at,
       section: article.category || "UPSC Current Affairs",
       authors: ["CurrentPulse Editorial Desk"],
     },
@@ -189,12 +189,12 @@ export default async function ArticlePage({ params }) {
   // Only published related articles
   const { data: relatedArticles, error: relatedError } = await supabase
     .from("articles")
-    .select("id,title,slug,category,created_at,article_sources!inner(source_kind)")
+    .select("id,title,slug,category,published_at,article_sources!inner(source_kind)")
     .eq("status", "published")
     .eq("article_sources.source_kind", "coaching")
     .eq("category", article.category)
     .neq("slug", slug)
-    .order("created_at", { ascending: false })
+    .order("published_at", { ascending: false, nullsFirst: false })
     .limit(3);
 
   if (relatedError) {
@@ -257,8 +257,8 @@ export default async function ArticlePage({ params }) {
       stripHtml(article.seo_description || "") ||
       stripHtml(article.why_news || ""),
     ...(articleImage ? { image: [absoluteImageUrl(articleImage)] } : {}),
-    datePublished: article.created_at,
-    dateModified: article.updated_at || article.created_at,
+    datePublished: article.published_at || article.created_at,
+    dateModified: article.updated_at || article.published_at || article.created_at,
     author: {
       "@type": "Organization",
       name: "CurrentPulse AI",
@@ -332,10 +332,10 @@ export default async function ArticlePage({ params }) {
         <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-300">
 
           <span>
-            📅 Published {formatDate(article.created_at)}
+            📅 Published {formatDate(article.published_at || article.created_at)}
           </span>
 
-          {article.updated_at && article.updated_at !== article.created_at && (
+          {article.updated_at && article.updated_at !== (article.published_at || article.created_at) && (
             <><span>•</span><span>Updated {formatDate(article.updated_at)}</span></>
           )}
 
@@ -632,7 +632,7 @@ export default async function ArticlePage({ params }) {
                   </h3>
 
                   <p className="mt-4 text-sm text-slate-400">
-                    {formatDate(item.created_at)}
+                    {formatDate(item.published_at)}
                   </p>
                 </Link>
               ))}

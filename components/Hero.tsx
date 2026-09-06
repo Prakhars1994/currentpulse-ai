@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { hasCoachingSource } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
+import { indiaDate } from "@/lib/study/digestDates";
 
 function stripHtml(value?: string | null) {
   if (!value) return "";
@@ -32,6 +33,7 @@ type FeaturedArticle = {
   paper?: string | null;
   why_news?: string | null;
   created_at?: string | null;
+  published_at?: string | null;
   image?: string | null;
   image_url?: string | null;
   image_source_url?: string | null;
@@ -41,34 +43,15 @@ type FeaturedArticle = {
   }> | null;
 };
 
-type HeroStats = {
-  todayCurrentAffairs?: number | null;
-  todayNews?: number | null;
-  totalCurrentAffairs?: number | null;
-  totalNews?: number | null;
-  lastUpdated?: string | null;
-};
-
 export default function Hero({
   featured = null,
-  stats = null,
+  latestCurrentAffairs = null,
 }: {
   featured?: FeaturedArticle | null;
-  stats?: HeroStats | null;
+  latestCurrentAffairs?: FeaturedArticle | null;
 }) {
-  const todayCurrentAffairs = Number(stats?.todayCurrentAffairs || 0);
-  const todayNews = Number(stats?.todayNews || 0);
-  const totalCurrentAffairs = Number(stats?.totalCurrentAffairs || 0);
-  const totalNews = Number(stats?.totalNews || 0);
-  const lastUpdated = stats?.lastUpdated
-    ? new Date(stats.lastUpdated).toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata",
-        day: "numeric",
-        month: "short",
-        hour: "numeric",
-        minute: "2-digit",
-      })
-    : "--";
+  const latestDate = latestCurrentAffairs?.published_at || null;
+  const latestDateKey = latestDate ? indiaDate(new Date(latestDate)) : "";
 
   const featuredImage = resolveDisplayImage(featured || {});
   const featuredIsCurrentAffairs = hasCoachingSource(featured || {});
@@ -85,8 +68,8 @@ export default function Hero({
       <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:py-24">
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_.95fr] xl:gap-16">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 shadow-lg shadow-cyan-950/20">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" /> Updated daily · Source-backed
+            <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 shadow-lg shadow-cyan-950/20">
+              UPSC study platform · Source-backed
             </span>
 
             <h1 className="mt-7 max-w-3xl text-5xl font-black leading-[1.05] tracking-[-0.045em] text-white sm:text-6xl xl:text-7xl">
@@ -144,7 +127,7 @@ export default function Hero({
                 href="/current-affairs"
                 className="rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 px-7 py-3.5 font-black text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:-translate-y-0.5 hover:from-cyan-300 hover:to-cyan-400"
               >
-                Read Today&apos;s Current Affairs
+                Latest Current Affairs
               </Link>
 
               <Link
@@ -155,11 +138,10 @@ export default function Hero({
               </Link>
             </div>
 
-            <div className="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-5 sm:gap-3">
-              {[["Today CA",todayCurrentAffairs],["Today News",todayNews],["Total CA",totalCurrentAffairs],["Total News",totalNews]].map(([label,value]) => (
-                <div key={String(label)} className="rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:p-4"><p className="text-2xl font-bold text-cyan-400 sm:text-3xl">{Number(value).toLocaleString("en-IN")}</p><p className="mt-2 text-xs text-gray-400 sm:text-sm">{label}</p></div>
-              ))}
-              <div className="col-span-2 rounded-2xl border border-white/8 bg-white/[.035] p-3 sm:col-span-1 sm:p-4"><p className="text-lg font-bold text-cyan-400">{lastUpdated}</p><p className="mt-2 text-xs text-gray-400">Last updated IST</p></div>
+            <div className="mt-8 rounded-2xl border border-cyan-400/20 bg-cyan-400/[.06] p-5">
+              <p className="text-xs font-black uppercase tracking-[.18em] text-cyan-300">Study by date</p>
+              <p className="mt-2 text-lg font-black text-white">{latestDate ? `Latest Current Affairs — ${formatDate(latestDate)}` : "Browse Current Affairs by date"}</p>
+              <Link href={latestDateKey ? `/current-affairs?date=${latestDateKey}` : "/current-affairs"} className="mt-3 inline-block font-bold text-cyan-300 hover:text-cyan-200">Browse by Date →</Link>
             </div>
           </div>
 
@@ -195,7 +177,7 @@ export default function Hero({
                   </p>
 
                   <div className="mt-7 flex items-center justify-between gap-4 border-t border-slate-800 pt-5">
-                    <div className="text-sm text-slate-400"><span className="font-bold text-blue-300">{featured.paper || "General Studies"}</span> · {formatDate(featured.created_at)}</div>
+                    <div className="text-sm text-slate-400"><span className="font-bold text-blue-300">{featured.paper || "General Studies"}</span>{featuredIsCurrentAffairs && featured.published_at ? ` · ${formatDate(featured.published_at)}` : ""}</div>
 
                     <Link
                       href={featuredPath}
