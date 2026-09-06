@@ -51,3 +51,38 @@
   #manual-import-content .article-rich-content { font-size: 14px; line-height: 1.5; }
   #manual-import-content .article-rich-content h2 { font-size: 15px; }
 }
+
+
+/* Make the FAST READ block visually distinct from normal section bars. */
+#manual-import-content .article-rich-content h2.fast-read-heading {
+  margin-bottom: 0;
+  border-color: #86b99a;
+  background: #cfe8d6;
+  color: #1f5f3a;
+}
+
+#manual-import-content .article-rich-content h2.fast-read-heading + p {
+  margin: 0;
+  padding: 10px 12px 4px;
+  border-left: 1px solid #e1c96f;
+  border-right: 1px solid #e1c96f;
+  background: #fff7d6;
+  color: #4b421d;
+  font-weight: 700;
+}
+
+#manual-import-content .article-rich-content h2.fast-read-heading + p + ul {
+  margin-top: 0;
+  padding: 4px 14px 12px 34px;
+  border: 1px solid #e1c96f;
+  border-top: 0;
+  background: #fff7d6;
+}
+
+#manual-import-content .article-rich-content h2.fast-read-heading + p + ul li {
+  color: #2c2a20;
+}
+
+#manual-import-content .article-rich-content h2.fast-read-heading + p + ul li::marker {
+  color: #8a6f00;
+}
