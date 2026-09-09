@@ -1,0 +1,1152 @@
+{
+  "generatedAt": "2026-09-09T10:45:37.213Z",
+  "maps": [
+    {
+      "url": "https://cp.vliab.workers.dev/sitemap.xml",
+      "status": 200
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/sitemaps/sitemap-0001.xml",
+      "status": 200
+    }
+  ],
+  "sitemapUrls": 1357,
+  "sampleMethod": "All sitemap pages outside article/exam sections, plus up to 12 evenly spaced URLs per section; not a population estimate or Google index-status check.",
+  "results": [
+    {
+      "url": "https://cp.vliab.workers.dev/",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev",
+      "title": "CurrentPulse AI - UPSC Current Affairs, PYQs, Quiz & News",
+      "description": "CurrentPulse AI provides administrator-published UPSC current affairs, Prelims facts, Mains analysis, PYQs, quizzes, revision PDFs and source-attributed news.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs",
+      "title": "UPSC Current Affairs | CurrentPulse AI",
+      "description": "Analytical Current Affairs with Prelims facts, static linkage and Mains dimensions.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news",
+      "title": "Latest News Today — India, World, Science & Analysis | CurrentPulse AI",
+      "description": "CurrentPulse Newsroom: administrator-published news with concise context, dates and categories.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/quiz",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/quiz",
+      "title": "Daily Current Affairs Quiz | CurrentPulse AI",
+      "description": "Automatically updated current-affairs quiz for UPSC and PCS preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/categories",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/categories",
+      "title": "UPSC Current Affairs by Subject | CurrentPulse AI",
+      "description": "Browse UPSC current affairs by Polity, Economy, International Relations, Environment, Science, Geography, History, Security and Social Issues.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/mock-tests",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/mock-tests",
+      "title": "Free Mock Tests - UPSC, SSC, Railway, Banking & State PCS | CurrentPulse AI",
+      "description": "Ten free guest mock tests per major exam with instant deterministic evaluation and no login requirement.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/notes",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/notes",
+      "title": "Revision Notes | CurrentPulse AI",
+      "description": "Create, search and export personal UPSC current-affairs revision notes.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/pyq",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/pyq",
+      "title": "UPSC Mains PYQ Explorer — 15 Years | CurrentPulse AI",
+      "description": "Browse 15 years of verified UPSC Mains General Studies papers from 2011–2025 and practise with annotated PYQ themes.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/pdf",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/pdf",
+      "title": "Current Affairs PDF Digests | CurrentPulse AI",
+      "description": "Daily, weekly and monthly printable UPSC current-affairs digests.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/videos",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/videos",
+      "title": "Current Affairs Video Discovery | CurrentPulse AI",
+      "description": "Find UPSC video explainers for the latest published current-affairs topics.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/question-papers",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/question-papers",
+      "title": "UPSC Previous Papers — 16 Prelims & 15 Mains Years | CurrentPulse AI",
+      "description": "Browse verified UPSC Civil Services papers with Prelims coverage from 2011–2026 and Mains coverage from 2011–2025.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams",
+      "title": "ResultPulse AI — Exam Results, Admit Cards & Notifications | CurrentPulse AI",
+      "description": "Official-source exam results, admit cards, answer keys, applications, deadlines and notifications across India.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/contact",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/contact",
+      "title": "Contact | CurrentPulse AI",
+      "description": "Contact CurrentPulse AI for support, corrections or partnerships.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/editorial-methodology",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/editorial-methodology",
+      "title": "Editorial Methodology | CurrentPulse AI",
+      "description": "CurrentPulse uses administrator-controlled Current Affairs and News publishing. PDF text is reviewed before publication and is not automatically collected or rewritten during ingestion.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/about",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/about",
+      "title": "About CurrentPulse | CurrentPulse AI",
+      "description": "CurrentPulse is an independent educational platform for administrator-published Current Affairs, News, study tools and official-source ResultPulse exam updates.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/ai-usage-policy",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/ai-usage-policy",
+      "title": "AI Usage Policy | CurrentPulse AI",
+      "description": "AI is not used to collect or rewrite administrator-published Current Affairs and News during ingestion. Separate AI study features may remain available to users.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/corrections-policy",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/corrections-policy",
+      "title": "Corrections Policy | CurrentPulse AI",
+      "description": "CurrentPulse aims to correct meaningful factual, classification, sourcing and duplication errors quickly while preserving a reliable public archive.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/sources-policy",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/sources-policy",
+      "title": "Sources Policy | CurrentPulse AI",
+      "description": "CurrentPulse Current Affairs and News are published from administrator-supplied PDFs or administrator-created content. Automated external source collection is disabled.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/terms",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/terms",
+      "title": "Terms | CurrentPulse AI",
+      "description": "By using CurrentPulse you agree to treat the service as educational information and revision assistance rather than an official examination authority.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/privacy",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/privacy",
+      "title": "Privacy Policy | CurrentPulse AI",
+      "description": "CurrentPulse is designed to collect as little personal information as practical for the features a user chooses to use.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/general-news",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/general-news",
+      "title": "General News Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest General News current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/economy",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/economy",
+      "title": "Economy Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Economy current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/international",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/international",
+      "title": "International Relations Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest International Relations current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/polity",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/polity",
+      "title": "Polity & Governance Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Polity & Governance current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/defence-security",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/defence-security",
+      "title": "Defence & Security Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Defence & Security current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/science-tech",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/science-tech",
+      "title": "Science & Technology Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Science & Technology current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/environment",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/environment",
+      "title": "Environment Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Environment current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/history-culture",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/history-culture",
+      "title": "History & Culture Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest History & Culture current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/government-schemes",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/government-schemes",
+      "title": "Government Schemes Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Government Schemes current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/social-issues",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/social-issues",
+      "title": "Social Issues Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Social Issues current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/geography",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/geography",
+      "title": "Geography Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Geography current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/sports",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/sports",
+      "title": "Sports Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Sports current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/space",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/space",
+      "title": "Space Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Space current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/category/judiciary",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/category/judiciary",
+      "title": "Judiciary Current Affairs for UPSC | CurrentPulse AI",
+      "description": "Latest Judiciary current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/admit-cards",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/admit-cards",
+      "title": "Admit Cards 2026 | ResultPulse AI | CurrentPulse AI",
+      "description": "Official admit cards, call letters and exam-city updates.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/results",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/results",
+      "title": "Exam Results 2026 | ResultPulse AI | CurrentPulse AI",
+      "description": "Official results, score cards, selection lists and marks updates.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/notifications",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/notifications",
+      "title": "Exam Notifications 2026 | ResultPulse AI | CurrentPulse AI",
+      "description": "Official recruitment and examination notifications from verified authorities.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/applications",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/applications",
+      "title": "Exam Applications Open 2026 | ResultPulse AI | CurrentPulse AI",
+      "description": "Official application and registration windows with direct source links.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/answer-keys",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/answer-keys",
+      "title": "Answer Keys 2026 | ResultPulse AI | CurrentPulse AI",
+      "description": "Official provisional/final answer keys, response sheets and objection windows.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/deadlines",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/deadlines",
+      "title": "Exam Deadlines 2026 | ResultPulse AI | CurrentPulse AI",
+      "description": "Application, correction and objection deadlines that need action.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/exam-dates",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/exam-dates",
+      "title": "Exam Dates & Schedules 2026 | ResultPulse AI | CurrentPulse AI",
+      "description": "Official exam schedules, rescheduling, interview/document-verification and city-intimation updates.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/cut-offs",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/cut-offs",
+      "title": "Exam Cut-offs 2026 | ResultPulse AI | CurrentPulse AI",
+      "description": "Official cut-off marks and allocation updates from examination authorities.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/republicans-seek-voter-election-of-kansas-supreme-court-justices-to-alter-court-ideology",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/republicans-seek-voter-election-of-kansas-supreme-court-justices-to-alter-court-ideology",
+      "title": "Kansas Voters Reject Proposal to Elect State Supreme Court Justices | CurrentPulse AI",
+      "description": "Voters in **Kansas** have rejected a ballot measure that sought to introduce direct popular elections for justices on the **Kansas Supreme Court**. Reports publ",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/study-links-dim-light-exposure-during-sleep-to-poorer-sleep-quality",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/study-links-dim-light-exposure-during-sleep-to-poorer-sleep-quality",
+      "title": "Study links dim light exposure during sleep to poorer sleep quality | CurrentPulse AI",
+      "description": "Research suggests that even low-level ambient light during sleep—such as from streetlights or electronic devices—can disrupt sleep quality. A study highlights h",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/counselling",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/counselling",
+      "title": "Counselling & Seat Allotment 2026 | ResultPulse AI | CurrentPulse AI",
+      "description": "Official counselling, seat-allotment and admission updates.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/cmc-council-meet-turns-stormy-over-civic-issues",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/cmc-council-meet-turns-stormy-over-civic-issues",
+      "title": "CMC council meet turns stormy over civic issues | CurrentPulse AI",
+      "description": "CMC council meet turns stormy over civic issues The New Indian Express",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/nss-officers-attend-workshop-on-swachh-bharat-mission-action-plan-in-new-delhi",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/nss-officers-attend-workshop-on-swachh-bharat-mission-action-plan-in-new-delhi",
+      "title": "NSS officers attend workshop on Swachh Bharat Mission Action Plan in New Delhi | CurrentPulse AI",
+      "description": "National Service Scheme officers from across India attended a workshop in **New Delhi** on **August 14, 2026**, to discuss strategies under the **Swachh Bharat ",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/signs-of-life-detected-under-earthquake-debris-in-colombia",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/signs-of-life-detected-under-earthquake-debris-in-colombia",
+      "title": "Signs of life detected under earthquake debris in Colombia | CurrentPulse AI",
+      "description": "Rescue teams in **Colombia** have detected signs of life beneath rubble from a powerful earthquake that struck the **Andes region** on **August 12, 2026**. Surv",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/government-offers-to-discuss-neet-amid-congress-boycott-says-kiren-rijiju",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/government-offers-to-discuss-neet-amid-congress-boycott-says-kiren-rijiju",
+      "title": "Government offers to discuss NEET amid Congress boycott, says Kiren Rijiju | CurrentPulse AI",
+      "description": "Union Minister **Kiren Rijiju** accused the **Congress party** of avoiding a debate on the **National Eligibility cum Entrance Test (NEET)** despite the governm",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/hal-q1-results-2026-profit-jumps-15-yoy-to-1590-crore",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/hal-q1-results-2026-profit-jumps-15-yoy-to-1590-crore",
+      "title": "HAL Q1 results 2026: Profit jumps 15% YoY to ₹1,590 crore | CurrentPulse AI",
+      "description": "HAL Q1 results 2026: Profit jumps 15% YoY to ₹1,590 crore livemint.com",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/karnataka-cabinet-reshuffle-delayed-as-portfolio-allocation-awaits-end-of-amavasye",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/karnataka-cabinet-reshuffle-delayed-as-portfolio-allocation-awaits-end-of-amavasye",
+      "title": "Karnataka cabinet reshuffle delayed as portfolio allocation awaits end of amavasye | CurrentPulse AI",
+      "description": "The **Karnataka** government postponed its cabinet reshuffle and portfolio allocation scheduled for **August 12, 2026**, citing the ongoing **amavasye** (new mo",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/brazils-supreme-court-to-hear-key-amazon-deforestation-cases-after-congressional-defeats-for-lula",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/brazils-supreme-court-to-hear-key-amazon-deforestation-cases-after-congressional-defeats-for-lula",
+      "title": "Brazil’s Supreme Court to hear key Amazon deforestation cases after congressional defeats for Lula | CurrentPulse AI",
+      "description": "Brazil’s **Supreme Court** is set to deliberate on critical cases involving **Amazon deforestation** after President **Luiz Inácio Lula da Silva** faced repeate",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/meta-glasses-banned-from-courts-in-england-and-wales",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/meta-glasses-banned-from-courts-in-england-and-wales",
+      "title": "Meta glasses banned from courts in England and Wales | CurrentPulse AI",
+      "description": "Meta glasses banned from courts in England and Wales The Guardian",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/official-teaser-released-for-upcoming-film-rajas-playlist",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/official-teaser-released-for-upcoming-film-rajas-playlist",
+      "title": "Official teaser released for upcoming film *Raja’s Playlist* | CurrentPulse AI",
+      "description": "The **official teaser** for the upcoming film *Raja’s Playlist* was released on **August 15, 2026**, offering the first glimpse into the movie’s storyline and v",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/intelligence-collection-beijing-rejects-claim-20260901-0fa886c-10",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/news/intelligence-collection-beijing-rejects-claim-20260901-0fa886c-10",
+      "title": "US Accuses COSCO of Signals Intelligence Collection; Beijing Rejects Claim | CurrentPulse AI",
+      "description": "The allegation against one of the world's largest shipping companies shows how commercial logistics networks are becoming entangled with military intelligence a",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/critical-minerals-as-the-foundation-of-strategic-power",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/critical-minerals-as-the-foundation-of-strategic-power",
+      "title": "Critical Minerals as the Foundation of Strategic Power | CurrentPulse AI",
+      "description": "Recent policy analyses highlight critical minerals as central to industrial strategy, national security, clean energy, defence, and digital technologies. P",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-quit-india-movement",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/the-quit-india-movement",
+      "title": "The Quit India Movement | CurrentPulse AI",
+      "description": "The Chairman of the Rajya Sabha made a solemn reference in Parliament to commemorate the 84th Anniversary of the Quit India Movement. The observance highli",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/environment-and-ecology-biodiversity-and-wetlands",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/environment-and-ecology-biodiversity-and-wetlands",
+      "title": "Environment & Ecology – Biodiversity & Wetlands | CurrentPulse AI",
+      "description": "A new freshwater crab species, Ghatiana karnataka, has been scientifically described from Mookambika Wildlife Sanctuary, Udupi, Karnataka. It was discovere",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/science-and-technology-internal-security-defence",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/science-and-technology-internal-security-defence",
+      "title": "Science & Technology + Internal Security + Defence | CurrentPulse AI",
+      "description": "Cochin Shipyard Limited (CSL) delivered INS Mangrol to the Indian Navy on 21 August 2026. It is the third of eight Anti-Submarine Warfare Shallow Water Cra",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-stakes-in-indias-delimitation-debate",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/the-stakes-in-indias-delimitation-debate",
+      "title": "The stakes in India’s delimitation debate | CurrentPulse AI",
+      "description": "Context: The upcoming post-2026 delimitation exercise has triggered widespread debate regarding how parliamentary seats will be reallocated among states on",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/polity-and-governance-disaster-management",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/polity-and-governance-disaster-management",
+      "title": "Polity & Governance + Disaster Management | CurrentPulse AI",
+      "description": "Following devastating flash floods in Nepal, the NDRF deployed 20 teams across Bihar and Uttar Pradesh as a precautionary measure to respond to possible do",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/magnetars-cosmic-laboratories-for-testing-the-quantum-nature-of-empty-space",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/magnetars-cosmic-laboratories-for-testing-the-quantum-nature-of-empty-space",
+      "title": "Magnetars: Cosmic Laboratories for Testing the Quantum Nature of Empty Space | CurrentPulse AI",
+      "description": "Recent observations of the magnetar 1E 1547.0−5408 have provided strong evidence for vacuum birefringence—a quantum phenomenon in which an extremely strong",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/himalayan-glof-and-avalanche-preparedness-from-disaster-response-to-risk-mapping-early-warning-and-community-resilience-20260903-6c11f7c-3",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/himalayan-glof-and-avalanche-preparedness-from-disaster-response-to-risk-mapping-early-warning-and-community-resilience-20260903-6c11f7c-3",
+      "title": "Himalayan GLOF and Avalanche Preparedness: From Disaster Response to Risk Mapping, Early Warning and Community Resilience | CurrentPulse AI",
+      "description": "CURRENT AFFAIRS 56 Himalayan GLOF and Avalanche Preparedness: From Disaster Response to Risk Mapping, Early Warning and Community Resilience Category GS Date Da",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/marine-fish-resources-in-india-experimental-monetary-asset-accounts-natural-capital-and-the-blue-economy-20260904-4391e92-1",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/marine-fish-resources-in-india-experimental-monetary-asset-accounts-natural-capital-and-the-blue-economy-20260904-4391e92-1",
+      "title": "Marine Fish Resources in India: Experimental Monetary Asset Accounts, Natural Capital and the Blue Economy | CurrentPulse AI",
+      "description": "CURRENT AFFAIRS 75 Marine Fish Resources in India: Experimental Monetary Asset Accounts, Natural Capital and the Blue Economy Category GS Date Data rule Economy",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/ncpcr-campaign-rescues-more-than-3800-children-from-labour-and-trafficking-20260905-a87e048-5",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/ncpcr-campaign-rescues-more-than-3800-children-from-labour-and-trafficking-20260905-a87e048-5",
+      "title": "NCPCR Campaign Rescues More Than 3,800 Children from Labour and Trafficking | CurrentPulse AI",
+      "description": "CURRENT AFFAIRS 127 NCPCR Campaign Rescues More Than 3,800 Children from Labour and Trafficking Category GS Date Quick rule Social Justice, Child Rights and Gov",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/ibca-adb-partnership-tiger-landscapes-bioeconomy-ecotourism-and-nature-positive-finance-20260904-b3f940f-3",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/ibca-adb-partnership-tiger-landscapes-bioeconomy-ecotourism-and-nature-positive-finance-20260904-b3f940f-3",
+      "title": "IBCA-ADB Partnership: Tiger Landscapes, Bioeconomy, Ecotourism and Nature-Positive Finance | CurrentPulse AI",
+      "description": "CURRENT AFFAIRS 101 IBCA-ADB Partnership: Tiger Landscapes, Bioeconomy, Ecotourism and Nature-Positive Finance Category GS Date Quick rule Environment, Biodiver",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/nta-64-public-notice-regarding-subject-wise-scheduled-of-ugc-net-june-2026-examination-eb4e90ee",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/nta-64-public-notice-regarding-subject-wise-scheduled-of-ugc-net-june-2026-examination-eb4e90ee",
+      "title": "64 Public Notice regarding Subject-wise Scheduled of UGC-NET June 2026 Examination | ResultPulse AI | CurrentPulse AI",
+      "description": "Official notification update from NTA. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/uppsc-list-of-candidates-provisionally-qualified-for-interview-in-advt-no-a-7-e-1-20-e8d8ce9a",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/uppsc-list-of-candidates-provisionally-qualified-for-interview-in-advt-no-a-7-e-1-20-e8d8ce9a",
+      "title": "LIST OF CANDIDATES PROVISIONALLY QUALIFIED FOR INTERVIEW IN ADVT. NO. A-7/E-1/20.. | ResultPulse AI | CurrentPulse AI",
+      "description": "Official result update from UPPSC. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/valles-marineris-mega-flood-study-ancient-martian-water-a-possible-ocean-and-the-reconstruction-of-planetary-climate-20260906-225954c-7",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/valles-marineris-mega-flood-study-ancient-martian-water-a-possible-ocean-and-the-reconstruction-of-planetary-climate-20260906-225954c-7",
+      "title": "Valles Marineris Mega-Flood Study: Ancient Martian Water, a Possible Ocean and the Reconstruction of Planetary Climate | CurrentPulse AI",
+      "description": "CURRENT AFFAIRS 105 Valles Marineris Mega-Flood Study: Ancient Martian Water, a Possible Ocean and the Reconstruction of Planetary Climate Category GS Date Quic",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/uppsc-13-sep-2026-result-of-advt-no-d-4-e-1-2025-u-p-ayush-ayurveda-professor-specialist-agad-tantra-evam-vidhi-ayurvada-s-09-01-1925471e",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/uppsc-13-sep-2026-result-of-advt-no-d-4-e-1-2025-u-p-ayush-ayurveda-professor-specialist-agad-tantra-evam-vidhi-ayurvada-s-09-01-1925471e",
+      "title": "13 Sep 2026 RESULT OF ADVT. NO. D-4/E-1/2025, U.P. AYUSH (AYURVEDA) PROFESSOR(SPECIALIST) AGAD TANTRA EVAM VIDHI AYURVADA, S-09/01 | ResultPulse AI | CurrentPulse AI",
+      "description": "Official result update from UPPSC. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/sbi-careers-corrigendum-130-kb-eb59e596",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/sbi-careers-corrigendum-130-kb-eb59e596",
+      "title": "CORRIGENDUM (130 KB) | ResultPulse AI | CurrentPulse AI",
+      "description": "Official notification update from SBI Careers. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/rpsc-513-08-2026school-lecturer-school-edu-2025result-preamble-list-for-eligibility-checking-and-decide-award-marks-for-school-lecturer-school-edu-2025-coa-fe489392",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/rpsc-513-08-2026school-lecturer-school-edu-2025result-preamble-list-for-eligibility-checking-and-decide-award-marks-for-school-lecturer-school-edu-2025-coa-fe489392",
+      "title": "SCHOOL LECTURER (SCHOOL EDU.) 2025Result Preamble (List for Eligibility Checking and Decide Award Marks) for School Lecturer (School Edu.) - 2025 (Coach (Kabaddi)) | ResultPulse AI | CurrentPulse AI",
+      "description": "Official result update from RPSC. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/uppsc-notice-regarding-admit-card-for-advt-no-a-6-e-1-2026-lecturer-male-female-go-a3d54bec",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/uppsc-notice-regarding-admit-card-for-advt-no-a-6-e-1-2026-lecturer-male-female-go-a3d54bec",
+      "title": "NOTICE REGARDING ADMIT CARD FOR ADVT. NO.A-6/E-1/2026, LECTURER (MALE/FEMALE) GO.. | ResultPulse AI | CurrentPulse AI",
+      "description": "Official admit card update from UPPSC. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/rpsc-3906-08-2026asst-prof-college-education-2025result-preamble-and-cutoff-marks-qualified-for-interview-for-asst-prof-college-education-2025-business-adm-29b3f20a",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/rpsc-3906-08-2026asst-prof-college-education-2025result-preamble-and-cutoff-marks-qualified-for-interview-for-asst-prof-college-education-2025-business-adm-29b3f20a",
+      "title": "3906/08/2026ASST. PROF. (COLLEGE EDUCATION) 2025Result Preamble and Cutoff Marks (Qualified for Interview) for Asst. Prof. (College Education) - 2025 (Business Administration) | ResultPulse AI | CurrentPulse AI",
+      "description": "Official result update from RPSC. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/rpsc-5930-07-2026asst-prof-college-education-2025result-preamble-and-cutoff-marks-qualified-for-interview-for-asst-prof-college-education-2025-economics-ad-e1efb30d",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/rpsc-5930-07-2026asst-prof-college-education-2025result-preamble-and-cutoff-marks-qualified-for-interview-for-asst-prof-college-education-2025-economics-ad-e1efb30d",
+      "title": "5930/07/2026ASST. PROF. (COLLEGE EDUCATION) 2025Result Preamble and Cutoff Marks (Qualified for Interview) for Asst. Prof. (College Education) - 2025 (Economics Administration And Financial Management (EAFM)) | ResultPulse AI | CurrentPulse AI",
+      "description": "Official result update from RPSC. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/uppsc-click-here-to-download-admit-card-for-advt-no-a-11-e-1-2025-lecturer-u-p-technical-education-teaching-service-exam-2025-1dff98d9",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/uppsc-click-here-to-download-admit-card-for-advt-no-a-11-e-1-2025-lecturer-u-p-technical-education-teaching-service-exam-2025-1dff98d9",
+      "title": "CLICK HERE TO DOWNLOAD ADMIT CARD FOR ADVT. NO. A-11/E-1/2025, LECTURER U.P. TECHNICAL EDUCATION (TEACHING) SERVICE EXAM.-2025. | ResultPulse AI | CurrentPulse AI",
+      "description": "Official admit card update from UPPSC. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/rpsc-2021-08-2026asst-professor-medical-edu-2024main-merit-list-for-asst-professor-medical-edu-2024-radiodiagnosis-bs-b51cfdcb",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/rpsc-2021-08-2026asst-professor-medical-edu-2024main-merit-list-for-asst-professor-medical-edu-2024-radiodiagnosis-bs-b51cfdcb",
+      "title": "2021/08/2026ASST. PROFESSOR (MEDICAL EDU.) 2024Main Merit List for Asst. Professor (Medical Edu.) - 2024 (Radiodiagnosis (BS)) | ResultPulse AI | CurrentPulse AI",
+      "description": "Official result update from RPSC. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/exams/nta-1-public-notice-regarding-advisory-to-candidates-appearing-for-ugc-net-re-examination-at-centre-in-delhi-754a9528",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://cp.vliab.workers.dev/exams/nta-1-public-notice-regarding-advisory-to-candidates-appearing-for-ugc-net-re-examination-at-centre-in-delhi-754a9528",
+      "title": "1 Public Notice regarding Advisory to candidates appearing for UGC-NET Re-Examination at Centre in Delhi | ResultPulse AI | CurrentPulse AI",
+      "description": "Official notification update from NTA. Open the official source to apply, download, or verify details.",
+      "h1": 1,
+      "issues": []
+    }
+  ]
+}
