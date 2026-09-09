@@ -18,6 +18,7 @@ import RelatedYouTubeVideo from "@/components/RelatedYouTubeVideo";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 import { suppressRepeatedArticleSections } from "@/lib/articleSectionDedupe";
+import { cleanSeoDescription, cleanSeoTitle, repairedCaTitle } from "@/lib/publicArticleRepair";
 
 // Remove HTML tags for SEO descriptions and reading-time calculation
 function stripHtml(html = "") {
@@ -117,13 +118,13 @@ export async function generateMetadata({ params }) {
   const resolvedImage = resolveDisplayImage(article);
   const image = resolvedImage ? absoluteImageUrl(resolvedImage) : "";
 
+  const title = cleanSeoTitle(article.seo_title || repairedCaTitle(article));
   const plainDescription =
-    stripHtml(article.seo_description || "") ||
-    stripHtml(article.why_news || "").slice(0, 160) ||
+    cleanSeoDescription(article.seo_description || article.why_news || article.content, title) ||
     "UPSC Current Affairs";
 
   return {
-    title: article.seo_title || article.title,
+    title,
     description: plainDescription,
 
     keywords: Array.isArray(article.tags)
@@ -135,7 +136,7 @@ export async function generateMetadata({ params }) {
     },
 
     openGraph: {
-      title: article.title,
+      title,
       description: plainDescription,
       url: `${SITE_URL}${canonicalPath}`,
       ...(image ? { images: [{ url: image, width: 1200, height: 630 }] } : {}),
@@ -148,7 +149,7 @@ export async function generateMetadata({ params }) {
 
     twitter: {
       card: image ? "summary_large_image" : "summary",
-      title: article.title,
+      title,
       description: plainDescription,
       ...(image ? { images: [image] } : {}),
     },

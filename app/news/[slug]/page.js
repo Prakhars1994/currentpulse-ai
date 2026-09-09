@@ -14,7 +14,7 @@ import { resolveDisplayImage, isVerifiedReusableArticleImage } from "@/lib/news/
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 import { isPublicNewsArticle } from "@/lib/articleStreams";
 import { parseNewsPresentation } from "@/lib/news/newsPresentation";
-import { normalizedPublicCategory, repairedNewsTitle } from "@/lib/publicArticleRepair";
+import { cleanSeoDescription, cleanSeoTitle, normalizedPublicCategory, repairedNewsTitle } from "@/lib/publicArticleRepair";
 
 function stripHtml(value = "") { return String(value || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim(); }
 function formatDate(value) { if (!value) return ""; return new Date(value).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "long", year: "numeric" }); }
@@ -50,7 +50,7 @@ const getArticle = unstable_cache(async (slug) => {
 export async function generateMetadata({ params }) {
   const { slug } = await params; const article = await getArticle(slug);
   if (!article) return { title: "News Not Found | CurrentPulse AI", robots: { index: false, follow: false } };
-  const image=resolveDisplayImage(article);const newsPresentation=parseNewsPresentation(article.content);const title=newsPresentation?.title||repairedNewsTitle(article);const licensedConversation=!isIndexableNewsArticle(article);const originalConversationUrl=licensedConversation?article.article_sources?.find((source)=>source.source_kind==="news"&&source.source_name==="The Conversation")?.source_url:"";const description=stripHtml(newsPresentation?.lead||article.seo_description||article.why_news||article.content).slice(0,160);
+  const image=resolveDisplayImage(article);const newsPresentation=parseNewsPresentation(article.content);const visibleTitle=newsPresentation?.title||repairedNewsTitle(article);const title=cleanSeoTitle(article.seo_title||visibleTitle);const licensedConversation=!isIndexableNewsArticle(article);const originalConversationUrl=licensedConversation?article.article_sources?.find((source)=>source.source_kind==="news"&&source.source_name==="The Conversation")?.source_url:"";const description=cleanSeoDescription(newsPresentation?.lead||article.seo_description||article.why_news||article.content,visibleTitle);
   return { title, description, alternates:{canonical:licensedConversation&&originalConversationUrl?originalConversationUrl:`${SITE_URL}/news/${slug}`}, openGraph:{title,description,url:`${SITE_URL}/news/${slug}`,type:"article",publishedTime:article.created_at,modifiedTime:article.updated_at||article.created_at,...(image?{images:[{url:absoluteSiteUrl(image),width:1200,height:630}]}:{})}, twitter:{card:image?"summary_large_image":"summary",title,description,...(image?{images:[absoluteSiteUrl(image)]}:{})}, robots:licensedConversation?{index:false,follow:true}:{index:true,follow:true} };
 }
 
