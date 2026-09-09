@@ -30,3 +30,9 @@ test("article metadata removes PDF control fields and avoids mid-word truncation
   assert.match(description, /^Inflation eased/);
   assert.doesNotMatch(description, /CA_(?:CATEGORY|GS|DATE)/);
 });
+
+test("a full visible title is used when cleaning a truncated SEO title's PDF excerpt", () => {
+  const visibleTitle = "Valles Marineris Mega-Flood Study: Ancient Martian Water, a Possible Ocean";
+  const description = cleanSeoDescription(`CURRENT AFFAIRS 105 ${visibleTitle} Category: Science GS: GS-III Date: 6 September 2026 Why in News: A new study examines evidence of ancient Martian water.`, visibleTitle);
+  assert.equal(description, "A new study examines evidence of ancient Martian water.");
+});

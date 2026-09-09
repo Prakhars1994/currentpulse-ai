@@ -118,9 +118,10 @@ export async function generateMetadata({ params }) {
   const resolvedImage = resolveDisplayImage(article);
   const image = resolvedImage ? absoluteImageUrl(resolvedImage) : "";
 
-  const title = cleanSeoTitle(article.seo_title || repairedCaTitle(article));
+  const visibleTitle = repairedCaTitle(article);
+  const title = cleanSeoTitle(article.seo_title || visibleTitle);
   const plainDescription =
-    cleanSeoDescription(article.seo_description || article.why_news || article.content, title) ||
+    cleanSeoDescription(article.seo_description || article.why_news || article.content, visibleTitle) ||
     "UPSC Current Affairs";
 
   return {
