@@ -35,7 +35,6 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: SITE_URL,
     siteName: "CurrentPulse AI",
     title: "CurrentPulse AI - UPSC Current Affairs, PYQs, Quiz & News",
     description:

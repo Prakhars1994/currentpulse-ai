@@ -83,7 +83,7 @@ export default async function CategoryPage({ params }: Props) {
       <section className="border-b border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/40">
         <div className="mx-auto max-w-7xl px-6 py-14">
           <Link href="/categories" className="text-sm font-semibold text-cyan-400">
-            â† All categories
+            ← All categories
           </Link>
           <div className="mt-5 flex items-start gap-4">
             <span className="text-5xl" aria-hidden="true">
@@ -145,7 +145,7 @@ export default async function CategoryPage({ params }: Props) {
                       href={`/current-affairs/${article.slug}`}
                       className="font-bold text-cyan-400 hover:text-cyan-300"
                     >
-                      Read analysis â†’
+                      Read analysis →
                     </Link>
                   </div>
                 </div>
