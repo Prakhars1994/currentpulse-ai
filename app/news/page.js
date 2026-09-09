@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { archivePage } from "@/lib/archiveSeo";
 import { Fragment } from "react";
 import { loadNewsArticles } from "@/lib/articleStreams";
 import { createCategorySlug } from "@/lib/categoryRouting";
@@ -12,7 +14,8 @@ import { SITE_URL } from "@/lib/siteUrl";
 
 export async function generateMetadata({ searchParams }) {
   const p = await searchParams;
-  const page = Math.max(1, Number(p?.page) || 1);
+  const page = archivePage(p?.page);
+  if (!page) notFound();
   const canonical = page <= 1 ? `${SITE_URL}/news` : `${SITE_URL}/news/page/${page}`;
   const title = page <= 1 ? "Latest News Today — India, World, Science & Analysis" : `Latest News Archive - Page ${page}`;
   const description = "CurrentPulse Newsroom: administrator-published news with concise context, dates and categories.";
@@ -24,10 +27,12 @@ function storyDek(article, title, limit = 190) { return cleanPublicExcerpt(artic
 
 export default async function NewsPage({ searchParams }) {
   const params = await searchParams;
-  const currentPage = Math.max(1, Number(params?.page) || 1);
+  const currentPage = archivePage(params?.page);
+  if (!currentPage) notFound();
   const pageSize = 48;
   const { articles, total, hasMore, error } = await loadNewsArticles({ limit: pageSize, offset: (currentPage - 1) * pageSize });
   if (error) console.error("News stream error:", error);
+  if (!error && currentPage > 1 && !articles.length) notFound();
   const totalPages = Number.isFinite(total) ? Math.max(1, Math.ceil(total / pageSize)) : null;
   const stories = currentPage === 1 ? rankNewsByPriority(articles) : articles;
 

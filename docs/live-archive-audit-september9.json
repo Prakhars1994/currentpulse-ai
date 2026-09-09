@@ -1,0 +1,52 @@
+[
+  {
+    "path": "/robots.txt",
+    "status": 200,
+    "title": "",
+    "h1": "",
+    "articleLinks": 0,
+    "archiveLinks": 0,
+    "text": "",
+    "robots": "User-Agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/admin/\nDisallow: /api/articles\nDisallow: /api/upload\nDisallow: /api/ai/\n\nHost: https://cp.vliab.workers.dev\nSitemap: https://cp.vliab.workers.dev/sitemap.xml\n"
+  },
+  {
+    "path": "/current-affairs",
+    "status": 200,
+    "canonical": "https://cp.vliab.workers.dev/current-affairs",
+    "title": "UPSC Current Affairs | CurrentPulse AI",
+    "h1": "UPSC Current Affairs",
+    "articleLinks": 23,
+    "archiveLinks": 11,
+    "text": "CURRENT PULSE · STUDY ARCHIVEUPSC Current AffairsChoose a published study date to revise only that day's verified Current Affairs briefs.UPSCSSCRailwayBankingState PCSSelect date← PreviousCurrent Affairs date6 Sept 20265 Sept 20264 Sept 20263 Sept 20261 Sept 202631 Aug 202630 Aug 2026GoNext →8 briefs6 Sept 20265 Sept 20264 Sept 20263 Sept 20261 Sept 2026EnvironmentGS-I, GS-III6 Sept 2026Valles Marineris Mega-Flood Study: Ancient Martian Water, a Possible Ocean and the Reconstruction of Planetary ClimateCategory GS Date Quick rule Science, Space and Planetary Geomorphology GS Paper I, GS Paper III 6 September 2026 Read highlighted facts first FAST READ - read only this box if short on time • A new study examines evidence that a catastrophic flood from the Valles Marineris system may have fe"
+  },
+  {
+    "path": "/current-affairs?page=2",
+    "status": 200,
+    "canonical": "https://cp.vliab.workers.dev/current-affairs",
+    "title": "UPSC Current Affairs | CurrentPulse AI",
+    "h1": "UPSC Current Affairs",
+    "articleLinks": 0,
+    "archiveLinks": 12,
+    "text": "CURRENT PULSE · STUDY ARCHIVEUPSC Current AffairsChoose a published study date to revise only that day's verified Current Affairs briefs.UPSCSSCRailwayBankingState PCSSelect date← PreviousCurrent Affairs date6 Sept 20265 Sept 20264 Sept 20263 Sept 20261 Sept 202631 Aug 202630 Aug 2026GoNext →0 briefs6 Sept 20265 Sept 20264 Sept 20263 Sept 20261 Sept 2026No Current Affairs published for 6 Sept 2026Choose an available publication date to continue studying.← Previous pagePage 2"
+  },
+  {
+    "path": "/current-affairs/hindi?page=2",
+    "status": 200,
+    "canonical": "https://cp.vliab.workers.dev/current-affairs/hindi",
+    "title": "हिंदी करेंट अफेयर्स | CurrentPulse AI | CurrentPulse AI",
+    "h1": "हिंदी करेंट अफेयर्स",
+    "articleLinks": 1,
+    "archiveLinks": 0,
+    "text": "Hindi Current Affairsहिंदी करेंट अफेयर्सहिंदी PDF से अलग archive में प्रकाशित लेख। extraction browser में होती है; कोई AI call नहीं।English Current Affairs →अभी कोई हिंदी Current Affairs PDF प्रकाशित नहीं है।← नए लेख"
+  },
+  {
+    "path": "/news/page/99999",
+    "status": 200,
+    "canonical": "https://cp.vliab.workers.dev/news/page/99999",
+    "title": "Latest News Archive - Page 99999 | CurrentPulse AI",
+    "h1": "CurrentPulse News",
+    "articleLinks": 0,
+    "archiveLinks": 0,
+    "text": "CurrentPulse · Newsroom · 9 Sept 2026CurrentPulse NewsIndia · States · World · concise reporting with article-specific visualsCurrent AffairsTopics780 storiesNo stories on this pagePublished News stories will appear here.← NewerPage 99999 / 17"
+  }
+]
