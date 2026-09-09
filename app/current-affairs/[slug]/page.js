@@ -18,7 +18,7 @@ import RelatedYouTubeVideo from "@/components/RelatedYouTubeVideo";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
 import { suppressRepeatedArticleSections } from "@/lib/articleSectionDedupe";
-import { cleanSeoDescription, cleanSeoTitle, repairedCaTitle } from "@/lib/publicArticleRepair";
+import { cleanSeoTitle, repairedCaTitle, selectSeoDescription } from "@/lib/publicArticleRepair";
 
 // Remove HTML tags for SEO descriptions and reading-time calculation
 function stripHtml(html = "") {
@@ -120,9 +120,10 @@ export async function generateMetadata({ params }) {
 
   const visibleTitle = repairedCaTitle(article);
   const title = cleanSeoTitle(article.seo_title || visibleTitle);
-  const plainDescription =
-    cleanSeoDescription(article.seo_description || article.why_news || article.content, visibleTitle) ||
-    "UPSC Current Affairs";
+  const plainDescription = selectSeoDescription(
+    [article.seo_description, article.why_news, article.content],
+    visibleTitle
+  );
 
   return {
     title,

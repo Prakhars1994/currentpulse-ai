@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { cleanSeoDescription, cleanSeoTitle } from "../lib/publicArticleRepair.js";
+import { cleanSeoDescription, cleanSeoTitle, selectSeoDescription } from "../lib/publicArticleRepair.js";
 
 const read = (file) => fs.readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
 
@@ -35,4 +35,11 @@ test("a full visible title is used when cleaning a truncated SEO title's PDF exc
   const visibleTitle = "Valles Marineris Mega-Flood Study: Ancient Martian Water, a Possible Ocean";
   const description = cleanSeoDescription(`CURRENT AFFAIRS 105 ${visibleTitle} Category: Science GS: GS-III Date: 6 September 2026 Why in News: A new study examines evidence of ancient Martian water.`, visibleTitle);
   assert.equal(description, "A new study examines evidence of ancient Martian water.");
+});
+
+test("header-only PDF descriptions fall back to a meaningful deterministic description", () => {
+  const title = "Valles Marineris Mega-Flood Study: Ancient Martian Water";
+  const description = selectSeoDescription(["Category GS Date Quick", ""], title);
+  assert.match(description, /UPSC Current Affairs analysis/);
+  assert.doesNotMatch(description, /^Category/);
 });
