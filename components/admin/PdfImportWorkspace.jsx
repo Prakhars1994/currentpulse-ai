@@ -461,8 +461,7 @@ export default function PdfImportWorkspace({ embedded = false }) {
           Upload one Current Affairs PDF, one Hindi Current Affairs PDF and one
           News PDF. The browser reads the PDFs locally, removes repeated
           headers/page numbers, detects article headings, preserves the complete
-          extracted text and converts it into CurrentPulse article fields. No AI
-          call is used for extraction.
+          extracted text and converts it into CurrentPulse article fields. No AI call is used for extraction.
         </p>
 
         <div className="mt-5 flex items-center gap-3">
