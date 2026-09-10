@@ -455,13 +455,14 @@ export default function PdfImportWorkspace({ embedded = false }) {
           Low-quota ingestion
         </p>
         <h1 className="mt-2 text-3xl font-black">
-          {embedded ? "Daily PDF Intake" : "Two-PDF CurrentPulse Import"}
+          {embedded ? "Daily PDF Intake" : "Three-PDF CurrentPulse Import"}
         </h1>
         <p className="mt-3 max-w-3xl leading-7 text-slate-300">
-          Upload one Current Affairs PDF and one News PDF. The browser reads
-          the PDFs locally, removes repeated headers/page numbers, detects
-          article headings, preserves the complete extracted text and converts
-          it into CurrentPulse article fields. No AI call is used for extraction.
+          Upload one Current Affairs PDF, one Hindi Current Affairs PDF and one
+          News PDF. The browser reads the PDFs locally, removes repeated
+          headers/page numbers, detects article headings, preserves the complete
+          extracted text and converts it into CurrentPulse article fields. No AI
+          call is used for extraction.
         </p>
 
         <div className="mt-5 flex items-center gap-3">
