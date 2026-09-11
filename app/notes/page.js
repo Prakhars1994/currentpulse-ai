@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import NotesWorkspace from "@/components/NotesWorkspace";
 
 export const metadata = {
