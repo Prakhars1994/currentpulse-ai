@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { EXAM_VERTICALS } from "@/lib/examPrep/sourceRegistry";
+import { landingMetadata } from "@/lib/landingMetadata";
 
-export const metadata = {
-  title: "Free Mock Tests - UPSC, SSC, Railway, Banking & State PCS",
-  description: "Ten free guest mock tests per major exam with instant deterministic evaluation and no login requirement.",
-  alternates: { canonical: "/mock-tests" },
-};
+export const metadata = landingMetadata(
+  "/mock-tests",
+  "Free Mock Tests - UPSC, SSC, Railway, Banking & State PCS",
+  "Take free guest mock tests for UPSC, SSC, Railway, Banking and State PCS with instant deterministic evaluation and no login requirement."
+);
 
 export default async function MockTestsPage({ searchParams }) {
   const params = await searchParams;
