@@ -11,6 +11,12 @@ import {
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 import { SITE_URL } from "@/lib/siteUrl";
 import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
+import {
+  cleanPublicExcerpt,
+  normalizedPaper,
+  normalizedPublicCategory,
+  repairedCaTitle,
+} from "@/lib/publicArticleRepair";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -29,14 +35,6 @@ type Article = {
   created_at: string | null;
   article_sources?: Array<{ source_kind?: string | null }>;
 };
-
-function plainText(value = "") {
-  return value
-    .replace(/<[^>]*>/g, " ")
-    .replace(/[#*_`>~-]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
@@ -105,52 +103,66 @@ export default async function CategoryPage({ params }: Props) {
       <section className="mx-auto max-w-7xl px-6 py-12">
         {articles.length > 0 ? (
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {articles.map((article) => (
-              <article
-                key={article.id}
-                className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl"
-              >
-                {resolveDisplayImage(article) ? (
-                  <img src={resolveDisplayImage(article)} alt={article.title} loading="lazy" decoding="async" className="h-44 w-full object-cover" />
-                ) : (
-                  <div className="ca-card-noimage"><span>{article.category || route.name}</span></div>
-                )}
-                <div className="p-6">
-                  <div className="flex flex-wrap gap-2 text-xs font-bold">
-                    <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-cyan-300">
-                      {article.category || route.name}
-                    </span>
-                    <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-300">
-                      {article.paper || "General Studies"}
-                    </span>
+            {articles.map((article) => {
+              const displayTitle = repairedCaTitle(article);
+              const displayCategory = normalizedPublicCategory(
+                article.category || route.name,
+                `${displayTitle} ${article.why_news || ""}`
+              );
+              const displayPaper = normalizedPaper(article.paper || "General Studies");
+              const excerpt = cleanPublicExcerpt(
+                article.why_news || "Complete UPSC-focused analysis.",
+                displayTitle,
+                220
+              );
+
+              return (
+                <article
+                  key={article.id}
+                  className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl"
+                >
+                  {resolveDisplayImage(article) ? (
+                    <img src={resolveDisplayImage(article)} alt={displayTitle} loading="lazy" decoding="async" className="h-44 w-full object-cover" />
+                  ) : (
+                    <div className="ca-card-noimage"><span>{displayCategory}</span></div>
+                  )}
+                  <div className="p-6">
+                    <div className="flex flex-wrap gap-2 text-xs font-bold">
+                      <span className="rounded-full bg-cyan-500/15 px-3 py-1 text-cyan-300">
+                        {displayCategory}
+                      </span>
+                      <span className="rounded-full bg-slate-800 px-3 py-1 text-slate-300">
+                        {displayPaper}
+                      </span>
+                    </div>
+                    <h2 className="mt-4 text-xl font-bold leading-snug">
+                      {displayTitle}
+                    </h2>
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">
+                      {excerpt || "Complete UPSC-focused analysis."}
+                    </p>
+                    <div className="mt-6 flex items-center justify-between gap-3">
+                      <span className="text-xs text-slate-500">
+                        {article.created_at
+                          ? new Date(article.created_at).toLocaleDateString("en-IN", {
+                              timeZone: "Asia/Kolkata",
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })
+                          : ""}
+                      </span>
+                      <Link
+                        href={`/current-affairs/${article.slug}`}
+                        className="font-bold text-cyan-400 hover:text-cyan-300"
+                      >
+                        Read analysis
+                      </Link>
+                    </div>
                   </div>
-                  <h2 className="mt-4 text-xl font-bold leading-snug">
-                    {article.title}
-                  </h2>
-                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">
-                    {plainText(article.why_news || "Complete UPSC-focused analysis.")}
-                  </p>
-                  <div className="mt-6 flex items-center justify-between gap-3">
-                    <span className="text-xs text-slate-500">
-                      {article.created_at
-                        ? new Date(article.created_at).toLocaleDateString("en-IN", {
-                            timeZone: "Asia/Kolkata",
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })
-                        : ""}
-                    </span>
-                    <Link
-                      href={`/current-affairs/${article.slug}`}
-                      className="font-bold text-cyan-400 hover:text-cyan-300"
-                    >
-                      Read analysis →
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-3xl border border-slate-800 bg-slate-900 p-10 text-center">
