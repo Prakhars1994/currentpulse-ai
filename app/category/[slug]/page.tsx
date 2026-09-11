@@ -42,16 +42,23 @@ export async function generateMetadata({ params }: Props) {
   if (!route) return { title: "UPSC Current Affairs Category", robots: { index: false } };
 
   const title = `${route.name} Current Affairs for UPSC`;
+  const socialTitle = `${title} | CurrentPulse AI`;
   const description = `Latest ${route.name} current affairs with syllabus linkage, static concepts, Prelims facts, data and Mains analysis for UPSC preparation.`;
+  const canonical = `${SITE_URL}/category/${route.slug}`;
   return {
     title,
     description,
-    alternates: { canonical: `${SITE_URL}/category/${route.slug}` },
+    alternates: { canonical },
     openGraph: {
-      title: `${title} | CurrentPulse AI`,
+      title: socialTitle,
       description,
-      url: `${SITE_URL}/category/${route.slug}`,
+      url: canonical,
       type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: socialTitle,
+      description,
     },
   };
 }

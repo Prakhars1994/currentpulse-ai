@@ -19,7 +19,7 @@ export async function generateMetadata({ searchParams }) {
   const canonical = page <= 1 ? `${SITE_URL}/news` : `${SITE_URL}/news/page/${page}`;
   const title = page <= 1 ? "Latest News Today — India, World, Science & Analysis" : `Latest News Archive - Page ${page}`;
   const description = "CurrentPulse Newsroom: administrator-published news with concise context, dates and categories.";
-  return { title, description, alternates: { canonical }, openGraph: { title, description, url: canonical, type: "website" } };
+  return { title, description, alternates: { canonical }, openGraph: { title, description, url: canonical, type: "website" }, twitter: { card: "summary_large_image", title, description } };
 }
 function formatDate(value) { if (!value) return ""; const date = new Date(value); if (Number.isNaN(date.getTime())) return ""; return date.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }); }
 function pageHref(page) { return page <= 1 ? "/news" : `/news/page/${page}`; }

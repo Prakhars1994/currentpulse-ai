@@ -2,10 +2,16 @@ import OfficialPapers from "@/components/OfficialPapers";
 import { OFFICIAL_UPSC_PAPERS } from "@/lib/upsc/questionPapers";
 import { SITE_URL } from "@/lib/siteUrl";
 
+const title = "UPSC Previous Papers — 16 Prelims & 15 Mains Years";
+const description = "Browse verified UPSC Civil Services papers with Prelims coverage from 2011–2026 and Mains coverage from 2011–2025.";
+const canonical = `${SITE_URL}/question-papers`;
+
 export const metadata = {
-  title: "UPSC Previous Papers — 16 Prelims & 15 Mains Years",
-  description: "Browse verified UPSC Civil Services papers with Prelims coverage from 2011–2026 and Mains coverage from 2011–2025.",
-  alternates: { canonical: `${SITE_URL}/question-papers` },
+  title,
+  description,
+  alternates: { canonical },
+  openGraph: { title, description, url: canonical, type: "website" },
+  twitter: { card: "summary_large_image", title, description },
 };
 
 export default function QuestionPapersPage() {

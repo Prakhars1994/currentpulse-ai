@@ -5,10 +5,16 @@ import ExamUpdatesPage from "@/components/ExamUpdatesPage";
 import { normalizeExamFilters, normalizeExamPage } from "@/lib/exams/filters";
 import { SITE_URL } from "@/lib/siteUrl";
 
+const title = "ResultPulse AI — Exam Results, Admit Cards & Notifications";
+const description = "Official-source exam results, admit cards, answer keys, applications, deadlines and notifications across India.";
+const canonical = `${SITE_URL}/exams`;
+
 export const metadata = {
-  title: "ResultPulse AI — Exam Results, Admit Cards & Notifications",
-  description: "Official-source exam results, admit cards, answer keys, applications, deadlines and notifications across India.",
-  alternates: { canonical: `${SITE_URL}/exams` },
+  title,
+  description,
+  alternates: { canonical },
+  openGraph: { title, description, url: canonical, type: "website" },
+  twitter: { card: "summary_large_image", title, description },
 };
 
 export default async function Page({ searchParams }) {
