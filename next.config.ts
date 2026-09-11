@@ -5,6 +5,19 @@ const nextConfig = {
     buildActivityPosition: 'bottom-right',
   },
   reactStrictMode: true,
+  async headers() {
+    return [
+      {
+        source: '/notes',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, follow',
+          },
+        ],
+      },
+    ];
+  },
 }
 
 export default nextConfig
