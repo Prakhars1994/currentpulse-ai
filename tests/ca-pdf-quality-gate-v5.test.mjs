@@ -42,9 +42,11 @@ test("official sources require a clickable URL", () => {
 });
 
 test("FAST READ and WHY IN NEWS cannot be exact editorial duplicates", () => {
+  const repeated = "- The same verified current-affairs development is repeated here with the same institution, date, policy significance, implementation context and examination relevance.\n- This second bullet is deliberately identical across both sections so the regression fixture is long enough to exercise duplicate detection.";
   const base = buildArticle();
-  const fast = base.slice(base.indexOf("## FAST READ") + "## FAST READ".length, base.indexOf("## WHY IN NEWS"));
-  const duplicated = base.replace(/## WHY IN NEWS[\s\S]*?## TOP DATA & FACTS/, `## WHY IN NEWS${fast}## TOP DATA & FACTS`);
+  const duplicated = base
+    .replace(/## FAST READ[\s\S]*?## WHY IN NEWS/, `## FAST READ\n${repeated}\n\n## WHY IN NEWS`)
+    .replace(/## WHY IN NEWS[\s\S]*?## TOP DATA & FACTS/, `## WHY IN NEWS\n${repeated}\n\n## TOP DATA & FACTS`);
   const audit = auditCaPdfLiveArticle(duplicated);
   assert.equal(audit.ok, false);
   assert.ok(audit.problems.includes("FAST READ and WHY IN NEWS must not duplicate each other"));
