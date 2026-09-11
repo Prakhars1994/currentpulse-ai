@@ -12,7 +12,7 @@ const SHARD_SIZE = 45_000;
 const PAGE_SIZE = 1_000;
 const STATIC_PATHS = [
   "/", "/current-affairs", "/news", "/categories", "/quiz", "/mock-tests",
-  "/pdf", "/notes", "/pyq", "/question-papers", "/videos", "/exams",
+  "/pdf", "/pyq", "/question-papers", "/videos", "/exams",
   "/about", "/contact", "/editorial-methodology", "/sources-policy",
   "/ai-usage-policy", "/corrections-policy", "/privacy", "/terms",
   "/exams/results", "/exams/admit-cards", "/exams/notifications",
