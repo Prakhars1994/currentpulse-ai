@@ -1,0 +1,75 @@
+name: VDL Bridge Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/vdl-bridge-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  NEXT_PUBLIC_SITE_URL: https://vdl.vliab.workers.dev
+
+jobs:
+  deploy-vdl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout VDL
+        uses: actions/checkout@v4
+        with:
+          repository: Prakhars1994/vishwakarma-digital-labs
+          ref: main
+          path: vdl
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: vdl/package-lock.json
+
+      - name: Install dependencies
+        working-directory: vdl
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Build Cloudflare Worker
+        working-directory: vdl
+        run: npx opennextjs-cloudflare build
+
+      - name: Validate Cloudflare credentials
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          [[ -n "${CLOUDFLARE_API_TOKEN:-}" ]] || { echo "Missing CLOUDFLARE_API_TOKEN"; exit 1; }
+          [[ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ]] || { echo "Missing CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+
+      - name: Deploy VDL Worker
+        working-directory: vdl
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx opennextjs-cloudflare deploy
+
+      - name: Production smoke test
+        shell: bash
+        run: |
+          set -euo pipefail
+          for url in \
+            https://vdl.vliab.workers.dev/ \
+            https://vdl.vliab.workers.dev/work/currentpulse-ai \
+            https://vdl.vliab.workers.dev/demos/restaurant \
+            https://vdl.vliab.workers.dev/contact \
+            https://vdl.vliab.workers.dev/robots.txt \
+            https://vdl.vliab.workers.dev/sitemap.xml; do
+            code="$(curl -L -sS -o /dev/null -w '%{http_code}' "$url")"
+            [[ "$code" == "200" ]] || { echo "Smoke failed: $url -> $code"; exit 1; }
+            echo "OK $code $url"
+          done
