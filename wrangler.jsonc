@@ -26,6 +26,9 @@
       "/quiz",
       "/pdf",
       "/pdf/*",
+      "/mock-tests",
+      "/mock-tests/*",
+      "/search",
       "/notes",
       "/news-sitemap.xml",
       "/feed.xml"
