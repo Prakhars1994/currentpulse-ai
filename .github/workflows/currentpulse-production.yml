@@ -66,13 +66,14 @@ jobs:
             currentpulse-release-${{ github.sha }}-
             currentpulse-release-
 
-      - name: Preserve previous static reader assets
+      - name: Preserve previous static reader assets and safe build cache
         id: previous-assets
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/currentpulse-previous-assets
+          rm -rf /tmp/currentpulse-previous-assets /tmp/currentpulse-next-cache
+
           if [[ -d .open-next/assets ]] && find .open-next/assets -type f -print -quit | grep -q .; then
             mkdir -p /tmp/currentpulse-previous-assets
             cp -a .open-next/assets/. /tmp/currentpulse-previous-assets/
@@ -82,9 +83,22 @@ jobs:
             echo "ready=false" >> "${GITHUB_OUTPUT}"
             echo "No previous reader assets found; this release will regenerate the reader."
           fi
-          # Never let an old build contaminate the new Worker build. Only the
-          # static assets are selectively merged back after impact planning.
+
+          # .next/cache is reusable compiler/build cache, not deployable output.
+          # Preserve only that cache across builds; discard all prior generated
+          # application output so stale pages or server bundles can never leak.
+          if [[ -d .next/cache ]] && find .next/cache -type f -print -quit | grep -q .; then
+            mkdir -p /tmp/currentpulse-next-cache
+            cp -a .next/cache/. /tmp/currentpulse-next-cache/
+          fi
+
           rm -rf .next .open-next
+
+          if [[ -d /tmp/currentpulse-next-cache ]] && find /tmp/currentpulse-next-cache -type f -print -quit | grep -q .; then
+            mkdir -p .next/cache
+            cp -a /tmp/currentpulse-next-cache/. .next/cache/
+            echo "Reusable Next build cache restored from the last validated release."
+          fi
 
       - name: Full regression suite
         run: npm run test:regression
@@ -165,7 +179,7 @@ jobs:
           mkdir -p .open-next/assets
           # Fresh OpenNext assets always win. Historical static HTML/chunks are
           # carried forward only for routes the impact planner proved unchanged.
-          cp -an /tmp/currentpulse-previous-assets/. .open-next/assets/
+          cp -a --update=none /tmp/currentpulse-previous-assets/. .open-next/assets/
 
       - name: Materialize static reader
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
