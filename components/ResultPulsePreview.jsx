@@ -2,12 +2,55 @@ import Link from "next/link";
 import { loadExamUpdates } from "@/lib/exams/repository";
 import { getExamUpdateDisplayType } from "@/lib/exams/displayType";
 
+const MONTHS = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
+};
+
+function leadingDateTimestamp(title = "") {
+  const match = String(title).trim().match(
+    /^(\d{1,2})\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+(20\d{2})\b/i
+  );
+  if (!match) return 0;
+  const day = Number(match[1]);
+  const month = MONTHS[match[2].slice(0, 3).toLowerCase()];
+  const year = Number(match[3]);
+  if (!Number.isInteger(month) || day < 1 || day > 31) return 0;
+  return Date.UTC(year, month, day);
+}
+
+function indiaTodayTimestamp() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day));
+}
+
+function cleanPreviewTitle(title = "") {
+  const text = String(title || "").replace(/\s+/g, " ").trim();
+  if (leadingDateTimestamp(text)) return text;
+  return text.replace(/^\d{1,3}\s+(?=[A-Za-z(])/, "").trim();
+}
+
 export default async function ResultPulsePreview() {
   let updates = [];
 
   try {
-    const result = await loadExamUpdates({ limit: 6 });
-    updates = result?.updates || [];
+    // Twelve keeps the same bounded per-source read size as six while giving
+    // the preview room to skip malformed future-dated source rows.
+    const result = await loadExamUpdates({ limit: 12 });
+    const today = indiaTodayTimestamp();
+    updates = (result?.updates || [])
+      .filter((item) => {
+        const titleDate = leadingDateTimestamp(item?.title || "");
+        return !titleDate || titleDate <= today;
+      })
+      .slice(0, 6)
+      .map((item) => ({ ...item, title: cleanPreviewTitle(item.title) }));
   } catch (error) {
     console.error(
       "[ResultPulsePreview] updates unavailable:",

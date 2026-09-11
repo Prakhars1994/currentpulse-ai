@@ -87,9 +87,11 @@ function ArticleCard({ item, stream }: { item: StreamArticle; stream: "current-a
           <span className={`rounded-full bg-white/5 px-3 py-1.5 ${accentText}`}>
             {item.category || "General Studies"}
           </span>
-          <span className="rounded-full bg-blue-400/10 px-3 py-1.5 text-blue-300">
-            {isCurrentAffairs ? item.paper || "UPSC" : "News"}
-          </span>
+          {isCurrentAffairs && (
+            <span className="rounded-full bg-blue-400/10 px-3 py-1.5 text-blue-300">
+              {item.paper || "UPSC"}
+            </span>
+          )}
         </div>
 
         <Link href={articlePath}>
