@@ -39,31 +39,6 @@
     }
   ],
 
-  "kv_namespaces": [
-    {
-      "binding": "NEXT_INC_CACHE_KV",
-      "id": "7702076fde4f43b5a745717fe93b0b2c"
-    }
-  ],
-
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "NEXT_CACHE_DO_QUEUE",
-        "class_name": "DOQueueHandler"
-      }
-    ]
-  },
-
-  "migrations": [
-    {
-      "tag": "currentpulse-isr-v1",
-      "new_sqlite_classes": [
-        "DOQueueHandler"
-      ]
-    }
-  ],
-
   "images": {
     "binding": "IMAGES"
   },
