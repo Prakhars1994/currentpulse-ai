@@ -55,7 +55,7 @@ export default function Hero({
 
   const featuredImage = resolveDisplayImage(featured || {});
   const featuredIsCurrentAffairs = hasCoachingSource(featured || {});
-  const featuredStreamLabel = featuredIsCurrentAffairs ? "Coaching current affairs" : "Latest news";
+  const featuredStreamLabel = featuredIsCurrentAffairs ? "Current affairs" : "Latest news";
   const featuredPath = featured ? `${featuredIsCurrentAffairs ? "/current-affairs" : "/news"}/${featured.slug}` : "/current-affairs";
 
   return (
