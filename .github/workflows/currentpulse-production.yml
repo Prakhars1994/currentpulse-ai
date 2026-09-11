@@ -31,9 +31,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Two commits are enough for the normal main push diff used by the
-          # safe code-release planner. It falls back to a full reader release
-          # whenever the previous commit cannot be inspected.
           fetch-depth: 2
 
       - name: Use Node 24 with npm cache
@@ -101,9 +98,6 @@ jobs:
             echo "No previous reader assets found; this release will regenerate the reader."
           fi
 
-          # .next/cache is reusable compiler/build cache, not deployable output.
-          # Preserve only that cache across builds; discard all prior generated
-          # application output so stale pages or server bundles can never leak.
           if [[ -d .next/cache ]] && find .next/cache -type f -print -quit | grep -q .; then
             mkdir -p /tmp/currentpulse-next-cache
             cp -a .next/cache/. /tmp/currentpulse-next-cache/
@@ -194,8 +188,6 @@ jobs:
           set -euo pipefail
           [[ -d /tmp/currentpulse-previous-assets ]] || { echo "Previous asset snapshot missing."; exit 1; }
           mkdir -p .open-next/assets
-          # Fresh OpenNext assets always win. Historical static HTML/chunks are
-          # carried forward only for routes the impact planner proved unchanged.
           cp -a --update=none /tmp/currentpulse-previous-assets/. .open-next/assets/
 
       - name: Materialize static reader
@@ -262,16 +254,28 @@ jobs:
         run: |
           set -euo pipefail
           base="https://cp.vliab.workers.dev"
-          for path in / /robots.txt /sitemap.xml /news-sitemap.xml /current-affairs /news /exams /quiz /feed.xml; do
-            echo "Checking ${base}${path}"
-            curl --silent --show-error --fail --location \
-              --retry 3 --retry-delay 2 --max-time 60 \
-              "${base}${path}" >/dev/null
-          done
-          echo "Production smoke test passed."
+          paths=(/ /robots.txt /sitemap.xml /news-sitemap.xml /current-affairs /news /exams /quiz /feed.xml)
+          pids=()
 
-      # PDF publication already performs bounded, persist-once image enrichment.
-      # Do not trigger historical external-provider searches on every code deploy.
+          for path in "${paths[@]}"; do
+            (
+              echo "Checking ${base}${path}"
+              curl --silent --show-error --fail --location \
+                --retry 3 --retry-delay 2 --max-time 60 \
+                "${base}${path}" >/dev/null
+            ) &
+            pids+=("$!")
+          done
+
+          failed=0
+          for pid in "${pids[@]}"; do
+            if ! wait "${pid}"; then
+              failed=1
+            fi
+          done
+
+          [[ "${failed}" -eq 0 ]] || { echo "One or more production smoke checks failed."; exit 1; }
+          echo "Production smoke test passed."
 
       - name: Save validated release snapshot
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
