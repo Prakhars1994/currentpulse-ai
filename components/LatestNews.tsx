@@ -1,7 +1,5 @@
 import Link from "next/link";
-import {
-  coachingSourceLabel,
-} from "@/lib/articleStreams";
+import { currentAffairsSourceLabel } from "@/lib/articleStreams";
 import { resolveDisplayImage } from "@/lib/news/categoryImage";
 
 export const revalidate = 60;
@@ -9,6 +7,7 @@ export const revalidate = 60;
 type ArticleSource = {
   source_kind?: string | null;
   source_name?: string | null;
+  source_key?: string | null;
 };
 
 type StreamArticle = {
@@ -27,7 +26,6 @@ type StreamArticle = {
 
 function stripHtml(value?: string | null) {
   if (!value) return "";
-
   return value
     .replace(/<[^>]*>/g, " ")
     .replace(/&nbsp;/g, " ")
@@ -40,7 +38,6 @@ function stripHtml(value?: string | null) {
 
 function formatDate(date?: string | null) {
   if (!date) return "";
-
   return new Date(date).toLocaleDateString("en-IN", {
     timeZone: "Asia/Kolkata",
     day: "numeric",
@@ -49,13 +46,7 @@ function formatDate(date?: string | null) {
   });
 }
 
-function ArticleCard({
-  item,
-  stream,
-}: {
-  item: StreamArticle;
-  stream: "current-affairs" | "news";
-}) {
+function ArticleCard({ item, stream }: { item: StreamArticle; stream: "current-affairs" | "news" }) {
   const isCurrentAffairs = stream === "current-affairs";
   const accentText = isCurrentAffairs ? "text-cyan-300" : "text-amber-300";
   const accentBorder = isCurrentAffairs
@@ -64,28 +55,29 @@ function ArticleCard({
   const titleHover = isCurrentAffairs
     ? "group-hover:text-cyan-300"
     : "group-hover:text-amber-300";
-  const streamLabel = isCurrentAffairs ? coachingSourceLabel(item) : "CurrentPulse Newsroom";
+  const streamLabel = isCurrentAffairs
+    ? currentAffairsSourceLabel(item)
+    : "CurrentPulse Newsroom";
   const articlePath = `/${stream}/${item.slug}`;
   const image = resolveDisplayImage(item);
 
   return (
-    <article
-      className={`group overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/85 shadow-xl shadow-slate-950/20 transition duration-300 hover:-translate-y-1 hover:shadow-2xl ${accentBorder}`}
-    >
-      <Link
-        href={articlePath}
-        className="block overflow-hidden"
-      >
+    <article className={`group overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/85 shadow-xl shadow-slate-950/20 transition duration-300 hover:-translate-y-1 hover:shadow-2xl ${accentBorder}`}>
+      <Link href={articlePath} className="block overflow-hidden">
         <div className="relative">
           {image ? (
-            <img src={image} alt={item.title || (isCurrentAffairs ? "UPSC current affairs article" : "News article")} className="h-52 w-full object-cover transition duration-700 group-hover:scale-[1.04]" loading="lazy" decoding="async" />
+            <img
+              src={image}
+              alt={item.title || (isCurrentAffairs ? "UPSC current affairs article" : "News article")}
+              className="h-52 w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+              loading="lazy"
+              decoding="async"
+            />
           ) : (
             <div className={`h-36 ${isCurrentAffairs ? "bg-gradient-to-br from-slate-900 to-cyan-950" : "bg-gradient-to-br from-stone-900 to-red-950"}`} />
           )}
-          <span
-            className={`absolute left-4 top-4 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-xs font-black uppercase tracking-wide backdrop-blur ${accentText}`}
-          >
-            {isCurrentAffairs ? "Coaching CA" : "News"}
+          <span className={`absolute left-4 top-4 rounded-full border border-white/10 bg-slate-950/90 px-3 py-1.5 text-xs font-black uppercase tracking-wide backdrop-blur ${accentText}`}>
+            {isCurrentAffairs ? "Current Affairs" : "News"}
           </span>
         </div>
       </Link>
@@ -96,7 +88,7 @@ function ArticleCard({
             {item.category || "General Studies"}
           </span>
           <span className="rounded-full bg-blue-400/10 px-3 py-1.5 text-blue-300">
-            {isCurrentAffairs ? (item.paper || "UPSC") : "News"}
+            {isCurrentAffairs ? item.paper || "UPSC" : "News"}
           </span>
         </div>
 
@@ -109,7 +101,7 @@ function ArticleCard({
         <p className="mt-3 line-clamp-3 leading-7 text-slate-400">
           {stripHtml(item.why_news) ||
             (isCurrentAffairs
-              ? "Read the coaching-synthesised UPSC analysis."
+              ? "Read the complete administrator-published UPSC current affairs brief."
               : "Read the concise source-backed news story.")}
         </p>
 
@@ -118,15 +110,9 @@ function ArticleCard({
             <p className={`max-w-[12rem] truncate text-xs font-bold ${accentText}`}>
               {streamLabel}
             </p>
-            <p className="mt-1 text-xs text-slate-500">
-              {formatDate(item.created_at)}
-            </p>
+            <p className="mt-1 text-xs text-slate-500">{formatDate(item.created_at)}</p>
           </div>
-
-          <Link
-            href={articlePath}
-            className={`shrink-0 text-sm font-black ${accentText}`}
-          >
+          <Link href={articlePath} className={`shrink-0 text-sm font-black ${accentText}`}>
             Read →
           </Link>
         </div>
@@ -161,21 +147,11 @@ function StreamSection({
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <p className={`font-black uppercase tracking-[.2em] ${accentText}`}>
-              {eyebrow}
-            </p>
-            <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">
-              {title}
-            </h2>
-            <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">
-              {description}
-            </p>
+            <p className={`font-black uppercase tracking-[.2em] ${accentText}`}>{eyebrow}</p>
+            <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">{title}</h2>
+            <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-400">{description}</p>
           </div>
-
-          <Link
-            href={href}
-            className={`w-fit rounded-xl border px-5 py-3 font-black transition ${buttonStyle}`}
-          >
+          <Link href={href} className={`w-fit rounded-xl border px-5 py-3 font-black transition ${buttonStyle}`}>
             View all →
           </Link>
         </div>
@@ -189,13 +165,9 @@ function StreamSection({
         ) : (
           <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/60 p-10 text-center">
             <h3 className="text-2xl font-black text-white">
-              {isCurrentAffairs
-                ? "Coaching current affairs are being prepared"
-                : "No new AI news analysis yet"}
+              {isCurrentAffairs ? "No current affairs published yet" : "No news published yet"}
             </h3>
-            <p className="mt-3 text-slate-400">
-              This section updates automatically after its publishing pipeline completes.
-            </p>
+            <p className="mt-3 text-slate-400">This section updates after administrator publishing completes.</p>
           </div>
         )}
       </div>
@@ -203,7 +175,15 @@ function StreamSection({
   );
 }
 
-export default function LatestNews({ streams }: { streams: { currentAffairs: StreamArticle[]; news: StreamArticle[]; error: { message?: string } | null } }) {
+export default function LatestNews({
+  streams,
+}: {
+  streams: {
+    currentAffairs: StreamArticle[];
+    news: StreamArticle[];
+    error: { message?: string } | null;
+  };
+}) {
   const { currentAffairs, news, error } = streams;
 
   if (error) {
@@ -221,10 +201,10 @@ export default function LatestNews({ streams }: { streams: { currentAffairs: Str
   return (
     <>
       <StreamSection
-        eyebrow="Coaching-synthesised"
+        eyebrow="Administrator-published"
         title="UPSC Current Affairs"
-        description="Exam-focused briefs sourced from trusted coaching coverage, merged across publishers and enriched with static concepts, Prelims facts and Mains dimensions."
-        articles={currentAffairs.slice(0, 6) as StreamArticle[]}
+        description="Exam-focused current affairs published from administrator-supplied source PDFs and content, with syllabus links, Prelims facts and Mains dimensions."
+        articles={currentAffairs.slice(0, 6)}
         stream="current-affairs"
         href="/current-affairs"
       />
@@ -233,7 +213,7 @@ export default function LatestNews({ streams }: { streams: { currentAffairs: Str
         eyebrow="CurrentPulse newsroom"
         title="Latest News"
         description="Concise source-backed India and world news for everyone — separate from the UPSC Current Affairs format."
-        articles={news.slice(0, 6) as StreamArticle[]}
+        articles={news.slice(0, 6)}
         stream="news"
         href="/news"
       />
