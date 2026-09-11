@@ -37,6 +37,7 @@ const ignored = (file) =>
   file === ".github/workflows/currentpulse-production.yml" ||
   file === "scripts/code-release-paths.mjs" ||
   file === "scripts/build-static-sitemaps.mjs" ||
+  file === "lib/exams/collector.js" ||
   file.startsWith("tests/") ||
   file.startsWith("docs/") ||
   file.startsWith("supabase/") ||
@@ -103,6 +104,13 @@ for (const file of changedFiles) {
   }
   if (file === "app/exams/[slug]/page.js" || file === "components/ExamUpdatesPage.jsx") {
     allExams = true;
+    continue;
+  }
+  // ResultPulse public routes are Worker-first in Cloudflare. Repository-only
+  // changes therefore need the new Worker plus a bounded /exams refresh, not a
+  // full static-reader regeneration.
+  if (file === "lib/exams/repository.js") {
+    paths.add("/exams");
     continue;
   }
 
