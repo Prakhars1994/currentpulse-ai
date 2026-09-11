@@ -24,6 +24,34 @@ test("major indexable landing pages define page-specific social metadata", () =>
   assert.match(questionPapers, /UPSC Previous Papers — 16 Prelims & 15 Mains Years/);
 });
 
+test("all sitemap landing pages avoid inherited homepage metadata", () => {
+  const helper = read("lib/landingMetadata.js");
+  assert.match(helper, /alternates:\s*\{ canonical \}/);
+  assert.match(helper, /openGraph:/);
+  assert.match(helper, /twitter:/);
+
+  const leafLayouts = [
+    "app/categories/layout.js",
+    "app/quiz/layout.js",
+    "app/pyq/layout.js",
+    "app/videos/layout.js",
+    "app/about/layout.js",
+    "app/contact/layout.js",
+    "app/editorial-methodology/layout.js",
+    "app/sources-policy/layout.js",
+    "app/ai-usage-policy/layout.js",
+    "app/corrections-policy/layout.js",
+    "app/privacy/layout.js",
+    "app/terms/layout.js",
+  ];
+  for (const path of leafLayouts) {
+    assert.match(read(path), /landingMetadata\(/, `${path} must define route-specific metadata`);
+  }
+
+  assert.match(read("app/pdf/page.js"), /landingMetadata\(/);
+  assert.match(read("app/mock-tests/page.js"), /landingMetadata\(/);
+});
+
 test("notes route has a hard HTTP noindex fallback", () => {
   const nextConfig = read("next.config.ts");
   assert.match(nextConfig, /source:\s*['"]\/notes['"]/);

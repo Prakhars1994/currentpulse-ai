@@ -7,13 +7,13 @@ import { CalendarDays, FileDown, Layers3 } from "lucide-react";
 import { indiaDate } from "@/lib/study/digestDates";
 import ExamPdfLibrary from "@/components/ExamPdfLibrary";
 import { loadPublishedExamPdfs } from "@/lib/examPdfs";
+import { landingMetadata } from "@/lib/landingMetadata";
 
-export const metadata = {
-  title: "Current Affairs PDF Digests",
-  description:
-    "Daily, weekly and monthly printable UPSC current-affairs digests.",
-  alternates: { canonical: "/pdf" },
-};
+export const metadata = landingMetadata(
+  "/pdf",
+  "Current Affairs PDF Digests | CurrentPulse AI",
+  "Open daily, weekly and monthly printable CurrentPulse current-affairs digests for focused UPSC revision."
+);
 
 function recentDates(today, count = 21) {
   const anchor = new Date(`${today}T12:00:00+05:30`);
