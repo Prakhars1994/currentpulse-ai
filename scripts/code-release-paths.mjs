@@ -36,6 +36,7 @@ let fullRequired = false;
 const ignored = (file) =>
   file === ".github/workflows/currentpulse-production.yml" ||
   file === "scripts/code-release-paths.mjs" ||
+  file === "scripts/build-static-sitemaps.mjs" ||
   file.startsWith("tests/") ||
   file.startsWith("docs/") ||
   file.startsWith("supabase/") ||
@@ -66,13 +67,20 @@ const globalFiles = new Set([
   "lib/articleStreams.js",
   "lib/sitemapQuality.js",
   "scripts/materialize-static-reader.mjs",
-  "scripts/build-static-sitemaps.mjs",
 ]);
 
 for (const file of changedFiles) {
   if (ignored(file)) continue;
   if (globalFiles.has(file)) {
     fullRequired = true;
+    continue;
+  }
+
+  // The production workflow always rebuilds sitemap.xml and its shards after
+  // reader materialization. Changing the dynamic sitemap implementation does
+  // not require re-rendering unrelated reader HTML, so keep this bounded.
+  if (file === "app/sitemap.ts") {
+    paths.add("/");
     continue;
   }
 
@@ -140,8 +148,6 @@ for (const file of changedFiles) {
     continue;
   }
 
-  // Unknown shared/application code can affect many pre-rendered pages. Prefer
-  // correctness over a guessed incremental release.
   if (file.startsWith("app/") || file.startsWith("components/") || file.startsWith("lib/")) {
     fullRequired = true;
     continue;
@@ -177,9 +183,6 @@ if (allCurrentAffairs || allNews || allCategories || allExams) {
   }
 }
 
-// Materializer requires at least one explicit route. Core paths are added by
-// the materializer automatically; '/' is the cheapest valid no-op refresh for
-// code-only changes with no public HTML impact.
 if (!paths.size) paths.add("/");
 
 const ordered = [...paths].sort((a, b) => a.localeCompare(b));
