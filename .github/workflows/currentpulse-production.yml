@@ -50,8 +50,25 @@ jobs:
           [[ -n "${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}" ]] || { echo "Missing NEXT_PUBLIC_SUPABASE_ANON_KEY"; exit 1; }
           [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] || { echo "Missing SUPABASE_SERVICE_ROLE_KEY"; exit 1; }
 
+      - name: Restore exact dependency tree
+        id: dependency-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: currentpulse-node-modules-${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
+
       - name: Install dependencies
+        if: steps.dependency-cache.outputs.cache-hit != 'true'
         run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Verify dependency cache
+        if: steps.dependency-cache.outputs.cache-hit == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -x node_modules/.bin/next ]] || { echo "Cached node_modules is incomplete; refusing deployment."; exit 1; }
+          [[ -x node_modules/.bin/opennextjs-cloudflare ]] || { echo "Cached OpenNext CLI is incomplete; refusing deployment."; exit 1; }
+          echo "Exact lockfile dependency cache restored; npm ci skipped."
 
       - name: Restore previous validated release assets
         id: previous-release-cache
