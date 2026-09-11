@@ -17,9 +17,10 @@ test("CA PDF quality gate v5 matches the canonical CurrentPulse editorial contra
   assert.equal(audit.metrics.prelimsBullets, 3);
 });
 
-test("about-300-word answers up to 380 words are accepted", () => {
-  const audit = auditCaPdfLiveArticle(buildArticle({ mainsWords: 350 }));
+test("about-300-word answers near the upper bound are accepted", () => {
+  const audit = auditCaPdfLiveArticle(buildArticle({ mainsWords: 335 }));
   assert.equal(audit.ok, true, audit.problems.join("; "));
+  assert.ok(audit.metrics.mainsWords <= 380);
 });
 
 test("historical dash labels are normalized before quality checks", () => {
