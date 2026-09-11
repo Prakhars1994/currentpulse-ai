@@ -31,7 +31,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          # Two commits are enough for the normal main push diff used by the
+          # safe code-release planner. It falls back to a full reader release
+          # whenever the previous commit cannot be inspected.
+          fetch-depth: 2
 
       - name: Use Node 24 with npm cache
         uses: actions/setup-node@v4
@@ -49,6 +52,39 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Restore previous validated release assets
+        id: previous-release-cache
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            .next
+            .open-next
+          key: currentpulse-release-${{ github.sha }}-bootstrap
+          restore-keys: |
+            currentpulse-release-${{ github.sha }}-
+            currentpulse-release-
+
+      - name: Preserve previous static reader assets
+        id: previous-assets
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/currentpulse-previous-assets
+          if [[ -d .open-next/assets ]] && find .open-next/assets -type f -print -quit | grep -q .; then
+            mkdir -p /tmp/currentpulse-previous-assets
+            cp -a .open-next/assets/. /tmp/currentpulse-previous-assets/
+            echo "ready=true" >> "${GITHUB_OUTPUT}"
+            echo "Previous validated reader assets preserved for a safe incremental release."
+          else
+            echo "ready=false" >> "${GITHUB_OUTPUT}"
+            echo "No previous reader assets found; this release will regenerate the reader."
+          fi
+          # Never let an old build contaminate the new Worker build. Only the
+          # static assets are selectively merged back after impact planning.
+          rm -rf .next .open-next
 
       - name: Full regression suite
         run: npm run test:regression
@@ -88,9 +124,70 @@ jobs:
           cat /tmp/currentpulse-reader.log || true
           exit 1
 
+      - name: Plan code-affected reader paths
+        id: code-release-plan
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+          PREVIOUS_ASSETS_READY: ${{ steps.previous-assets.outputs.ready }}
+        run: |
+          set -euo pipefail
+          rm -f /tmp/currentpulse-code-reader-paths.txt
+
+          if [[ "${GITHUB_EVENT_NAME}" != "push" || "${PREVIOUS_ASSETS_READY:-false}" != "true" ]]; then
+            echo "mode=full" >> "${GITHUB_OUTPUT}"
+            echo "Full reader release required: no safe previous-asset baseline for this event."
+            exit 0
+          fi
+
+          if node scripts/code-release-paths.mjs \
+            --before "${BEFORE_SHA:-}" \
+            --head "${GITHUB_SHA}" \
+            --base http://127.0.0.1:3100 \
+            --out /tmp/currentpulse-code-reader-paths.txt; then
+            count="$(grep -cve '^[[:space:]]*$' /tmp/currentpulse-code-reader-paths.txt || true)"
+            echo "mode=incremental" >> "${GITHUB_OUTPUT}"
+            echo "Safe incremental code release contains ${count} explicit paths."
+            sed 's/^/  /' /tmp/currentpulse-code-reader-paths.txt
+          else
+            echo "::warning title=Safe incremental fallback::Code impact could not be bounded; regenerating the full reader."
+            rm -f /tmp/currentpulse-code-reader-paths.txt
+            echo "mode=full" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Merge unchanged reader assets
+        if: steps.code-release-plan.outputs.mode == 'incremental'
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -d /tmp/currentpulse-previous-assets ]] || { echo "Previous asset snapshot missing."; exit 1; }
+          mkdir -p .open-next/assets
+          # Fresh OpenNext assets always win. Historical static HTML/chunks are
+          # carried forward only for routes the impact planner proved unchanged.
+          cp -an /tmp/currentpulse-previous-assets/. .open-next/assets/
+
       - name: Materialize static reader
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        run: node scripts/materialize-static-reader.mjs --base http://127.0.0.1:3100 --out .open-next/assets --max-pages 1200 --concurrency 3 --timeout-ms 10000 --budget-seconds 720
+        shell: bash
+        env:
+          RELEASE_MODE: ${{ steps.code-release-plan.outputs.mode }}
+        run: |
+          set -euo pipefail
+          changed_args=()
+          if [[ "${RELEASE_MODE}" == "incremental" ]]; then
+            changed_args=(--changed-file /tmp/currentpulse-code-reader-paths.txt)
+          fi
+
+          echo "PRODUCTION_READER_RELEASE_MODE=${RELEASE_MODE:-full}"
+          node scripts/materialize-static-reader.mjs \
+            --base http://127.0.0.1:3100 \
+            --out .open-next/assets \
+            --max-pages 1200 \
+            --concurrency 4 \
+            --timeout-ms 10000 \
+            --budget-seconds 720 \
+            "${changed_args[@]}"
 
       - name: Build static sitemap index and shards
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
