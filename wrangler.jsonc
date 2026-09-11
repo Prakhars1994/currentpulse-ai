@@ -26,6 +26,7 @@
       "/quiz",
       "/pdf",
       "/pdf/*",
+      "/notes",
       "/news-sitemap.xml",
       "/feed.xml"
     ]
