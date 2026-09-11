@@ -76,6 +76,21 @@ function articleRoute(item = {}) {
   return `${coaching ? "/current-affairs" : "/news"}/${item.slug}`;
 }
 
+function isExternalPublicSource(source = {}) {
+  const value = String(source?.source_url || "").trim();
+  if (!value) return false;
+  try {
+    const sourceUrl = new URL(value);
+    const siteUrl = new URL(SITE_URL);
+    return (
+      (sourceUrl.protocol === "https:" || sourceUrl.protocol === "http:") &&
+      sourceUrl.hostname.toLowerCase() !== siteUrl.hostname.toLowerCase()
+    );
+  } catch {
+    return false;
+  }
+}
+
 const getCurrentAffairsArticle = unstable_cache(
   async (slug) => {
     const supabase = createServerSupabase();
@@ -179,6 +194,7 @@ export default async function ArticlePage({ params }) {
   const readingTime = calculateReadingTime(article);
 
   const articleSources = article.article_sources || [];
+  const externalSources = articleSources.filter(isExternalPublicSource);
   const isProtectedManualImport = article.manual_protected === true &&
     articleSources.some((source) => source.source_kind === "coaching") &&
     typeof article.content === "string" && article.content.trim().length > 0;
@@ -282,7 +298,7 @@ export default async function ArticlePage({ params }) {
     articleSection: article.category || "UPSC Current Affairs",
     keywords: Array.isArray(article.tags) ? article.tags.join(", ") : article.tags || article.category,
     isAccessibleForFree: true,
-    citation: (articleSources || []).map((source) => source.source_url).filter(Boolean),
+    ...(externalSources.length > 0 ? { citation: externalSources.map((source) => source.source_url) } : {}),
     about: [article.category, article.paper].filter(Boolean).map((name) => ({ "@type": "Thing", name })),
   }, {
     "@type": "BreadcrumbList",
@@ -479,20 +495,15 @@ export default async function ArticlePage({ params }) {
         {articleSources?.length > 0 && (
           <section className="mt-10 rounded-2xl border border-slate-700 bg-slate-900/70 p-6">
             <h2 className="text-xl font-bold text-cyan-300">
-              🔎 Sources consulted
+              🔎 Source provenance
             </h2>
             <p className="mt-2 text-sm text-slate-400">
-              This CurrentPulse analysis synthesizes unique exam-relevant inputs from the following sources.
+              Provenance recorded for this article. Administrator-supplied PDF imports are shown as labels; external links are included only when an original source URL is available.
             </p>
             <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-              {articleSources.map((source) => (
-                <li key={source.id}>
-                  <a
-                    href={source.source_url}
-                    target="_blank"
-                rel="noopener noreferrer"
-                    className="block rounded-xl border border-slate-700 bg-slate-950/70 p-4 transition hover:border-cyan-500"
-                  >
+              {articleSources.map((source) => {
+                const content = (
+                  <>
                     <span className="font-bold text-cyan-300">
                       {source.source_name}
                     </span>
@@ -501,9 +512,28 @@ export default async function ArticlePage({ params }) {
                         {source.source_title}
                       </span>
                     )}
-                  </a>
-                </li>
-              ))}
+                  </>
+                );
+
+                return (
+                  <li key={source.id}>
+                    {isExternalPublicSource(source) ? (
+                      <a
+                        href={source.source_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block rounded-xl border border-slate-700 bg-slate-950/70 p-4 transition hover:border-cyan-500"
+                      >
+                        {content}
+                      </a>
+                    ) : (
+                      <div className="block rounded-xl border border-slate-700 bg-slate-950/70 p-4">
+                        {content}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}
