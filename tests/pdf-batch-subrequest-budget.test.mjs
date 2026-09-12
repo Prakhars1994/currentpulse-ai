@@ -7,7 +7,7 @@ const postBody = source.slice(source.indexOf("export async function POST"));
 
 test("PDF batch publish defers per-article image enrichment", () => {
   assert.ok(postBody.includes("imageEnrichmentDeferred: true"));
-  assert.ok(postBody.includes('status: "deferred"'));
+  assert.ok(postBody.includes('? "provided" : "deferred"'));
   assert.equal(postBody.includes("await enrichPublishedArticleImage("), false);
   assert.equal(postBody.includes("await enrichExistingPdfArticle("), false);
   assert.equal(postBody.includes("await loadReusableImageBank("), false);
