@@ -6,6 +6,7 @@ import { auditCaPdfLiveArticle } from "../lib/pdf/liveQualityGate.js";
 import { isSameEvent } from "../lib/news/eventCluster.js";
 
 const QUEUE_DIR = path.resolve("automation/publish-queue");
+const ROOT_DIR = path.resolve(".");
 const SITE_URL = "https://cp.vliab.workers.dev";
 const MAX_ARTICLES = 20;
 const QUALITY_VERSION = 6;
@@ -46,6 +47,33 @@ function requiredString(value, label) {
   const text = clean(value);
   if (!text) throw new Error(`${label} is required.`);
   return text;
+}
+
+function safeArticlePath(value, queueFileName) {
+  const relative = clean(value).replace(/\\/g, "/");
+  if (!relative.startsWith("automation/publish-data/") || !relative.endsWith(".json") || relative.includes("..")) {
+    throw new Error(`${queueFileName}: invalid articleFiles entry: ${relative}`);
+  }
+  const resolved = path.resolve(ROOT_DIR, relative);
+  const dataRoot = path.resolve(ROOT_DIR, "automation/publish-data");
+  if (!resolved.startsWith(`${dataRoot}${path.sep}`)) throw new Error(`${queueFileName}: article file escapes trusted data directory.`);
+  return resolved;
+}
+
+async function loadQueueArticles(queue, queueFileName) {
+  if (Array.isArray(queue.articles)) return queue.articles;
+  if (!Array.isArray(queue.articleFiles)) return [];
+  const articles = [];
+  for (const relative of queue.articleFiles) {
+    const filePath = safeArticlePath(relative, queueFileName);
+    const raw = await fs.readFile(filePath, "utf8");
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new Error(`${queueFileName}: ${relative} must contain one article object.`);
+    }
+    articles.push(parsed);
+  }
+  return articles;
 }
 
 function buildPayload(queue, article) {
@@ -139,9 +167,13 @@ for (const fileName of queueFiles) {
   queue.queueId = requiredString(queue.queueId, `${fileName}: queueId`);
   queue.publishedAt = requiredString(queue.publishedAt, `${fileName}: publishedAt`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(queue.publishedAt)) throw new Error(`${fileName}: publishedAt must be YYYY-MM-DD.`);
+  queue.articles = await loadQueueArticles(queue, fileName);
   if (!Array.isArray(queue.articles) || queue.articles.length < 1 || queue.articles.length > MAX_ARTICLES) {
     throw new Error(`${fileName}: queue must contain 1-${MAX_ARTICLES} articles.`);
   }
+
+  const indexes = queue.articles.map((article) => Number(article.importIndex));
+  if (new Set(indexes).size !== indexes.length) throw new Error(`${fileName}: duplicate importIndex values are not allowed.`);
 
   const normalized = queue.articles.map((article) => ({
     article,
