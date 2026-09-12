@@ -12,9 +12,10 @@ export async function generateMetadata({ params }) {
   const { slug } = await params; const { update } = await loadExamUpdateBySlug(slug);
   if (!update) return { title: "Exam Update Not Found | ResultPulse AI", robots: { index: false, follow: false } };
   const displayTitle = examDisplayTitle(update.title) || update.title;
-  const indexable = assessExamSitemapRecord(update).allowed;
+  const assessment = assessExamSitemapRecord(update);
+  const indexable = assessment.allowed;
   const description = String(update.summary || `Official ${update.update_type} update from ${update.source_name || update.agency}.`).slice(0, 160);
-  return { title: `${displayTitle} | ResultPulse AI`, description, alternates: { canonical: `${SITE_URL}/exams/${slug}` }, openGraph: { title: displayTitle, description, url: `${SITE_URL}/exams/${slug}`, type: "article" }, robots: { index: indexable, follow: true } };
+  return { title: `${displayTitle} | ResultPulse AI`, description, alternates: { canonical: `${SITE_URL}/exams/${slug}` }, openGraph: { title: displayTitle, description, url: `${SITE_URL}/exams/${slug}`, type: "article" }, twitter: { card: "summary", title: displayTitle, description }, robots: indexable ? { index: true, follow: true } : { index: false, follow: true, googleBot: { index: false, follow: true, noarchive: true } } };
 }
 export default async function ExamDetail({ params }) {
   const { slug } = await params; const { update } = await loadExamUpdateBySlug(slug); if (!update) notFound();
