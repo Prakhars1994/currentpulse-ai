@@ -75,6 +75,9 @@ jobs:
             echo "OK $code $url"
           done
 
+          home_html="$(curl -L -sS https://vdl.vliab.workers.dev/)"
+          grep -Fq "Vishwakarma Digital Labs | Web Development, AI &amp; Mobile Apps" <<<"$home_html" || { echo "VDL homepage is missing brand-first SEO title"; exit 1; }
+
           work_html="$(curl -L -sS https://vdl.vliab.workers.dev/work)"
           grep -Fq "Administrator-controlled Current Affairs and News publishing" <<<"$work_html" || { echo "VDL work page is missing current CurrentPulse architecture copy"; exit 1; }
           if grep -Fq "multi-provider AI routing" <<<"$work_html"; then
