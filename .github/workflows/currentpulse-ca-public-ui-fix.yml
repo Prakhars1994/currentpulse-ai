@@ -1,0 +1,43 @@
+name: CurrentPulse CA Public UI Fix
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - scripts/patch-ca-public-ui.mjs
+      - .github/workflows/currentpulse-ca-public-ui-fix.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Use Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Apply CA public UI patch
+        run: node scripts/patch-ca-public-ui.mjs
+
+      - name: Commit patch if needed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- app/current-affairs/[slug]/page.js; then
+            echo "No patch needed."
+            exit 0
+          fi
+          git config user.name "CurrentPulse Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add 'app/current-affairs/[slug]/page.js'
+          git commit -m "Hide internal CA provenance and simplify breadcrumb"
+          git push origin HEAD:main
