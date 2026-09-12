@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 
+// One-time idempotent patch used to keep public CA pages free of internal publishing metadata.
 const file = "app/current-affairs/[slug]/page.js";
 let text = await fs.readFile(file, "utf8");
 const before = text;
