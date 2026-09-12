@@ -4,6 +4,7 @@ import { loadExamUpdates } from "@/lib/exams/repository";
 import { EXAM_TYPE_META } from "@/lib/exams/constants";
 import { EXAM_FILTER_GROUPS, EXAM_FILTER_SOURCES, normalizeExamFilters } from "@/lib/exams/filters";
 import { getExamUpdateDisplayType } from "@/lib/exams/displayType";
+import { examDisplayTitle } from "@/lib/sitemapQuality";
 
 const TYPE_ROUTE = {
   result: "results",
@@ -130,7 +131,9 @@ export default async function ExamUpdatesPage({
         )}
 
         <section className="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {updates.map((item) => (
+          {updates.map((item) => {
+            const displayTitle = examDisplayTitle(item.title) || item.title;
+            return (
             <article key={item.id} className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-slate-950/20 transition hover:-translate-y-1 hover:border-violet-400/50">
               <div className="flex items-center justify-between gap-3">
                 <span className="rounded-full bg-violet-400/10 px-3 py-1 text-xs font-black uppercase text-violet-300">
@@ -141,7 +144,7 @@ export default async function ExamUpdatesPage({
                 </time>
               </div>
               <h2 className="mt-4 text-xl font-black leading-snug">
-                <Link href={`/exams/${item.slug}`} className="hover:text-violet-300">{item.title}</Link>
+                <Link href={`/exams/${item.slug}`} className="hover:text-violet-300">{displayTitle}</Link>
               </h2>
               <p className="mt-3 line-clamp-3 leading-7 text-slate-400">
                 {item.summary || `Official update from ${item.source_name || item.agency}.`}
@@ -151,7 +154,8 @@ export default async function ExamUpdatesPage({
                 <Link href={`/exams/${item.slug}`} className="font-black text-violet-300">Open -&gt;</Link>
               </div>
             </article>
-          ))}
+            );
+          })}
         </section>
 
         {!updates.length && !error && (
