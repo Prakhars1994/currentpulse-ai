@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   patch:
@@ -29,15 +30,24 @@ jobs:
         run: node scripts/patch-ca-public-ui.mjs
 
       - name: Commit patch if needed
+        id: commit
         shell: bash
         run: |
           set -euo pipefail
           if git diff --quiet -- app/current-affairs/[slug]/page.js; then
+            echo "changed=false" >> "${GITHUB_OUTPUT}"
             echo "No patch needed."
             exit 0
           fi
           git config user.name "CurrentPulse Automation"
           git config user.email "actions@users.noreply.github.com"
           git add 'app/current-affairs/[slug]/page.js'
-          git commit -m "Hide internal CA provenance and simplify breadcrumb"
+          git commit -m "Polish protected CA reader UX"
           git push origin HEAD:main
+          echo "changed=true" >> "${GITHUB_OUTPUT}"
+
+      - name: Deploy patched main
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run currentpulse-production.yml --ref main
