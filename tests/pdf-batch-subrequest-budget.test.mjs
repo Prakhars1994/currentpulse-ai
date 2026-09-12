@@ -18,6 +18,13 @@ test("duplicate PDF rows stay idempotent and cheap", () => {
   assert.ok(postBody.includes('status: "unchanged_or_deferred"'));
 });
 
+test("duplicate-only reupload can heal a previously missed reader refresh", () => {
+  assert.ok(postBody.includes("const duplicateRows"));
+  assert.ok(postBody.includes("const releaseRows = publishedRows.length > 0 ? publishedRows : (failed === 0 ? duplicateRows : [])"));
+  assert.ok(postBody.includes("if (releaseRows.length > 0)"));
+  assert.ok(postBody.includes("articleId: releaseRows.at(-1).articleId"));
+});
+
 test("new PDF publications carry the current CA quality version", () => {
   assert.match(source, /quality_version:\s*6/);
   assert.match(source, /structure_validated/);
