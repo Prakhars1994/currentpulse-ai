@@ -13,5 +13,5 @@ test("strict PDF headings never remain inside bullet text", () => {
   assert.match(output, /Third statement\.\n\nWhich of the statements/);
   assert.match(output, /\n\n\(a\) 1 only\n\n\(b\) 2 only/);
   assert.match(output, /Ask CurrentPulse AI: Mains[^\n]+\n\n## VERIFIED OFFICIAL REFERENCES/);
-  assert.doesNotMatch(output, /- [^\n]+\s#{2,4}\s/);
+  assert.doesNotMatch(output, /- [^\n]+[ \t]+#{2,4}[ \t]+/);
 });
