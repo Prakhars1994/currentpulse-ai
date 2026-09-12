@@ -341,7 +341,7 @@ export default async function ArticlePage({ params }) {
 
           {" / "}
 
-          <span>{article.title}</span>
+          <span aria-current="page">Article</span>
         </nav>
 
         <h1 className="text-3xl font-extrabold leading-tight text-white sm:text-5xl">
@@ -492,16 +492,16 @@ export default async function ArticlePage({ params }) {
           category={article.category}
         />
 
-        {articleSources?.length > 0 && (
+        {externalSources.length > 0 && (
           <section className="mt-10 rounded-2xl border border-slate-700 bg-slate-900/70 p-6">
             <h2 className="text-xl font-bold text-cyan-300">
               🔎 Source provenance
             </h2>
             <p className="mt-2 text-sm text-slate-400">
-              Provenance recorded for this article. Administrator-supplied PDF imports are shown as labels; external links are included only when an original source URL is available.
+              Original external sources cited for this article.
             </p>
             <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-              {articleSources.map((source) => {
+              {externalSources.map((source) => {
                 const content = (
                   <>
                     <span className="font-bold text-cyan-300">
