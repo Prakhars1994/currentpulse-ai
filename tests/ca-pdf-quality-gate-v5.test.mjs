@@ -51,3 +51,11 @@ test("FAST READ and WHY IN NEWS cannot be exact editorial duplicates", () => {
   assert.equal(audit.ok, false);
   assert.ok(audit.problems.includes("FAST READ and WHY IN NEWS must not duplicate each other"));
 });
+
+test("reusable topic-agnostic Mains boilerplate is rejected", () => {
+  const filler = "Current developments in this area show how a focused policy instrument can connect immediate implementation with wider governance, inclusion and long-term capacity.";
+  const text = buildArticle().replace("### SIGNIFICANCE", `${filler}\n\n### SIGNIFICANCE`);
+  const audit = auditCaPdfLiveArticle(text);
+  assert.equal(audit.ok, false);
+  assert.ok(audit.problems.includes("Generic filler detected"));
+});
