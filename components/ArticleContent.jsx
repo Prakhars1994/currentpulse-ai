@@ -72,6 +72,17 @@ function isStrictPdfSource(value = "") {
 
 function normalizeStrictPdfMarkdown(value = "") {
   let raw = String(value || "").replace(/\r\n?/g, "\n");
+  raw = raw
+    .replace(/^(\s*#{2,4}\s*)MAINS\s+QUESTION\s+FOR\s+UPSC\s*$/gim, "$1PROBABLE MAINS QUESTION")
+    .replace(/^(\s*#{2,4}\s*)ACTIONABLE\s+ROADMAP\s*$/gim, "$1WAY FORWARD")
+    .replace(/^(\s*#{2,4}\s*)FINAL\s+TAKEAWAY\s*$/gim, "$1CONCLUSION")
+    .replace(/^(\s*#{2,4}\s*)VERIFIED\s+OFFICIAL\s+REFERENCES\s*$/gim, "$1SOURCES")
+    .replace(/^(\s*#{2,4}\s*)MODEL\s+ANSWER\s*\(\s*~?300\s+WORDS\s*\)\s*$/gim, "$1MODEL ANSWER - ~300 WORDS")
+    .replace(/^\s*MAINS\s+QUESTION\s+FOR\s+UPSC\s*$/gim, "PROBABLE MAINS QUESTION")
+    .replace(/^\s*ACTIONABLE\s+ROADMAP\s*$/gim, "WAY FORWARD")
+    .replace(/^\s*FINAL\s+TAKEAWAY\s*$/gim, "CONCLUSION")
+    .replace(/^\s*VERIFIED\s+OFFICIAL\s+REFERENCES\s*$/gim, "SOURCES")
+    .replace(/^\s*MODEL\s+ANSWER\s*\(\s*~?300\s+WORDS\s*\)\s*$/gim, "MODEL ANSWER - ~300 WORDS");
   raw = raw.replace(/^\s*\[\[(?:CA_(?:START|END)|सीपी_बुलेट)\]\]\s*$/gim, "").replace(/^\s*CA_(?:TITLE|CATEGORY|GS|DATE|IMAGE)\s*:\s*.*$/gim, "").replace(/^\s*CurrentPulse AI\s*\|.*$/gim, "").replace(/^\s*(?:Page\s*)?\d+\s*(?:of\s*\d+)?\s*$/gim, "");
   raw = raw.replace(/\s*\[\[(?:CP_BULLET|सीपी_बुलेट)\]\]\s*/gi, "\n• ");
   const fastReadIndex = raw.search(/(^|\n)\s*FAST\s+READ\b[^\n]*(?=\n|$)/i);
