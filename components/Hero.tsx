@@ -69,19 +69,19 @@ export default function Hero({
         <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_.95fr] xl:gap-16">
           <div>
             <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-sm font-bold text-cyan-200 shadow-lg shadow-cyan-950/20">
-              UPSC study platform · Source-backed
+              CurrentPulse AI · UPSC study platform · Source-backed
             </span>
 
             <h1 className="mt-7 max-w-3xl text-5xl font-black leading-[1.05] tracking-[-0.045em] text-white sm:text-6xl xl:text-7xl">
-              Current affairs that connect
+              CurrentPulse AI
               <span className="block bg-gradient-to-r from-cyan-300 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                news to the UPSC syllabus
+                current affairs for the UPSC syllabus
               </span>
             </h1>
 
             <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
-              Revise the trigger, static foundation, verified evidence, Prelims
-              traps and Mains dimensions in one selection-oriented brief.
+              CurrentPulse AI connects today&apos;s news with static foundation, verified evidence,
+              Prelims traps and Mains dimensions in one selection-oriented brief.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-2.5 text-sm font-semibold text-slate-200">
