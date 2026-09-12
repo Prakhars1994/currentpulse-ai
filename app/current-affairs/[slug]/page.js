@@ -41,6 +41,7 @@ function calculateReadingTime(article) {
     article?.mains,
     article?.answer_framework,
     article?.question,
+    article?.content,
   ]
     .filter(Boolean)
     .map(stripHtml)
@@ -406,15 +407,17 @@ export default async function ArticlePage({ params }) {
           </figure>
         )}
 
-        <nav className="article-jump-nav" aria-label="Article sections">
-          <span>Jump to</span>
-          <a href="#why-in-news">News</a>
-          <a href="#syllabus">Syllabus</a>
-          {article.static_foundation && <a href="#static-foundation">Static</a>}
-          {article.data_examples && <a href="#evidence">Evidence</a>}
-          <a href="#prelims">Prelims</a>
-          {(article.mains || article.answer_framework) && <a href="#mains">Mains</a>}
-        </nav>
+        {!isProtectedManualImport && (
+          <nav className="article-jump-nav" aria-label="Article sections">
+            <span>Jump to</span>
+            <a href="#why-in-news">News</a>
+            <a href="#syllabus">Syllabus</a>
+            {article.static_foundation && <a href="#static-foundation">Static</a>}
+            {article.data_examples && <a href="#evidence">Evidence</a>}
+            <a href="#prelims">Prelims</a>
+            {(article.mains || article.answer_framework) && <a href="#mains">Mains</a>}
+          </nav>
+        )}
 
         <article className="mt-10 space-y-8">
 
