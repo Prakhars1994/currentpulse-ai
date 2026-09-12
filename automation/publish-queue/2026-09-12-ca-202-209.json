@@ -1,0 +1,15 @@
+{
+  "schema": "currentpulse-ca-queue-v1",
+  "queueId": "ca-202-209-20260912-v2",
+  "publishedAt": "2026-09-12",
+  "articleFiles": [
+    "automation/publish-data/2026-09-12-ca-202.json",
+    "automation/publish-data/2026-09-12-ca-203.json",
+    "automation/publish-data/2026-09-12-ca-204.json",
+    "automation/publish-data/2026-09-12-ca-205.json",
+    "automation/publish-data/2026-09-12-ca-206.json",
+    "automation/publish-data/2026-09-12-ca-207.json",
+    "automation/publish-data/2026-09-12-ca-208.json",
+    "automation/publish-data/2026-09-12-ca-209.json"
+  ]
+}
