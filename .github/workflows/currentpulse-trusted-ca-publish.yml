@@ -1,0 +1,96 @@
+name: CurrentPulse Trusted CA Publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "automation/publish-queue/*.json"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: currentpulse-trusted-ca-publish
+  cancel-in-progress: false
+
+env:
+  NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+  SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Use Node 24 with npm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Wait for normal production deployment of this commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          sha="${GITHUB_SHA}"
+          run_id=""
+
+          for attempt in {1..40}; do
+            response="$(gh api "repos/${repo}/actions/workflows/currentpulse-production.yml/runs?head_sha=${sha}&event=push&per_page=10")"
+            run_id="$(node -e 'const j=JSON.parse(process.argv[1]); const r=j.workflow_runs?.[0]; process.stdout.write(r?.id?String(r.id):"")' "${response}")"
+            status="$(node -e 'const j=JSON.parse(process.argv[1]); const r=j.workflow_runs?.[0]; process.stdout.write(String(r?.status||""))' "${response}")"
+            conclusion="$(node -e 'const j=JSON.parse(process.argv[1]); const r=j.workflow_runs?.[0]; process.stdout.write(String(r?.conclusion||""))' "${response}")"
+
+            if [[ -n "${run_id}" && "${status}" == "completed" ]]; then
+              [[ "${conclusion}" == "success" ]] || { echo "Production workflow ${run_id} ended with ${conclusion}. Refusing CA publish."; exit 1; }
+              echo "Production workflow ${run_id} passed; trusted CA publish may proceed."
+              exit 0
+            fi
+
+            echo "Waiting for production workflow for ${sha} (attempt ${attempt}/40)..."
+            sleep 30
+          done
+
+          echo "Timed out waiting for the production workflow of ${sha}."
+          exit 1
+
+      - name: Publish trusted CA queue through database quality gates
+        run: node scripts/publish-currentpulse-queue.mjs
+
+      - name: Queue durable reader refresh
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${NEXT_PUBLIC_SUPABASE_URL:-}" && -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]] || { echo "Missing Supabase release credentials"; exit 1; }
+          payload="$(node -e 'process.stdout.write(JSON.stringify([{entity_key:process.argv[1],stream:"coverage",status:"pending"}]))' "trusted-ca-${GITHUB_SHA}")"
+          curl --silent --show-error --fail-with-body \
+            "${NEXT_PUBLIC_SUPABASE_URL}/rest/v1/reader_release_requests" \
+            -X POST \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            --data "${payload}"
+
+      - name: Dispatch immediate full reader release
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh workflow run currentpulse-reader-release.yml \
+            --ref main \
+            -f reason=trusted-ca-publish \
+            -f expected_sha="${GITHUB_SHA}" \
+            -f full=true
+          echo "Reader release dispatched for trusted CA publication."
