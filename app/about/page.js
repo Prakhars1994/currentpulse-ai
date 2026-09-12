@@ -2,9 +2,15 @@ import TrustPage from "@/components/TrustPage";
 import { SITE_URL } from "@/lib/siteUrl";
 
 export const metadata = {
-  title: "About CurrentPulse",
-  description: "CurrentPulse is an independent educational platform for administrator-published Current Affairs, News, study tools and official-source ResultPulse exam updates.",
+  title: "About CurrentPulse AI",
+  description: "CurrentPulse AI is an independent educational platform for administrator-published Current Affairs, News, study tools and official-source ResultPulse exam updates.",
   alternates: { canonical: `${SITE_URL}/about` },
+  openGraph: {
+    title: "About CurrentPulse AI",
+    description: "CurrentPulse AI is an independent educational platform for administrator-published Current Affairs, News, study tools and official-source ResultPulse exam updates.",
+    url: `${SITE_URL}/about`,
+    type: "website",
+  },
 };
 
 const sections = [
@@ -18,9 +24,9 @@ const sections = [
     ]
   },
   {
-    heading: "What CurrentPulse is not",
+    heading: "What CurrentPulse AI is not",
     bullets: [
-      "CurrentPulse is not a government website and is not affiliated with UPSC, SSC, NTA or any other examination authority.",
+      "CurrentPulse AI is not a government website and is not affiliated with UPSC, SSC, NTA or any other examination authority.",
       "Students should use official authority links for final confirmation of results, deadlines, applications and eligibility."
     ]
   }
@@ -29,9 +35,9 @@ const sections = [
 export default function Page() {
   return (
     <TrustPage
-      kicker="CurrentPulse standards"
-      title="About CurrentPulse"
-      intro="CurrentPulse is an independent educational platform built to help UPSC and PCS learners use administrator-published Current Affairs and News alongside revision tools and official exam updates."
+      kicker="CurrentPulse AI standards"
+      title="About CurrentPulse AI"
+      intro="CurrentPulse AI is an independent educational platform built to help UPSC and PCS learners use administrator-published Current Affairs and News alongside revision tools and official exam updates."
       sections={sections}
     />
   );
