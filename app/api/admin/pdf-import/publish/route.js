@@ -109,9 +109,9 @@ export async function POST(request) {
     const existing = new Map((existingSources || []).map((row) => [clean(row.source_key), row.article_id]));
     const results = [];
 
-    // IMPORTANT: synchronous image enrichment is intentionally excluded from this
-    // request. A selected PDF batch must finish publishing and dispatch its reader
-    // refresh before any optional external image search consumes Worker subrequests.
+    // Synchronous image enrichment is intentionally excluded. Publication and the
+    // reader release must finish before optional external image work consumes Worker
+    // subrequests.
     for (const item of normalized) {
       const payload = buildArticlePayload(item.article, { stream, date, fileHash });
       if (existing.has(item.sourceKey)) {
@@ -136,11 +136,13 @@ export async function POST(request) {
     }
 
     const publishedRows = results.filter((item) => item.status === "published");
-    const published = publishedRows.length; const duplicates = results.filter((item) => item.status === "duplicate").length; const failed = results.filter((item) => item.status === "failed").length;
+    const duplicateRows = results.filter((item) => item.status === "duplicate" && item.articleId);
+    const published = publishedRows.length; const duplicates = duplicateRows.length; const failed = results.filter((item) => item.status === "failed").length;
+    const releaseRows = publishedRows.length > 0 ? publishedRows : (failed === 0 ? duplicateRows : []);
     let readerRefreshQueued = false; let readerRefreshDurable = false; let readerRefreshWarning = "";
-    if (published > 0) {
+    if (releaseRows.length > 0) {
       try {
-        const release = await requestReaderRelease({ articleId: publishedRows.at(-1).articleId, stream: stream === "news" ? "news" : "coverage", supabase: auth.supabase });
+        const release = await requestReaderRelease({ articleId: releaseRows.at(-1).articleId, stream: stream === "news" ? "news" : "coverage", supabase: auth.supabase });
         readerRefreshQueued = true; readerRefreshDurable = Boolean(release?.durable);
       } catch (dispatchError) {
         readerRefreshDurable = Boolean(dispatchError?.durable);
@@ -151,7 +153,7 @@ export async function POST(request) {
 
     const success = published + duplicates > 0;
     const baseMessage = published > 0 ? `Published ${published}; duplicates ${duplicates}; failed ${failed}.` : duplicates > 0 && failed === 0 ? `All ${duplicates} selected articles were already imported.` : "No selected PDF articles were published.";
-    return NextResponse.json({ success, stats: { requested: articles.length, published, duplicates, failed }, releaseRequired: published > 0, readerRefreshQueued, readerRefreshDurable, readerRefreshWarning, imageEnrichmentDeferred: true, message: readerRefreshWarning ? `${baseMessage} ${readerRefreshWarning}` : published > 0 && readerRefreshQueued ? `${baseMessage} Live reader refresh queued.` : baseMessage, results }, { status: success ? 200 : 502 });
+    return NextResponse.json({ success, stats: { requested: articles.length, published, duplicates, failed }, releaseRequired: releaseRows.length > 0, readerRefreshQueued, readerRefreshDurable, readerRefreshWarning, imageEnrichmentDeferred: true, message: readerRefreshWarning ? `${baseMessage} ${readerRefreshWarning}` : readerRefreshQueued ? `${baseMessage} Live reader refresh queued.` : baseMessage, results }, { status: success ? 200 : 502 });
   } catch (error) {
     return NextResponse.json({ success: false, message: error?.message || "PDF import failed." }, { status: 500 });
   }
