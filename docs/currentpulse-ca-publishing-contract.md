@@ -64,6 +64,7 @@ Preferred target per article:
 - Mains: approximately 270-330 words preferred, always inside the currently deployed quality-gate limits.
 - Use at least four explicit analytical subheadings and always include INTRODUCTION, WAY FORWARD, and CONCLUSION (or current production-approved equivalents).
 - Sources: official primary source first, with a clickable URL. Add reputable secondary sources only when they materially improve verification/context.
+- Numerical/factual density: every CA should carry at least 10-15 genuinely useful numerical or concrete factual data points when the topic supports them. Distribute these across FAST READ, WHY IN NEWS, TOP DATA & FACTS, PRELIMS, QUICK REVISION, MCQ explanation and Mains where relevant; do not concentrate all numbers in one box or pad with meaningless figures.
 
 ## Content-quality prohibitions
 
