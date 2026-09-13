@@ -1,5 +1,6 @@
 name: VDL Bridge Deploy
 
+# Triggered by production SEO audit to publish the current VDL main state.
 on:
   push:
     branches: [main]
