@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "automation/publish-compressed/*.json"
+      - ".github/workflows/currentpulse-compressed-ca-publish.yml"
 
 permissions:
   contents: read
