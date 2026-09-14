@@ -1,7 +1,7 @@
 name: VDL Bridge Deploy
 
 # Triggered by production SEO audit to publish the current VDL main state.
-# Audit redeploy trigger: 2026-09-13
+# Audit redeploy trigger: 2026-09-14
 on:
   push:
     branches: [main]
