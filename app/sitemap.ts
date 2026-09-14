@@ -57,7 +57,7 @@ type SitemapExam = {
 
 function staticRoutes(): MetadataRoute.Sitemap {
   const publicPages = [
-    "current-affairs","news","categories","quiz","mock-tests","pdf","pyq",
+    "current-affairs","current-affairs/hindi","news","categories","quiz","mock-tests","pdf","pyq",
     "question-papers","videos","contact","about","editorial-methodology",
     "sources-policy","ai-usage-policy","corrections-policy","privacy","terms",
     "exams","exams/results","exams/admit-cards","exams/notifications",
@@ -66,11 +66,17 @@ function staticRoutes(): MetadataRoute.Sitemap {
   ].map((path) => ({
     url: `${SITE_URL}/${path}`,
     changeFrequency:
-      path === "current-affairs" || path === "news"
+      path === "current-affairs" || path === "current-affairs/hindi" || path === "news"
         ? ("daily" as const)
         : ("weekly" as const),
     priority:
-      path === "current-affairs" ? 0.95 : path === "news" ? 0.9 : 0.7,
+      path === "current-affairs"
+        ? 0.95
+        : path === "current-affairs/hindi"
+          ? 0.9
+          : path === "news"
+            ? 0.9
+            : 0.7,
   }));
 
   const categoryPages = CATEGORY_ROUTES.map((category) => ({
