@@ -15,15 +15,13 @@ export default function MemberLoginPage() {
   const [busy, setBusy] = useState(false);
   const [socialBusy, setSocialBusy] = useState<SocialProvider | null>(null);
   const [message, setMessage] = useState("");
+  const callbackUrl = () => `${location.origin}/auth/callback?next=/member`;
 
   async function socialSignIn(provider: SocialProvider) {
     setSocialBusy(provider); setMessage("");
     try {
       const supabase = createMemberBrowserClient();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo: `${location.origin}/member` },
-      });
+      const { error } = await supabase.auth.signInWithOAuth({ provider, options: { redirectTo: callbackUrl() } });
       if (error) throw error;
     } catch (err) {
       setMessage(err instanceof Error ? err.message : `${provider} sign-in could not start.`);
@@ -36,10 +34,7 @@ export default function MemberLoginPage() {
     setBusy(true); setMessage("");
     try {
       const supabase = createMemberBrowserClient();
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: `${location.origin}/member` },
-      });
+      const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: callbackUrl() } });
       if (error) throw error;
       setMessage("Secure sign-in link sent. Check your email and open the link on this device.");
     } catch (err) { setMessage(err instanceof Error ? err.message : "Could not send the sign-in link."); }
@@ -51,7 +46,7 @@ export default function MemberLoginPage() {
     try {
       const supabase = createMemberBrowserClient();
       if (mode === "signup") {
-        const { error, data } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: `${location.origin}/member` } });
+        const { error, data } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: callbackUrl() } });
         if (error) throw error;
         if (!data.session) { setMessage("Account created. Check your email to confirm your account, then sign in."); return; }
       } else {
@@ -85,7 +80,7 @@ export default function MemberLoginPage() {
         {mode === "login" && <button type="button" disabled={busy} onClick={sendMagicLink} className="mt-3 w-full rounded-xl border border-slate-700 px-4 py-3 text-sm font-bold text-cyan-300 disabled:opacity-60">Email me a sign-in link</button>}
         {message && <div aria-live="polite" className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-sm leading-6 text-amber-100">{message}</div>}
         <button type="button" onClick={()=>{setMode(mode === "login" ? "signup" : "login");setMessage("")}} className="mt-5 text-sm font-bold text-cyan-300">{mode === "login" ? "New student? Create an account" : "Already registered? Sign in"}</button>
-        <p className="mt-6 text-xs leading-5 text-slate-500">By continuing, you agree to CurrentPulse Terms and Privacy Policy. Social providers are used only for authentication unless you explicitly grant additional access.</p>
+        <p className="mt-6 text-xs leading-5 text-slate-500">By continuing, you agree to <Link href="/terms" className="underline">CurrentPulse Terms</Link> and <Link href="/privacy" className="underline">Privacy Policy</Link>. Social providers are used only for authentication unless you explicitly grant additional access.</p>
       </div>
     </div>
   </div></main>;
