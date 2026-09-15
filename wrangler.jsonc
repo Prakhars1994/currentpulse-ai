@@ -17,6 +17,8 @@
     "run_worker_first": [
       "/api/*",
       "/admin/*",
+      "/member",
+      "/member/*",
       "/news",
       "/news/*",
       "/current-affairs",
