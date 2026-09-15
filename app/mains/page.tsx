@@ -2,12 +2,13 @@ import Link from "next/link";
 
 export const metadata = {
   title: "UPSC Mains Hub - PYQs, Essay, GS Papers & Answer Writing",
-  description: "CurrentPulse AI UPSC Mains hub for PYQs, Essay, GS1-GS4, answer writing and premium study books.",
+  description: "CurrentPulse AI UPSC Mains hub for PYQs, Essay, GS1-GS4, answer writing tests and premium study books.",
 };
 
 const papers = [
   ["Mains PYQs", "/pyq", "Official previous-year questions organised for pattern analysis."],
   ["Essay", "/mains/essay", "Essay strategy, model essays and the 200-essay premium textbook."],
+  ["Answer Writing Tests", "/mains/answer-writing", "Five paid UPSC, PCS and subjective test formats with member PDF submission."],
   ["GS Paper I", "/mains#gs1", "History, society, geography and Indian heritage."],
   ["GS Paper II", "/mains#gs2", "Polity, governance, social justice and international relations."],
   ["GS Paper III", "/mains#gs3", "Economy, environment, science-tech, security and disaster management."],
@@ -21,7 +22,7 @@ export default function MainsPage() {
         <div className="mb-5 inline-flex rounded-full border border-amber-300/40 bg-amber-300/10 px-4 py-2 text-xs font-bold uppercase tracking-[.22em] text-amber-200">CurrentPulse Mains Studio</div>
         <h1 className="max-w-4xl text-4xl font-black leading-tight sm:text-6xl">Think deeper. Write sharper. <span className="text-amber-300">Score in UPSC Mains.</span></h1>
         <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">A focused Mains workspace built around PYQ intelligence, multidimensional answer writing, Essay, GS papers, evidence and revision-ready resources.</p>
-        <div className="mt-8 flex flex-wrap gap-3"><Link href="/pyq" className="rounded-xl bg-amber-300 px-5 py-3 font-bold text-slate-950">Explore Mains PYQs</Link><Link href="/mains/essay" className="rounded-xl border border-slate-500 px-5 py-3 font-bold">Open Essay Studio</Link></div>
+        <div className="mt-8 flex flex-wrap gap-3"><Link href="/pyq" className="rounded-xl bg-amber-300 px-5 py-3 font-bold text-slate-950">Explore Mains PYQs</Link><Link href="/mains/answer-writing" className="rounded-xl bg-emerald-300 px-5 py-3 font-bold text-slate-950">Take Answer Writing Test</Link><Link href="/mains/essay" className="rounded-xl border border-slate-500 px-5 py-3 font-bold">Open Essay Studio</Link></div>
       </div>
     </section>
     <section className="mx-auto max-w-7xl px-5 py-12">
