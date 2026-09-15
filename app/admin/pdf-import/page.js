@@ -1,5 +1,5 @@
-import PdfImportWorkspace from "@/components/admin/PdfImportWorkspace";
+import PdfImportWorkspaceSafe from "@/components/admin/PdfImportWorkspaceSafe";
 
 export default function PdfImportPage() {
-  return <PdfImportWorkspace />;
+  return <PdfImportWorkspaceSafe />;
 }
