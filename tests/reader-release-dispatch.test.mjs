@@ -28,10 +28,10 @@ test("Admin diagnostics are actionable and never include sensitive values", () =
   assert.match(workspace, /readerReleaseAdminMessage/);
 });
 
-test("dispatch treats successful 204 as queued and sends workflow inputs as strings", async () => {
+test("dispatch treats successful 204 as queued and sends full admin refresh input as a string", async () => {
   let body;
   await dispatchReaderRelease({ token: "test-token", owner: "owner", repository: "repo", articleId: 7, stream: "pdf", fetchImpl: async (_url, options) => { body = JSON.parse(options.body); return { ok: true, status: 204 }; } });
-  assert.equal(body.inputs.full, "false");
+  assert.equal(body.inputs.full, "true");
   assert.match(dispatch, /recentlyQueued\.set/);
   assert.match(dispatch, /return \{ queued: true, durable: outbox\.durable, deduplicated: false \}/);
 });
