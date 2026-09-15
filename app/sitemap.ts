@@ -51,6 +51,7 @@ type SitemapExam = {
   update_type?: string | null;
   official_url?: string | null;
   source_name?: string | null;
+  source_published_at?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
 };
@@ -109,9 +110,10 @@ const loadSitemapDatabaseRows = unstable_cache(
         .limit(2500),
       supabase
         .from("exam_updates")
-        .select("slug,title,agency,update_type,official_url,source_name,created_at,updated_at")
+        .select("slug,title,agency,update_type,official_url,source_name,source_published_at,created_at,updated_at")
         .eq("status", "published")
-        .order("created_at", { ascending: false })
+        .not("source_published_at", "is", null)
+        .order("source_published_at", { ascending: false })
         .limit(1500),
     ]);
 
@@ -126,7 +128,7 @@ const loadSitemapDatabaseRows = unstable_cache(
         : null,
     };
   },
-  ["currentpulse-sitemap-database-v3"],
+  ["currentpulse-sitemap-database-v4"],
   { revalidate: 300, tags: ["currentpulse-articles", "currentpulse-exams"] }
 );
 
@@ -182,7 +184,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const selectedExams = selectExamSitemapRecords(sitemapData.exams as SitemapExam[]);
     const examRoutes: MetadataRoute.Sitemap = selectedExams.included.map((exam) => ({
       url: `${SITE_URL}/exams/${exam.slug}`,
-      lastModified: exam.updated_at || exam.created_at || undefined,
+      lastModified: exam.source_published_at || exam.updated_at || exam.created_at || undefined,
       changeFrequency: "daily",
       priority: 0.82,
     }));
