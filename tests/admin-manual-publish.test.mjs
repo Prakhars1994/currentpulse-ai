@@ -34,7 +34,7 @@ test("manual News publication uses news safety and classification", () => {
   assert.equal(inferAdminStream({ article_sources: [{ source_kind: "news" }] }), "news");
 });
 
-test("published updates reuse or correct source rows before incremental refresh", () => {
+test("published updates reuse or correct source rows before reader refresh", () => {
   const sourceHelper = read("lib/publisher/articleStream.js");
   assert.match(sourceHelper, /const target = rows\.find/);
   assert.match(sourceHelper, /else if \(opposite\)/);
@@ -49,11 +49,11 @@ test("dispatch failure preserves database success and returns a warning", () => 
   assert.match(route, /Article published to database, but live reader refresh could not be queued\./);
 });
 
-test("reader dispatch stays server-only, incremental, and does not expose its token", () => {
+test("reader dispatch stays server-only, forces correctness-first admin refresh, and does not expose its token", () => {
   assert.match(dispatch, /import "server-only"/);
   assert.match(dispatch, /GITHUB_READER_RELEASE_TOKEN/);
   assert.doesNotMatch(dispatch, /NEXT_PUBLIC_GITHUB/);
-  assert.match(dispatchRequest, /full: "false"/);
+  assert.match(dispatchRequest, /full: "true"/);
   assert.match(dispatchRequest, /admin-publish:/);
   assert.match(planner, /paths\.add\("\/"\)/);
   assert.match(planner, /paths\.add\("\/sitemap\.xml"\)/);
