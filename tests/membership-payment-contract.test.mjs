@@ -13,9 +13,13 @@ test('member auth UI supports login and signup without privileged browser secret
 
 test('member dashboard uses authenticated data rather than placeholder statistics', () => {
   const page = read('app/member/page.tsx');
-  assert.doesNotMatch(page, /Production authentication UI is being connected/);
-  assert.match(page, /mains_entitlements/);
-  assert.match(page, /mains_attempts/);
+  const dashboard = read('app/member/MemberDashboard.tsx');
+  assert.match(page, /MemberDashboard/);
+  assert.match(page, /force-dynamic/);
+  assert.doesNotMatch(page + dashboard, /Production authentication UI is being connected/);
+  assert.match(dashboard, /auth\.getUser/);
+  assert.match(dashboard, /mains_entitlements/);
+  assert.match(dashboard, /mains_attempts/);
 });
 
 test('shop obtains products from server and starts payment server-side', () => {
