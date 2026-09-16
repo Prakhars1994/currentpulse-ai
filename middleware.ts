@@ -17,63 +17,29 @@ function redirectToLogin(request: NextRequest) {
   const loginUrl = request.nextUrl.clone();
   loginUrl.pathname = "/admin/login";
   loginUrl.search = "";
-
-  const response = NextResponse.redirect(loginUrl);
-  response.cookies.set(ADMIN_ACCESS_COOKIE, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: 0,
-  });
-
-  return protectAdminResponse(response);
+  return protectAdminResponse(NextResponse.redirect(loginUrl));
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (PUBLIC_ADMIN_PATHS.has(pathname)) {
     return protectAdminResponse(NextResponse.next());
   }
 
+  // Middleware only performs the cheap presence check. It must not call
+  // Supabase or destroy the login cookie: edge/runtime auth validation can
+  // disagree with the server-side session endpoint and previously caused a
+  // valid freshly-created admin session to be erased during navigation.
+  // Sensitive admin APIs continue to perform full token/email validation via
+  // requireAuthenticatedAdmin()/authenticateAdminToken() in lib/adminAuth.
   const accessToken = request.cookies.get(ADMIN_ACCESS_COOKIE)?.value;
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  // Keep middleware validation consistent with app/api/admin/session and lib/adminAuth.
-  // The anon key remains a fallback for deployments that have not yet provisioned
-  // the service-role secret at the edge.
-  const authKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 
-  if (!accessToken || !supabaseUrl || !authKey || !adminEmail) {
+  if (!accessToken) {
     return redirectToLogin(request);
   }
 
-  try {
-    const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
-      headers: {
-        apikey: authKey,
-        Authorization: `Bearer ${accessToken}`,
-      },
-      cache: "no-store",
-    });
-
-    if (!authResponse.ok) {
-      return redirectToLogin(request);
-    }
-
-    const user = await authResponse.json();
-
-    if (user?.email?.trim().toLowerCase() !== adminEmail) {
-      return redirectToLogin(request);
-    }
-
-    return protectAdminResponse(NextResponse.next());
-  } catch (error) {
-    console.error("Admin route authentication error:", error);
-    return redirectToLogin(request);
-  }
+  return protectAdminResponse(NextResponse.next());
 }
 
 export const config = {
