@@ -31,7 +31,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Use Node 24 with npm cache
         uses: actions/setup-node@v4
@@ -75,6 +75,7 @@ jobs:
           path: |
             .next
             .open-next
+            .currentpulse-release-sha
           key: currentpulse-release-${{ github.sha }}-bootstrap
           restore-keys: |
             currentpulse-release-${{ github.sha }}-
@@ -154,7 +155,6 @@ jobs:
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: bash
         env:
-          BEFORE_SHA: ${{ github.event.before }}
           PREVIOUS_ASSETS_READY: ${{ steps.previous-assets.outputs.ready }}
         run: |
           set -euo pipefail
@@ -166,8 +166,20 @@ jobs:
             exit 0
           fi
 
+          baseline=""
+          if [[ -f .currentpulse-release-sha ]]; then
+            baseline="$(tr -d '[:space:]' < .currentpulse-release-sha)"
+          fi
+
+          if [[ ! "${baseline}" =~ ^[0-9a-f]{40}$ ]] || ! git cat-file -e "${baseline}^{commit}" 2>/dev/null || ! git merge-base --is-ancestor "${baseline}" "${GITHUB_SHA}"; then
+            echo "::warning title=Validated baseline unavailable::Last successful deployment SHA is missing or invalid; regenerating the full reader."
+            echo "mode=full" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          echo "Planning reader changes from last validated deployment ${baseline} to ${GITHUB_SHA}."
           if node scripts/code-release-paths.mjs \
-            --before "${BEFORE_SHA:-}" \
+            --before "${baseline}" \
             --head "${GITHUB_SHA}" \
             --base http://127.0.0.1:3100 \
             --out /tmp/currentpulse-code-reader-paths.txt; then
@@ -254,7 +266,7 @@ jobs:
         run: |
           set -euo pipefail
           base="https://cp.vliab.workers.dev"
-          paths=(/ /robots.txt /sitemap.xml /news-sitemap.xml /current-affairs /news /exams /quiz /feed.xml)
+          paths=(/ /robots.txt /sitemap.xml /news-sitemap.xml /current-affairs /news /exams /quiz /feed.xml /pyq /question-papers /mains)
           pids=()
 
           for path in "${paths[@]}"; do
@@ -277,6 +289,11 @@ jobs:
           [[ "${failed}" -eq 0 ]] || { echo "One or more production smoke checks failed."; exit 1; }
           echo "Production smoke test passed."
 
+      - name: Record validated release SHA
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: printf '%s\n' "${GITHUB_SHA}" > .currentpulse-release-sha
+
       - name: Save validated release snapshot
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: actions/cache/save@v4
@@ -284,4 +301,5 @@ jobs:
           path: |
             .next
             .open-next
+            .currentpulse-release-sha
           key: currentpulse-release-${{ github.sha }}-${{ github.run_id }}
