@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export const metadata = {
   title: "UPSC Mains PYQ Explorer — 2012–2026 GS Papers",
-  description: "Browse UPSC Mains General Studies paper access for 2012–2026 and practise with annotated PYQ themes.",
+  description: "Browse 15 examination years of UPSC Mains General Studies paper access from 2012 through 2026 and practise with annotated PYQ themes.",
   alternates: { canonical: "/pyq" },
 };
 
