@@ -39,17 +39,21 @@ export async function middleware(request: NextRequest) {
 
   const accessToken = request.cookies.get(ADMIN_ACCESS_COOKIE)?.value;
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  // Keep middleware validation consistent with app/api/admin/session and lib/adminAuth.
+  // The anon key remains a fallback for deployments that have not yet provisioned
+  // the service-role secret at the edge.
+  const authKey =
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
 
-  if (!accessToken || !supabaseUrl || !anonKey || !adminEmail) {
+  if (!accessToken || !supabaseUrl || !authKey || !adminEmail) {
     return redirectToLogin(request);
   }
 
   try {
     const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
       headers: {
-        apikey: anonKey,
+        apikey: authKey,
         Authorization: `Bearer ${accessToken}`,
       },
       cache: "no-store",
