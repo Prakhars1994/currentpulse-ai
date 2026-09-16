@@ -21,7 +21,9 @@ test("major indexable landing pages define page-specific social metadata", () =>
   }
 
   assert.match(exams, /ResultPulse AI — Exam Results, Admit Cards & Notifications/);
-  assert.match(questionPapers, /UPSC Previous Papers — 16 Prelims & 15 Mains Years/);
+  assert.match(questionPapers, /UPSC Previous Year Question Papers \(PYQ\) 2011–2026 \| Prelims & Mains/);
+  assert.match(questionPapers, /<h1>UPSC Previous Year Question Papers \(PYQ\)<\/h1>/);
+  assert.match(questionPapers, /Prelims 2011–2026/);
 });
 
 test("all sitemap landing pages avoid inherited homepage metadata", () => {
