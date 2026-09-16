@@ -2,8 +2,8 @@ import OfficialPapers from "@/components/OfficialPapers";
 import { OFFICIAL_UPSC_PAPERS } from "@/lib/upsc/questionPapers";
 import { SITE_URL } from "@/lib/siteUrl";
 
-const title = "UPSC Previous Papers — 16 Prelims & 15 Mains Years";
-const description = "Browse verified UPSC Civil Services papers with Prelims coverage from 2011–2026 and Mains coverage from 2011–2025.";
+const title = "UPSC Previous Year Question Papers (PYQ) 2011–2026 | Prelims & Mains";
+const description = "Browse UPSC Civil Services previous year question papers (PYQs): Prelims 2011–2026 and verified Mains papers through 2025, with official UPSC PDFs and clearly labelled archive links.";
 const canonical = `${SITE_URL}/question-papers`;
 
 export const metadata = {
@@ -20,9 +20,9 @@ export default function QuestionPapersPage() {
       <div className="mx-auto max-w-6xl">
         <header className="paper-library-hero">
           <p>Verified UPSC paper library</p>
-          <h1>Prelims & Mains Papers</h1>
-          <span>Prelims 2011–2026 · 15 Mains years (2011–2025)</span>
-          <p className="paper-library-description">A clean academic library for Civil Services question papers. Direct UPSC PDFs, the official UPSC archive and any trusted legacy index are labelled separately.</p>
+          <h1>UPSC Previous Year Question Papers (PYQ)</h1>
+          <span>Prelims 2011–2026 · verified Mains papers through 2025</span>
+          <p className="paper-library-description">Revise Civil Services Prelims and Mains with a clean year-wise PYQ library. Direct UPSC PDFs, official UPSC archive entries and trusted legacy indexes are labelled separately so students can distinguish original papers from index links.</p>
         </header>
         <div className="mt-10"><OfficialPapers papers={OFFICIAL_UPSC_PAPERS} /></div>
       </div>
