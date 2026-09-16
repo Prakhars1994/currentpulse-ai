@@ -42,7 +42,9 @@ function repairPdfBoldArtifacts(value = "") {
 
 function stripEmptyMarkdownHeadings(value = "") {
   return String(value || "")
-    .replace(/^\s*#{1,6}(?:\s|\u00a0)*$/gm, "")
+    // PDF extraction can prefix an otherwise-empty heading with a bullet/list marker.
+    // Remove both plain empty headings (###) and malformed list headings (- ### / * ###).
+    .replace(/^\s*(?:[-*+]\s+)?#{1,6}(?:\s|\u00a0)*$/gm, "")
     .replace(/\n{3,}/g, "\n\n");
 }
 
@@ -74,6 +76,7 @@ function normalizeLine(line = "") {
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
     .replace(/^\s*[•●▪◦◎]\s*/, "- ")
     .replace(/^\s*u\s+(?=[A-Z0-9])/i, "- ")
+    .replace(/^\s*[-*+]\s+#{1,6}(?:\s|\u00a0)*$/, "")
     .replace(/\s+([,.;:!?])/g, "$1")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
@@ -96,7 +99,7 @@ function normalizeStrictPdfMarkdown(value = "") {
   const lines = raw.split("\n").map(normalizeLine).filter(Boolean);
   const out = [];
   for (const line of lines) {
-    const plain = line.replace(/^[-*]\s+/, "").trim();
+    const plain = line.replace(/^[-*+]\s+/, "").trim();
     const upper = plain.replace(/:$/, "").toUpperCase();
     if (SECTION_SET.has(upper)) {
       out.push("", `## ${plain.replace(/:$/, "")}`, "");
