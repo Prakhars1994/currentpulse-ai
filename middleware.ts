@@ -20,7 +20,7 @@ function redirectToLogin(request: NextRequest) {
   return protectAdminResponse(NextResponse.redirect(loginUrl));
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
   if (PUBLIC_ADMIN_PATHS.has(pathname)) {
