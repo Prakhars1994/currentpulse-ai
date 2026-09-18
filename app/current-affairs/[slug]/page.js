@@ -16,9 +16,14 @@ import MainsAccordion from "@/components/MainsAccordion";
 import PrelimsPracticeCard from "@/components/PrelimsPracticeCard";
 import RelatedYouTubeVideo from "@/components/RelatedYouTubeVideo";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
-import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
+import { assessPublishedArticle } from "@/lib/editorial/publicationSafety";
 import { suppressRepeatedArticleSections } from "@/lib/articleSectionDedupe";
 import { cleanSeoTitle, repairedCaTitle, selectSeoDescription } from "@/lib/publicArticleRepair";
+
+function isCurrentAffairsPubliclySafe(article = {}) {
+  const assessment = assessPublishedArticle(article, { stream: "coverage" });
+  return assessment.allowed || assessment.code === "repeated_long_passage";
+}
 
 // Remove HTML tags for SEO descriptions and reading-time calculation
 function stripHtml(html = "") {
@@ -117,7 +122,7 @@ export async function generateMetadata({ params }) {
 
   const article = await getCurrentAffairsArticle(slug);
 
-  if (!article || !isPublishedArticleSafe(article, { stream: "coverage" })) {
+  if (!article || !isCurrentAffairsPubliclySafe(article)) {
     return {
       title: "Article Not Found | CurrentPulse AI",
       description:
@@ -187,7 +192,7 @@ export default async function ArticlePage({ params }) {
 
   const article = await getCurrentAffairsArticle(slug);
 
-  if (!article || !isPublishedArticleSafe(article, { stream: "coverage" })) {
+  if (!article || !isCurrentAffairsPubliclySafe(article)) {
     notFound();
   }
   const displayArticle = suppressRepeatedArticleSections(article);
@@ -199,7 +204,7 @@ export default async function ArticlePage({ params }) {
   const isProtectedManualImport = article.manual_protected === true &&
     articleSources.some((source) => source.source_kind === "coaching") &&
     typeof article.content === "string" && article.content.trim().length > 0;
-  if (!isPublishedArticleSafe(article, { stream: "coverage" })) notFound();
+  if (!isCurrentAffairsPubliclySafe(article)) notFound();
   const isCoachingArticle = (articleSources || []).some((source) => source.source_kind === "coaching");
   const hasNewsVersion = (articleSources || []).some((source) => source.source_kind === "news");
   if (!isCoachingArticle) {
@@ -253,14 +258,14 @@ export default async function ArticlePage({ params }) {
   }
 
   const safeRelatedArticles = (relatedArticles || []).filter((item) =>
-    isPublishedArticleSafe(item, { stream: "coverage" })
+    isCurrentAffairsPubliclySafe(item)
   );
   const safePreviousArticle = previousArticle &&
-    isPublishedArticleSafe(previousArticle, { stream: "coverage" })
+    isCurrentAffairsPubliclySafe(previousArticle)
       ? previousArticle
       : null;
   const safeNextArticle = nextArticle &&
-    isPublishedArticleSafe(nextArticle, { stream: "coverage" })
+    isCurrentAffairsPubliclySafe(nextArticle)
       ? nextArticle
       : null;
 
