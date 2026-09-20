@@ -18,22 +18,7 @@
       "/api/*",
       "/admin/*",
       "/member",
-      "/member/*",
-      "/news",
-      "/news/*",
-      "/current-affairs",
-      "/current-affairs/*",
-      "/exams",
-      "/exams/*",
-      "/quiz",
-      "/pdf",
-      "/pdf/*",
-      "/mock-tests",
-      "/mock-tests/*",
-      "/search",
-      "/notes",
-      "/news-sitemap.xml",
-      "/feed.xml"
+      "/member/*"
     ]
   },
 
