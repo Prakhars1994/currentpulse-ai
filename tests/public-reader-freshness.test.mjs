@@ -8,7 +8,7 @@ test("published reader routes are asset-first while private routes stay Worker-f
   const config = read("wrangler.jsonc");
   const workerFirst = config.match(/"run_worker_first"\s*:\s*\[([\s\S]*?)\]/)?.[1] || "";
   assert.doesNotMatch(workerFirst, /^\s*"\/"\s*(?:,|$)/m);
-  for (const route of ["/api/*", "/admin/*", "/member", "/member/*", "/current-affairs*", "!/current-affairs/*"]) assert.match(workerFirst, new RegExp(`"${route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
+  for (const route of ["/api/*", "/admin/*", "/member", "/member/*", "/current-affairs"]) assert.match(workerFirst, new RegExp(`"${route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
   for (const route of ["/news", "/news/*", "/current-affairs/*", "/exams", "/exams/*", "/pdf", "/pdf/*", "/feed.xml"]) assert.doesNotMatch(workerFirst, new RegExp(`"${route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
 });
 
