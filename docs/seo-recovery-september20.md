@@ -28,3 +28,11 @@ The live indexability audit now exits unsuccessfully for detected issues, reject
 Current Search Console Page indexing exclusions, URL Inspection results, Google-selected canonicals, sitemap processing timestamps and impressions were not available. A public fetch or site-search result does not establish Google indexing. Inspect representative home, service and article URLs in the exact current-host properties. Use Google’s live URL test after release and request indexing for a small representative set; monitor subsequent recrawls. Do not manufacture publication dates, remove legitimate noindex rules, or assume sitemap submission guarantees indexing.
 
 References: https://developers.google.com/search/docs/crawling-indexing/troubleshoot-crawling-errors and https://postgrest.org/en/stable/references/errors.html.
+
+## Final local build verification
+
+Production Next.js build completed successfully. Requests to the built app confirmed:
+- /current-affairs?page=99999: streamed HTTP 200, noindex present, archive content absent.
+- /current-affairs: HTTP 200, no noindex, archive content present.
+
+A true HTTP 404 remains preferable, but the repaired Next.js notFound path now emits its exclusion directive. Cloudflare/OpenNext CI and post-deployment verification have not run. Automatic approval review blocked pushing the repair branch because publishing to the external repository was not explicitly authorized. No push or deployment was performed.
