@@ -19,7 +19,8 @@
       "/admin/*",
       "/member",
       "/member/*",
-      "/current-affairs"
+      "/current-affairs*",
+      "!/current-affairs/*"
     ]
   },
 
