@@ -36,3 +36,13 @@ Production Next.js build completed successfully. Requests to the built app confi
 - /current-affairs: HTTP 200, no noindex, archive content present.
 
 A true HTTP 404 remains preferable, but the repaired Next.js notFound path now emits its exclusion directive. Cloudflare/OpenNext CI and post-deployment verification have not run. Automatic approval review blocked pushing the repair branch because publishing to the external repository was not explicitly authorized. No push or deployment was performed.
+
+## Search Console diagnosis and routing recovery
+
+The 20 September Search Console Page indexing report shows 798 URLs as "Discovered – currently not indexed" and one URL as "Crawled – currently not indexed." This points to crawl prioritization and page reliability, not a robots.txt block. A complete public sitemap crawl found 838 submitted URLs: 425 Current Affairs articles, 350 ResultPulse updates, 30 News articles, and 33 landing pages.
+
+Sequential checks of representative submitted URLs then reproduced the decisive delivery failure: a Current Affairs article returned Cloudflare Worker error 1102/HTTP 503; other submitted article, News, and ResultPulse URLs returned HTTP 200 with no canonical, title, description, or H1. The deployment configuration forced every public reader path through the Worker even though the release pipeline had already materialized static HTML for those paths.
+
+The route policy now makes public reader pages, XML, and archives asset-first. Only `/api/*`, `/admin/*`, and member-only paths remain Worker-first. This lets Cloudflare serve the generated reader HTML without executing the Supabase-heavy rendering path; URLs with no matching static file still fall through to the Worker.
+
+Validation after this recovery change: all 211 regression tests pass and the production Next.js build completes. The local build reported `JWT issued at future` for optional News/homepage data during static generation, but it completed successfully; that is an environment-clock/key issue to correct in CI if it also appears there, not a release failure in the asset-route change.

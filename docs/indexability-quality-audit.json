@@ -1,0 +1,1569 @@
+{
+  "generatedAt": "2026-09-20T08:18:46.081Z",
+  "origin": "https://cp.vliab.workers.dev",
+  "total": 838,
+  "byType": {
+    "landing": {
+      "total": 33,
+      "medianWords": 95,
+      "issues": 0
+    },
+    "exam-update": {
+      "total": 350,
+      "medianWords": 0,
+      "issues": 339
+    },
+    "current-affairs": {
+      "total": 425,
+      "medianWords": 0,
+      "issues": 288
+    },
+    "news": {
+      "total": 30,
+      "medianWords": 0,
+      "issues": 21
+    }
+  },
+  "issueCounts": {
+    "short-main-content-review": 309,
+    "canonical-mismatch": 390,
+    "incomplete-page-signals": 570,
+    "non-200-or-fetch-error": 47,
+    "noindex-in-sitemap": 47,
+    "duplicate-title-review": 51,
+    "duplicate-description-review": 204
+  },
+  "examples": [
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/notto-launches-e-pratyaropan-portal-for-organ-transplantation",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/notto-launches-e-pratyaropan-portal-for-organ-transplantation",
+      "title": "NOTTO Launches e-Pratyaropan Portal for Organ Transplantation | CurrentPulse AI",
+      "description": "The National Organ and Tissue Transplant Organisation (NOTTO) has launched the e-Pratyaropan Portal alongside the NOTTO mobile application. This…",
+      "h1": 1,
+      "words": 243,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-taxation-and-other-laws-amendment-bill-2026",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/gi-tags-scaling-traditional-wealth-into-global-brands",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/gi-tags-scaling-traditional-wealth-into-global-brands",
+      "title": "GI Tags: Scaling Traditional Wealth into Global Brands | CurrentPulse AI",
+      "description": "Geographical Indication (GI) tags have emerged as a powerful tool for protecting India’s cultural heritage while creating economic opportunities for…",
+      "h1": 1,
+      "words": 247,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/strategic-polar-diplomacy-parliamentary-panel-recommends-appointing-a-polar-ambassador-for-arctic-and-antarctic-affairs",
+      "type": "current-affairs",
+      "status": 503,
+      "canonical": "",
+      "title": "Worker exceeded resource limits | cp.vliab.workers.dev | Cloudflare",
+      "description": "",
+      "h1": 1,
+      "words": 0,
+      "noindex": true,
+      "issues": [
+        "non-200-or-fetch-error",
+        "noindex-in-sitemap",
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review",
+        "duplicate-title-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/live-in-partner-now-protected-against-domestic-cruelty-what-sc-said",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/live-in-partner-now-protected-against-domestic-cruelty-what-sc-said",
+      "title": "Live-in partner now protected against domestic cruelty: What SC said | CurrentPulse AI",
+      "description": "On 4 August 2026, the Supreme Court of India ruled that women in live-in relationships with an 'intent to marry' are entitled to protection against…",
+      "h1": 1,
+      "words": 241,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/research-and-development-statistics-2025-26-dst",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/research-and-development-statistics-2025-26-dst",
+      "title": "Research and Development Statistics 2025-26: DST | CurrentPulse AI",
+      "description": "According to the latest data disclosed by the Department of Science and Technology (DST), India’s spending on research and development (R&D) surged to…",
+      "h1": 1,
+      "words": 201,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indigenous-african-swine-fever-vaccine-developed-by-icar",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/emerging-challenges-faced-by-the-isro",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/emerging-challenges-faced-by-the-isro",
+      "title": "Emerging Challenges Faced by the ISRO | CurrentPulse AI",
+      "description": "Syllabus: GS3/Science and Technology An analysis of the ISRO headcount from data in annual reports over the last three decades shows that ISRO’s current…",
+      "h1": 1,
+      "words": 206,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/allocation-and-governance-of-indias-rs-1-lakh-crore-deep-tech-fund",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/supreme-court-mandates-sops-mechanisms-to-curb-digital-arrests",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/supreme-court-mandates-sops-mechanisms-to-curb-digital-arrests",
+      "title": "Supreme Court Mandates SOPs, Mechanisms to Curb ‘Digital Arrests’ | CurrentPulse AI",
+      "description": "The Supreme Court passed a detailed order directing the Centre, States, the Reserve Bank of India and telecom authorities to prepare standard…",
+      "h1": 1,
+      "words": 225,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/supreme-court-extends-mining-approval-mandate-around-asan-wetland-nationwide-to-all-conservation-reserves",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/national-circular-bioenergy-scheme-gobardhan-scheme",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/national-circular-bioenergy-scheme-gobardhan-scheme",
+      "title": "National Circular Bioenergy Scheme (GOBARdhan Scheme) | CurrentPulse AI",
+      "description": "The Union Cabinet has approved the National Circular Bioenergy Scheme (GOBARdhan – Galvanising Organic Bio-Agro Resources Dhan) with a total outlay of…",
+      "h1": 1,
+      "words": 217,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/fiscal-federalism-balancing-efficiency-versus-equity-concerns",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-report-reimagining-care-in-viksit-bharat2047",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/kazakhstan-central-asian-pivot-and-india-kazakhstan-strategic-partnership",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/nathu-la-pass-himalayan-gateway-linking-india-china-trade-and-strategic-connectivity",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/vehicle-to-vehicle-v2v-technology",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-gobardhan-initiative",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/the-gobardhan-initiative",
+      "title": "The GOBARdhan Initiative | CurrentPulse AI",
+      "description": "The Union Cabinet approved the GOBARdhan (Galvanizing Organic Bio-Agro Resources Dhan) National Circular Bioenergy Scheme with a total financial outlay of…",
+      "h1": 1,
+      "words": 245,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/money-bills-in-india",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/money-bills-in-india",
+      "title": "Money Bills in India | CurrentPulse AI",
+      "description": "Context: The Rajya Sabha passed the Supreme Court (Number of Judges) Amendment Bill, 2026, increasing the sanctioned strength of Supreme Court…",
+      "h1": 1,
+      "words": 235,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/environmental-performance-index-2026-indias-ranking-and-analysis",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-legal-process-and-judicial-framework-for-withdrawing-and-closing-firs",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/the-legal-process-and-judicial-framework-for-withdrawing-and-closing-firs",
+      "title": "The Legal Process and Judicial Framework for Withdrawing | CurrentPulse AI",
+      "description": "The Supreme Court recently clarified that State governments remain empowered to close or withdraw First Information Reports (FIRs) registered against…",
+      "h1": 1,
+      "words": 247,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-seafarer-first-initiative",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-closing-auction-session-cas",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/the-closing-auction-session-cas",
+      "title": "The Closing Auction Session (CAS) | CurrentPulse AI",
+      "description": "was introduced by Indian stock exchanges on August 3, 2026, for cash market stocks with derivatives, following…",
+      "h1": 1,
+      "words": 200,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/sc-seeks-govts-reply-on-pleas-against-rti-changes-through-dpdp-act",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/vishwas-2026-epfos-one-time-dispute-resolution-mechanism-for-pf-damages",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/vishwas-2026-epfos-one-time-dispute-resolution-mechanism-for-pf-damages",
+      "title": "VISHWAS 2026: EPFO's One-Time Dispute Resolution Mechanism for PF | CurrentPulse AI",
+      "description": "The Employees' Provident Fund Organisation (EPFO) launched VISHWAS 2026 as a one-time, digital, and time-bound dispute resolution initiative. The scheme…",
+      "h1": 1,
+      "words": 243,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-stakes-in-indias-delimitation-debate",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/supreme-court-directs-measures-to-curb-digital-arrest-scams",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/supreme-court-directs-measures-to-curb-digital-arrest-scams",
+      "title": "Supreme Court Directs Measures to Curb ‘Digital Arrest’ Scams | CurrentPulse AI",
+      "description": "Recently, the Supreme Court directed the Centre, States/UTs, RBI, telecom…",
+      "h1": 1,
+      "words": 204,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/diplomatic-and-ecological-significance-of-the-indian-peafowl",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/epigenetic-inheritance",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/epigenetic-inheritance",
+      "title": "Epigenetic Inheritance | CurrentPulse AI",
+      "description": "Scientific Innovations & Discoveries A study published in Nature Genetics found that certain epigenetic changes, particularly DNA methylation patterns…",
+      "h1": 1,
+      "words": 196,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/exercise-pitch-black-2026-multinational-air-exercise-highlights-indo-pacific-security-cooperation",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/central-electricity-authority-cyber-security-in-power-sector-regulations-2026",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/india-reaches-milestone-of-300-gw-installed-non-fossil-fuel-power-capacity",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/india-reaches-milestone-of-300-gw-installed-non-fossil-fuel-power-capacity",
+      "title": "India Reaches Milestone of 300 GW Installed Non-Fossil Fuel Power | CurrentPulse AI",
+      "description": "As of July 31, 2026, India successfully crossed 300.50 GW in installed non-fossil fuel-based electricity generation capacity. This milestone represents…",
+      "h1": 1,
+      "words": 240,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/niti-aayog-report-on-key-sectors-to-position-india-as-a-global-manufacturing-hub",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/niti-aayog-report-on-key-sectors-to-position-india-as-a-global-manufacturing-hub",
+      "title": "NITI Aayog Report on Key Sectors to Position India as a Global | CurrentPulse AI",
+      "description": "Context: NITI Aayog (in collaboration with knowledge partner CRISIL Intelligence) released the landmark report titled “Key Sectors to Position India as a…",
+      "h1": 1,
+      "words": 157,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/coastal-erosion-in-odisha",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-mines-and-minerals-development-and-regulation-amendment-bill-2026",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/the-mines-and-minerals-development-and-regulation-amendment-bill-2026",
+      "title": "The Mines and Minerals (Development and Regulation) Amendment Bill | CurrentPulse AI",
+      "description": "was introduced in Parliament to establish a uniform…",
+      "h1": 1,
+      "words": 140,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/deepening-inclusive-development-in-rural-india",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/digital-infrastructure-in-india",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-sweet-revolution-promoting-beekeeping-and-protecting-pollinators",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/the-sweet-revolution-promoting-beekeeping-and-protecting-pollinators",
+      "title": "The Sweet Revolution: Promoting Beekeeping and Protecting | CurrentPulse AI",
+      "description": "India’s honey production has nearly doubled over the last decade, but the sustainability of its sweet revolution depends on protecting bees as…",
+      "h1": 1,
+      "words": 224,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indias-campaign-for-a-un-security-council-unsc-seat-in-2028-29",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/indias-campaign-for-a-un-security-council-unsc-seat-in-2028-29",
+      "title": "India’s Campaign For a UN Security Council (UNSC) Seat in 2028-29 | CurrentPulse AI",
+      "description": "Syllabus: GS2/International Relation; Global Grouping India has launched its campaign for a non-permanent United Nations Security Council (UNSC)…",
+      "h1": 1,
+      "words": 226,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/ai-can-be-optimised-for-better-healthcare",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/ai-can-be-optimised-for-better-healthcare",
+      "title": "AI Can Be Optimised for Better Healthcare | CurrentPulse AI",
+      "description": "Science and Technology AI_in_Healthcare The article discusses the integration of AI in healthcare, emphasizing its potential to enhance patient care and…",
+      "h1": 1,
+      "words": 197,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-foreign-currency-non-resident-bank-fcnrb-deposits",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/the-foreign-currency-non-resident-bank-fcnrb-deposits",
+      "title": "The Foreign Currency Non-Resident (Bank) — FCNR(B) Deposits | CurrentPulse AI",
+      "description": "Context: The Reserve Bank of India (RBI) advanced the deadline for fresh Foreign Currency Non-Resident (Bank) [FCNR(B)] deposits to qualify for…",
+      "h1": 1,
+      "words": 139,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/black-money-in-elections-hampers-democracy-sc",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/cag-audit-flags-governance-concerns-in-railway-passenger-amenities",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/cag-audit-flags-governance-concerns-in-railway-passenger-amenities",
+      "title": "CAG Audit Flags Governance Concerns in Railway Passenger Amenities | CurrentPulse AI",
+      "description": "Syllabus: GS2/ Governance, GS3/ Infrastructure A recent Comptroller and Auditor General (CAG) audit of railway passenger amenities for 2019-20 to 2023-24…",
+      "h1": 1,
+      "words": 165,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/draft-shanti-rules-2026",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/hanging-as-a-constitutional-mode-of-execution",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/economy-taxation-and-financial-system",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/economy-taxation-and-financial-system",
+      "title": "Economy – Taxation & Financial System | CurrentPulse AI",
+      "description": "The government has introduced the Foreign Assets of Small Taxpayers–Disclosure Scheme (FAST-DS), providing a limited window for eligible taxpayers to…",
+      "h1": 1,
+      "words": 212,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indias-trade-agreements",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/indias-trade-agreements",
+      "title": "India’s Trade Agreements | CurrentPulse AI",
+      "description": "India’s FTA journey is moving from expanding its network of agreements to making fuller use of the market access. What is a Free Trade Agreement…",
+      "h1": 1,
+      "words": 248,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/corporate-investment-in-india",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/corporate-investment-in-india",
+      "title": "Corporate Investment in India | CurrentPulse AI",
+      "description": "Corporate investment, as a share of GDP, has been declining in India. It refers to the acquisition of financial assets, business operations, or…",
+      "h1": 1,
+      "words": 247,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/gaganyaans-thermal-protection-system",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/balancing-religious-sentiments-and-constitutional-freedoms",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/balancing-religious-sentiments-and-constitutional-freedoms",
+      "title": "Balancing Religious Sentiments and Constitutional Freedoms | CurrentPulse AI",
+      "description": "Syllabus: GS2/Polity and Governance Punjab’s new sacrilege law has reignited debate over the criminalisation of reli­gious offence in a sec­u­lar state.…",
+      "h1": 1,
+      "words": 216,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/legality-of-polygamy-in-india",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/india-brazil-relations",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indias-coconut-sector",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/indias-coconut-sector",
+      "title": "India’s Coconut Sector | CurrentPulse AI",
+      "description": ", deeply rooted in the country’s agricultural economy and cultural traditions, is steadily evolving from a predominantly…",
+      "h1": 1,
+      "words": 245,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indias-revised-fdi-framework",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/national-horticulture-board-revises-subsidy-guidelines-for-commercial-horticulture",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indiauk-strategic-and-defence-cooperation",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/indiauk-strategic-and-defence-cooperation",
+      "title": "India–U.K. Strategic and Defence Cooperation | CurrentPulse AI",
+      "description": "India and the United Kingdom reviewed their defence-industrial cooperation, military exchanges and maritime security partnership during the 25th…",
+      "h1": 1,
+      "words": 241,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/science-and-technology-internal-security-defence",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/compassion-and-contentment-strengthening-bonds-of-cooperation-and-harmony-in-society",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/compassion-and-contentment-strengthening-bonds-of-cooperation-and-harmony-in-society",
+      "title": "Compassion & Contentment: Strengthening Bonds of Cooperation & | CurrentPulse AI",
+      "description": "The Prime Minister of India recently shared Sanskrit Subhashitam stressing the virtues of Compassion (Karuna) and Contentment (Santosha). He said that…",
+      "h1": 1,
+      "words": 231,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/potential-of-floating-solar-systems-in-india",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/india-proposes-medical-device-rule-changes-to-boost-ease-of-business",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/ease-of-doing-research-and-development-in-india-report-by-niti-aayog",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/international-relations-geography",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/india-us-deal-to-procure-javelin-anti-tank-guided-missile-systems",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/securing-synthetic-dna-in-india",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/securing-synthetic-dna-in-india",
+      "title": "Securing Synthetic DNA in India | CurrentPulse AI",
+      "description": "Syllabus: GS3/Science and Technology Synthetic DNA has become central to advances in health, food security, climate and biotechnology, but its growing…",
+      "h1": 1,
+      "words": 233,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/global-drought-resilience-architecture-unccd-cop17-launches-dri-and-drif",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/global-drought-resilience-architecture-unccd-cop17-launches-dri-and-drif",
+      "title": "Global Drought Resilience Architecture: UNCCD COP17 Launches DRI | CurrentPulse AI",
+      "description": "At the 17th Conference of the Parties (COP17) to the United Nations Convention to Combat Desertification (UNCCD), a new global drought resilience…",
+      "h1": 1,
+      "words": 212,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/the-r-and-d-fund-mapping-problem",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indias-growth-paradox-economic-rise-amid-persistent-regional-disparities",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/indias-growth-paradox-economic-rise-amid-persistent-regional-disparities",
+      "title": "India’s Growth Paradox: Economic Rise Amid Persistent Regional | CurrentPulse AI",
+      "description": "There are substantial gaps in per capita income and development across states in India while it has emerged as one of the world’s largest economies…",
+      "h1": 1,
+      "words": 240,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/metas-new-teen-safety-rules",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/metas-new-teen-safety-rules",
+      "title": "Meta’s New Teen Safety Rules | CurrentPulse AI",
+      "description": "Meta is set to introduce new default restrictions for teenagers on Instagram and Facebook in the US after signing an $18 billion settlement with 52 state…",
+      "h1": 1,
+      "words": 240,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/hybrid-annuity-model-in-indian-railways",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/26th-sco-summit-at-bishkek-indias-central-asia-strategy-and-strategic-autonomy-20260831-bc8d940-0",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/urban-flooding-ufrmp-phase-ii-and-patnas-climate-resilience-20260830-d511e5e-2",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/urban-flooding-ufrmp-phase-ii-and-patnas-climate-resilience-20260830-d511e5e-2",
+      "title": "Urban Flooding, UFRMP Phase II and Patna's Climate Resilience | CurrentPulse AI",
+      "description": "• Urban flooding has become a recurring governance challenge in Indian cities, including Patna. • Policy attention to urban flood-risk mitigation, drainage…",
+      "h1": 1,
+      "words": 220,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/ganga-water-treaty-2026-farakka-barrage-and-bihars-water-security-20260830-d511e5e-1",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/ganga-water-treaty-2026-farakka-barrage-and-bihars-water-security-20260830-d511e5e-1",
+      "title": "Ganga Water Treaty 2026, Farakka Barrage and Bihar's Water Security | CurrentPulse AI",
+      "description": "• The approaching renewal phase of India-Bangladesh arrangements over sharing of Ganga waters has brought the 1996 Ganges Water Sharing Treaty back into policy…",
+      "h1": 1,
+      "words": 243,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/india-japan-economic-partnership",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/india-japan-economic-partnership",
+      "title": "India-Japan Economic Partnership | CurrentPulse AI",
+      "description": "The Union Minister of Commerce and Industry concluded his official visit to Japan aimed at accelerating Japanese investment in India. Aim: To advance…",
+      "h1": 1,
+      "words": 235,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/aditya-l1-solar-mission-new-findings-on-solar-flare-triggers-and-space-weather-20260831-4e0f35c-0",
+      "type": "current-affairs",
+      "status": 503,
+      "canonical": "",
+      "title": "Worker exceeded resource limits | cp.vliab.workers.dev | Cloudflare",
+      "description": "",
+      "h1": 1,
+      "words": 0,
+      "noindex": true,
+      "issues": [
+        "non-200-or-fetch-error",
+        "noindex-in-sitemap",
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review",
+        "duplicate-title-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indias-q1-fy2026-27-gdp-growth-at-78-investment-surge-manufacturing-recovery-and-macro-20260831-7a4a485-0",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/integrated-fertilizer-management-system-20-agristack-dbt-14-crore-buyers-and-data-driven-20260831-0e8bb58-2",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/foreign-portfolio-flows-return-to-india-us31-billion-august-inflow-rupee-support-and-20260831-7a4a485-2",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indias-higher-education-expansion-450-crore-students-1289-universities-and-the-nep-2035-ger-target-20260901-2f9138d-1",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/five-years-of-e-shram-3189-crore-unorganised-workers-and-indias-portable-social-security-architecture-20260901-2f9138d-4",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/pm-aasha-and-msp-reform-7200-crore-allocation-pulses-oilseeds-procurement-and-price-risk-20260901-2f9138d-7",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/geography-environment-and-ecology-disaster-management",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/unccd-cop17-40-of-global-land-degraded-us278-billion-annual-finance-gap-and-the-shift-from-20260901-cd71527-5",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/diplomacy-20260901-0fa886c-2",
+      "type": "news",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/news/12-as-ukraines-air-defence-shortage-deepens-20260901-0fa886c-9",
+      "type": "news",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/tiger-landscapes-bioeconomy-and-ecotourism-from-fortress-conservation-to-landscape-based-livelihoods-20260903-f0b3d80-3",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/record-banking-liquidity-rbi-dollar-mobilisation-and-the-new-challenge-of-monetary-management-20260903-8244a9f-1",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/indias-78-gdp-growth-new-statistical-methodology-and-the-debate-over-real-versus-nominal-expansion-20260903-8244a9f-2",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/india-belgium-partnership-from-diamonds-to-defence-semiconductors-critical-minerals-and-clean-energy-cooperation-20260903-6c11f7c-2",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/eos-05-in-geosynchronous-orbit-indias-new-continuous-earth-observation-capability-and-the-gslv-f17-mission-20260904-85f405f-0",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/marine-fish-natural-capital-accounting-mospi-moves-beyond-annual-catch-to-experimental-monetary-asset-accounts-for-ocean-wealth-20260904-85f405f-2",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/pan-india-child-labour-rescue-campaign-ncpcr-reports-3800-children-rescued-and-575-firs-from-rescue-to-rehabilitation-20260904-85f405f-5",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/ophiorrhiza-assamensis-new-species-from-assam-medicinal-plant-diversity-and-the-conservation-value-of-taxonomy-20260904-f2016e6-1",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/bio-nivesh-platform-connecting-biotechnology-startups-with-investors-and-bridging-indias-innovation-to-scale-valley-of-death-20260904-f2016e6-5",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/hindi-current-affairs-20260904-33d45e0-0",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/reverse-vaccinology-genome-first-vaccine-discovery-bioinformatics-and-the-search-for-better-pneumonia-vaccines-20260904-f2016e6-2",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/reverse-vaccinology-genome-first-vaccine-discovery-bioinformatics-and-the-search-for-better-pneumonia-vaccines-20260904-f2016e6-2",
+      "title": "Reverse Vaccinology: Genome-First Vaccine Discovery, Bioinformatics | CurrentPulse AI",
+      "description": "• Genome-led and immunoinformatics approaches to pneumonia vaccine research returned reverse vaccinology to current affairs. • Computational prediction can…",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/hindi-current-affairs-20260904-33d45e0-3",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/hindi-current-affairs-20260904-33d45e0-4",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/marine-fish-resources-in-india-experimental-monetary-asset-accounts-natural-capital-and-the-blue-economy-20260904-4391e92-1",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/pichavaram-mangrove-forest-total-economic-value-blue-carbon-and-ecosystem-service-accounting-20260904-4391e92-0",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "",
+      "title": "",
+      "description": "",
+      "h1": 0,
+      "words": 0,
+      "noindex": false,
+      "issues": [
+        "canonical-mismatch",
+        "incomplete-page-signals",
+        "short-main-content-review"
+      ]
+    },
+    {
+      "url": "https://cp.vliab.workers.dev/current-affairs/hindi-current-affairs-20260904-33d45e0-1",
+      "type": "current-affairs",
+      "status": 200,
+      "canonical": "https://cp.vliab.workers.dev/current-affairs/hindi-current-affairs-20260904-33d45e0-1",
+      "title": "शीर्षक: भूतापीय ऊर्जा नीति: भारत संसाधन मानचित्रण से चौबीसों घंटे | CurrentPulse AI",
+      "description": "समसामयिकी 61 भूतापीय ऊर्जा नीति: भारत संसाधन मानचित्रण से चौबीसों घंटे स्वच्छ ऊर्जा और लद्दाख प्रदर्शन कुओं की ओर आगे बढ़ रहा है श्रेणी जीएस तिथि डेटा…",
+      "h1": 1,
+      "words": 147,
+      "noindex": false,
+      "issues": [
+        "short-main-content-review"
+      ]
+    }
+  ]
+}
