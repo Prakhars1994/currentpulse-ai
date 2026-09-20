@@ -18,7 +18,8 @@
       "/api/*",
       "/admin/*",
       "/member",
-      "/member/*"
+      "/member/*",
+      "/current-affairs"
     ]
   },
 
