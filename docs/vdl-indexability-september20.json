@@ -1,0 +1,186 @@
+{
+  "generatedAt": "2026-09-20T08:04:08.920Z",
+  "maps": [
+    {
+      "url": "https://vdl.vliab.workers.dev/sitemap.xml",
+      "status": 200
+    }
+  ],
+  "sitemapUrls": 11,
+  "sampleMethod": "All sitemap pages outside article/exam sections, plus up to 12 evenly spaced URLs per section; not a population estimate or Google index-status check.",
+  "results": [
+    {
+      "url": "https://vdl.vliab.workers.dev",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev",
+      "title": "Vishwakarma Digital Labs | Web Development, AI & Mobile Apps",
+      "description": "Vishwakarma Digital Labs builds fast websites, mobile apps, AI applications and business automation for startups, local businesses and growing teams in India and worldwide.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/services/mobile-app-development",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/services/mobile-app-development",
+      "title": "Mobile App Development Services | Business & Customer Apps | Vishwakarma Digital Labs",
+      "description": "Mobile app development for booking, marketplace, healthcare, education and business workflows with production-ready backend integration.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/services/web-development",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/services/web-development",
+      "title": "Web Development Services | Next.js & React Websites | Vishwakarma Digital Labs",
+      "description": "Fast, responsive business websites, landing pages, e-commerce and web applications built with modern Next.js and React workflows.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/services/ai-development",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/services/ai-development",
+      "title": "AI Application Development Services | AI Agents & RAG | Vishwakarma Digital Labs",
+      "description": "Build AI agents, copilots, RAG knowledge assistants and AI-powered applications connected to your business data, tools and APIs.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/services/business-automation",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/services/business-automation",
+      "title": "Business Automation Services | APIs, Workflows & AI | Vishwakarma Digital Labs",
+      "description": "Automate repetitive business workflows, lead routing, reporting and operations with APIs, databases, webhooks and AI-assisted processing.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/work",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/work",
+      "title": "Work & Interactive Product Demos | Vishwakarma Digital Labs",
+      "description": "Explore CurrentPulse AI production work with administrator-controlled Current Affairs and News publishing, plus interactive web, AI, ecommerce, healthcare, CRM, real-estate, education and operations demos.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/work/currentpulse-ai",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/work/currentpulse-ai",
+      "title": "CurrentPulse AI Case Study | Vishwakarma Digital Labs",
+      "description": "How Vishwakarma Digital Labs built CurrentPulse AI: administrator-controlled publishing, ResultPulse, Supabase/PostgreSQL, Cloudflare delivery, SEO quality gates and GitHub Actions automation.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/contact",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/contact",
+      "title": "Contact & Project Quote | Vishwakarma Digital Labs",
+      "description": "Discuss a website, mobile app, AI application or business automation project with Vishwakarma Digital Labs.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/about",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/about",
+      "title": "About | Vishwakarma Digital Labs",
+      "description": "About Vishwakarma Digital Labs and founder Prakhar Singh — production-focused web, AI and automation development.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/privacy",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/privacy",
+      "title": "Privacy Policy | Vishwakarma Digital Labs",
+      "description": "Privacy policy for Vishwakarma Digital Labs.",
+      "h1": 1,
+      "issues": []
+    },
+    {
+      "url": "https://vdl.vliab.workers.dev/terms",
+      "status": 200,
+      "location": null,
+      "robots": [
+        "index, follow",
+        "index, follow, max-video-preview:-1, max-image-preview:large, max-snippet:-1"
+      ],
+      "xRobotsTag": null,
+      "canonical": "https://vdl.vliab.workers.dev/terms",
+      "title": "Terms of Use | Vishwakarma Digital Labs",
+      "description": "Terms of use for Vishwakarma Digital Labs.",
+      "h1": 1,
+      "issues": []
+    }
+  ],
+  "missingPages": [
+    {
+      "url": "https://vdl.vliab.workers.dev/definitely-missing-seo-audit-page",
+      "status": 404,
+      "noindex": true,
+      "issues": []
+    }
+  ]
+}

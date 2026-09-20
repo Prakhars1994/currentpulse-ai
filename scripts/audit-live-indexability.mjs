@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import { load } from 'cheerio';
 
-const origin = 'https://cp.vliab.workers.dev';
+const origin = new URL(process.env.SEO_AUDIT_ORIGIN || 'https://cp.vliab.workers.dev').origin;
 const get = (url) => fetch(url, { redirect: 'manual', signal: AbortSignal.timeout(25000) });
 const maps = [];
 const urls = new Set();
@@ -51,6 +51,30 @@ for (let i = 0; i < sample.length; i += 3) {
   }));
 }
 const report = { generatedAt: new Date().toISOString(), maps, sitemapUrls: all.length, sampleMethod: 'All sitemap pages outside article/exam sections, plus up to 12 evenly spaced URLs per section; not a population estimate or Google index-status check.', results };
+// A successful homepage fetch cannot detect a broken archive or a silent
+// noindex/canonical regression. Probe missing pages as well as published URLs.
+const missingPaths = ['/definitely-missing-seo-audit-page'];
+if (origin === 'https://cp.vliab.workers.dev') {
+  missingPaths.push('/current-affairs?page=99999', '/news/page/99999');
+}
+report.missingPages = [];
+for (const pathname of missingPaths) {
+  const url = origin + pathname;
+  try {
+    const response = await get(url);
+    const $ = load(await response.text());
+    const robots = $('meta[name="robots"],meta[name="googlebot"]').map((_, el) => $(el).attr('content')).get();
+    const noindex = /noindex/i.test([...robots, response.headers.get('x-robots-tag')].join(','));
+    // Next may stream a 200 before notFound(), but must then emit noindex.
+    const ok = [404, 410].includes(response.status) || (response.status === 200 && noindex);
+    report.missingPages.push({ url, status: response.status, noindex, issues: ok ? [] : ['indexable-missing-page'] });
+  } catch (error) {
+    report.missingPages.push({ url, error: error.message, issues: ['fetch-error'] });
+  }
+}
 await fs.mkdir('docs', { recursive: true });
-await fs.writeFile('docs/live-indexability-audit.json', JSON.stringify(report, null, 2) + '\n');
-console.log(JSON.stringify({ sitemapUrls: all.length, sampled: results.length, issues: results.filter(row => row.issues.length) }, null, 2));
+await fs.writeFile(process.env.SEO_AUDIT_OUTPUT || 'docs/live-indexability-audit.json', JSON.stringify(report, null, 2) + '\n');
+const issues = [...results, ...report.missingPages].filter(row => row.issues.length);
+if (!all.length) issues.push({ issues: ['empty-sitemap'] });
+console.log(JSON.stringify({ sitemapUrls: all.length, sampled: results.length, issues }, null, 2));
+if (issues.length) process.exitCode = 1;
