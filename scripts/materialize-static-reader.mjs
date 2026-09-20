@@ -218,11 +218,10 @@ function isPublicArticleDetailPath(pathname) {
 }
 
 function looksLikeNotFoundPlaceholder(html = "") {
-  const head = String(html).slice(0, 40000);
+  const head = String(html).slice(0, 20000);
   return (
-    /<title>\s*(?:News\s+)?Not Found\b/i.test(head) ||
-    /<h1[^>]*>\s*404(?:\s|<)/i.test(head) ||
-    /This page could not be found\./i.test(head)
+    /<title>\s*(?:Article|News|Exam Update) Not Found\b/i.test(head) &&
+    /<meta\b[^>]*\bname=["']robots["'][^>]*\bcontent=["'][^"']*\bnoindex\b/i.test(head)
   );
 }
 

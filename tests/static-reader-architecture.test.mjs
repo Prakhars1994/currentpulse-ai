@@ -13,6 +13,7 @@ test("Cloudflare serves published reader paths from static assets", () => {
   const config = read("wrangler.jsonc");
   assert.match(config, /"run_worker_first"\s*:\s*\[[\s\S]*"\/api\/\*"[\s\S]*"\/admin\/\*"/);
   const workerFirst = config.match(/"run_worker_first"\s*:\s*\[([\s\S]*?)\]/)?.[1] || "";
+  assert.match(workerFirst, /"\/current-affairs"/);
   for (const route of ["/news/*", "/current-affairs/*", "/exams/*"]) assert.doesNotMatch(workerFirst, new RegExp(`"${route.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`));
   assert.doesNotMatch(workerFirst, /^\s*"\/"\s*(?:,|$)/m);
 });
@@ -23,6 +24,9 @@ test("static reader materializer retains incremental release safeguards", () => 
   assert.match(source, /reuse-local/);
   assert.match(source, /addRecentlyChangedDatabasePaths/);
   assert.doesNotMatch(source, /pruneWorkerFirstDynamicAssets/);
+  assert.doesNotMatch(source, /This page could not be found\\\./);
+  assert.match(source, /Article\|News\|Exam Update/);
+  assert.match(source, /name=\["']robots/);
 });
 
 test("GitHub scheduled background is ResultPulse-only", () => {
