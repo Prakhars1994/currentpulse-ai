@@ -40,7 +40,10 @@ export default function CurrentAffairsAdminPage() {
   }, [router]);
 
   useEffect(() => {
-    loadArticles();
+    const timer = window.setTimeout(() => {
+      void loadArticles();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [loadArticles]);
 
   return (

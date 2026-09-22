@@ -20,27 +20,8 @@ type SitemapArticle = {
   slug: string;
   created_at?: string | null;
   updated_at?: string | null;
-  why_news?: string | null;
-  syllabus_linkage?: string | null;
-  india_relevance?: string | null;
-  static_foundation?: string | null;
-  data_examples?: string | null;
-  prelims?: string | null;
-  mains?: string | null;
-  answer_framework?: string | null;
-  question?: string | null;
-  visual_summary?: string | null;
-  memory_trick?: string | null;
-  content?: string | null;
-  seo_description?: string | null;
-  quality_score?: number | null;
-  quality_version?: number | null;
   article_sources?: Array<{
     source_kind?: string | null;
-    source_name?: string | null;
-    source_url?: string | null;
-    source_published_at?: string | null;
-    source_key?: string | null;
   }> | null;
 };
 
@@ -100,10 +81,8 @@ const loadSitemapDatabaseRows = unstable_cache(
       supabase
         .from("articles")
         .select(`
-          title,slug,created_at,updated_at,why_news,syllabus_linkage,india_relevance,
-          static_foundation,data_examples,prelims,mains,answer_framework,question,
-          visual_summary,memory_trick,content,seo_description,quality_score,quality_version,quality_flags,
-          article_sources(source_kind,source_name,source_url,source_published_at,source_key)
+          title,slug,created_at,updated_at,quality_flags,
+          article_sources(source_kind)
         `)
         .eq("status", "published")
         .order("created_at", { ascending: false })
