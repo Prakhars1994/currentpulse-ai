@@ -1,13 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
 const MODES = [["Explain Topic","📖","Explain"],["Mains Answer","✍️","Mains"],["Prelims Facts","🎯","Prelims"],["MCQs","❓","MCQs"]];
+const subscribeToLocation = (notify) => {
+  window.addEventListener("popstate", notify);
+  return () => window.removeEventListener("popstate", notify);
+};
+const readTopicQuestion = () => {
+  const topic = new URLSearchParams(window.location.search).get("topic");
+  return topic ? `Explain ${topic}.` : "";
+};
+const serverTopicQuestion = () => "";
 
 export default function AIPage(){
-  const[question,setQuestion]=useState(()=>{if(typeof window==="undefined")return "";const topic=new URLSearchParams(window.location.search).get("topic");return topic?`Explain ${topic}.`:"";});const[answer,setAnswer]=useState("");const[mode,setMode]=useState("Explain Topic");const[loading,setLoading]=useState(false);const[provider,setProvider]=useState("");const[zeroAi,setZeroAi]=useState(false);const[sources,setSources]=useState([]);
+  const topicQuestion = useSyncExternalStore(subscribeToLocation, readTopicQuestion, serverTopicQuestion);
+  const[editedQuestion,setQuestion]=useState(null);
+  const question = editedQuestion ?? topicQuestion;
+  const[answer,setAnswer]=useState("");const[mode,setMode]=useState("Explain Topic");const[loading,setLoading]=useState(false);const[provider,setProvider]=useState("");const[zeroAi,setZeroAi]=useState(false);const[sources,setSources]=useState([]);
   async function askAI(){const q=question.trim();if(!q||loading)return;setLoading(true);setAnswer("");setSources([]);setProvider("");setZeroAi(false);try{const res=await fetch("/api/ask-ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:q,mode})});const data=await res.json().catch(()=>({}));if(!res.ok&&!data.answer)throw new Error(data.error||`Request failed (${res.status}).`);setAnswer(data.answer||"No answer was generated.");setSources(Array.isArray(data.sources)?data.sources:[]);setProvider(data.provider||"");setZeroAi(Boolean(data.zeroAi));}catch(err){setAnswer(err?.message||"Something went wrong. Please try again.");}finally{setLoading(false);}}
   return <main className="min-h-screen bg-slate-950 text-white"><div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
     <header className="rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-slate-900 via-slate-900 to-cyan-950/30 p-6 shadow-2xl shadow-black/20 sm:p-9"><div className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-400/10 px-3 py-1 text-xs font-black uppercase tracking-[.18em] text-cyan-300">Quota-first evidence assistant</div><h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl">Ask CurrentPulse <span className="text-cyan-300">AI</span></h1><p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">Clear answers from CurrentPulse and free reference sources, with clean facts, context and source links instead of raw article dumps.</p></header>
