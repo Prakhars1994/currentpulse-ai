@@ -6,10 +6,11 @@ import { EXAM_TYPE_META } from "@/lib/exams/constants";
 import { assessExamSitemapRecord, resultPulseDisplayTitle } from "@/lib/sitemapQuality";
 import ExamSubscriptionForm from "@/components/ExamSubscriptionForm";
 import { SITE_URL } from "@/lib/siteUrl";
+import { requirePublicData } from "@/lib/publicData";
 
 function formatDate(value) { if (!value) return ""; return new Date(value).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "long", year: "numeric" }); }
 export async function generateMetadata({ params }) {
-  const { slug } = await params; const { update } = await loadExamUpdateBySlug(slug);
+  const { slug } = await params; const { update } = requirePublicData(await loadExamUpdateBySlug(slug), "Exam update");
   if (!update) return { title: "Exam Update Not Found | ResultPulse AI", robots: { index: false, follow: false } };
   const displayTitle = resultPulseDisplayTitle(update);
   const assessment = assessExamSitemapRecord(update);
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }) {
   return { title: `${displayTitle} | ResultPulse AI`, description, alternates: { canonical: `${SITE_URL}/exams/${slug}` }, openGraph: { title: displayTitle, description, url: `${SITE_URL}/exams/${slug}`, type: "article" }, twitter: { card: "summary", title: displayTitle, description }, robots: indexable ? { index: true, follow: true } : { index: false, follow: true, googleBot: { index: false, follow: true, noarchive: true } } };
 }
 export default async function ExamDetail({ params }) {
-  const { slug } = await params; const { update } = await loadExamUpdateBySlug(slug); if (!update) notFound();
+  const { slug } = await params; const { update } = requirePublicData(await loadExamUpdateBySlug(slug), "Exam update"); if (!update) notFound();
   const { updates: related } = await loadRelatedExamUpdates(update.exam_name, update.id, 8);
   const meta = EXAM_TYPE_META[update.update_type] || { label: "Exam Update", icon: "📢" };
   const displayTitle = resultPulseDisplayTitle(update);

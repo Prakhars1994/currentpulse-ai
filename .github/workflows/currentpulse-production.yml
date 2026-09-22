@@ -115,6 +115,9 @@ jobs:
       - name: Full regression suite
         run: npm run test:regression
 
+      - name: Verify data API availability
+        run: node scripts/check-data-api.mjs
+
       - name: Build Cloudflare Worker
         run: npx opennextjs-cloudflare build
 
@@ -202,6 +205,10 @@ jobs:
           mkdir -p .open-next/assets
           cp -a --update=none /tmp/currentpulse-previous-assets/. .open-next/assets/
 
+      - name: Build static sitemap index and shards
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: node scripts/build-static-sitemaps.mjs --out .open-next/assets
+
       - name: Materialize static reader
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: bash
@@ -218,15 +225,16 @@ jobs:
           node scripts/materialize-static-reader.mjs \
             --base http://127.0.0.1:3100 \
             --out .open-next/assets \
+            --sitemap-dir .open-next/assets \
             --max-pages 1200 \
             --concurrency 4 \
             --timeout-ms 10000 \
             --budget-seconds 720 \
             "${changed_args[@]}"
 
-      - name: Build static sitemap index and shards
+      - name: Verify every sitemap URL has a healthy static asset
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        run: node scripts/build-static-sitemaps.mjs --out .open-next/assets
+        run: node scripts/verify-reader-assets.mjs --out .open-next/assets
 
       - name: Stop production reader renderer
         if: always() && steps.deploy-ready.outputs.ready == 'true'

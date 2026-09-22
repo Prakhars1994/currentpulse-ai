@@ -119,6 +119,9 @@ jobs:
             echo "No validated snapshot for this commit; one fallback build is required."
           fi
 
+      - name: Verify data API availability
+        run: node scripts/check-data-api.mjs
+
       - name: Fallback build only when cache is missing
         if: steps.restored.outputs.ready != 'true'
         run: npx opennextjs-cloudflare build
@@ -194,6 +197,9 @@ jobs:
             echo "mode=full" >> "${GITHUB_OUTPUT}"
           fi
 
+      - name: Build static sitemap shards
+        run: node scripts/build-static-sitemaps.mjs --out .open-next/assets
+
       - name: Refresh reader pages
         shell: bash
         env:
@@ -217,14 +223,15 @@ jobs:
             --reuse-local "${reuse_local}" \
             --fresh-days 3 \
             --out .open-next/assets \
+            --sitemap-dir .open-next/assets \
             --max-pages 1200 \
             --concurrency 3 \
             --timeout-ms 10000 \
             --budget-seconds 720 \
             "${changed_args[@]}"
 
-      - name: Build static sitemap shards
-        run: node scripts/build-static-sitemaps.mjs --out .open-next/assets
+      - name: Verify every sitemap URL has a healthy static asset
+        run: node scripts/verify-reader-assets.mjs --out .open-next/assets
 
       - name: Stop reader renderer
         if: always()
@@ -250,6 +257,10 @@ jobs:
             curl --silent --show-error --fail --location --retry 3 --retry-delay 2 --max-time 60 "${base}${path}" >/dev/null
           done
           echo "Incremental public reader release passed."
+
+      - name: Verify production indexability and missing pages
+        timeout-minutes: 10
+        run: node scripts/audit-live-indexability.mjs
 
       - name: Complete durable release requests
         if: success() && needs.preflight.outputs.max_id != ''

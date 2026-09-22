@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { CATEGORY_ROUTES } from "@/lib/categoryRouting";
 import { SITE_URL } from "@/lib/siteUrl";
 import { createServerSupabase } from "@/lib/supabase-server";
-import { isPublishedArticleSafe } from "@/lib/editorial/publicationSafety";
+import { isPublishedArticleSafe, isCurrentAffairsPubliclySafe } from "@/lib/editorial/publicationSafety";
 import { isPublicNewsArticle } from "@/lib/articleStreams";
 import { isIndexableNewsArticle } from "@/lib/newsIndexability";
 import {
@@ -117,15 +117,12 @@ const loadSitemapDatabaseRows = unstable_cache(
         .limit(1500),
     ]);
 
+    if (articleResult.error || examResult.error) {
+      throw new Error("Sitemap data is temporarily unavailable", { cause: articleResult.error || examResult.error });
+    }
     return {
       articles: articleResult.data || [],
       exams: examResult.data || [],
-      articleError: articleResult.error
-        ? { message: articleResult.error.message, code: articleResult.error.code }
-        : null,
-      examError: examResult.error
-        ? { message: examResult.error.message, code: examResult.error.code }
-        : null,
     };
   },
   ["currentpulse-sitemap-database-v4"],
@@ -148,7 +145,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (
         kinds.has("coaching") &&
         isStandaloneCurrentAffairsArticle(article) &&
-        isPublishedArticleSafe(article, { stream: "coverage" })
+        isCurrentAffairsPubliclySafe(article)
       ) {
         const key = `ca:${article.slug}`;
         if (!seen.has(key)) {
@@ -189,14 +186,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.82,
     }));
 
-    if (sitemapData.articleError) console.error("[Sitemap] article query:", sitemapData.articleError.message);
-    if (sitemapData.examError && sitemapData.examError.code !== "42P01") {
-      console.error("[Sitemap] exam query:", sitemapData.examError.message);
-    }
-
     return [...base, ...examRoutes, ...articleRoutes];
   } catch (error: unknown) {
     console.error("[Sitemap] dynamic data unavailable:", error instanceof Error ? error.message : String(error));
-    return base;
+    throw error;
   }
 }

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { createServerSupabase } from "@/lib/supabase-server";
+import { requirePublicData } from "@/lib/publicData";
 import { unstable_cache } from "next/cache";
 import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
@@ -16,14 +17,9 @@ import MainsAccordion from "@/components/MainsAccordion";
 import PrelimsPracticeCard from "@/components/PrelimsPracticeCard";
 import RelatedYouTubeVideo from "@/components/RelatedYouTubeVideo";
 import { SITE_URL, absoluteSiteUrl } from "@/lib/siteUrl";
-import { assessPublishedArticle } from "@/lib/editorial/publicationSafety";
+import { isCurrentAffairsPubliclySafe } from "@/lib/editorial/publicationSafety";
 import { suppressRepeatedArticleSections } from "@/lib/articleSectionDedupe";
 import { cleanSeoTitle, repairedCaTitle, selectSeoDescription } from "@/lib/publicArticleRepair";
-
-function isCurrentAffairsPubliclySafe(article = {}) {
-  const assessment = assessPublishedArticle(article, { stream: "coverage" });
-  return assessment.allowed || assessment.code === "repeated_long_passage";
-}
 
 // Remove HTML tags for SEO descriptions and reading-time calculation
 function stripHtml(html = "") {
@@ -106,7 +102,7 @@ const getCurrentAffairsArticle = unstable_cache(
       .eq("slug", slug)
       .eq("status", "published")
       .maybeSingle();
-    if (error) console.error("Article fetch error:", error.message);
+    requirePublicData({ error }, "Current Affairs article");
     return data || null;
   },
   ["currentpulse-ca-detail-v2"],

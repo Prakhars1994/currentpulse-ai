@@ -52,7 +52,7 @@ test("canonical sitemap and public archives preserve historical published CA and
   const newsSitemap = read("app/news-sitemap.xml/route.js");
 
   assert.match(sitemap, /isStandaloneCurrentAffairsArticle/);
-  assert.match(sitemap, /isPublishedArticleSafe\(article, \{ stream: "coverage" \}\)/);
+  assert.match(sitemap, /isCurrentAffairsPubliclySafe\(article\)/);
   assert.match(sitemap, /isPublicNewsArticle\(article\)/);
   assert.match(sitemap, /isPublishedArticleSafe\(article, \{ stream: "news" \}\)/);
 

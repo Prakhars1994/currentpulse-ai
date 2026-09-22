@@ -31,7 +31,7 @@ export default async function NewsPage({ searchParams }) {
   if (!currentPage) notFound();
   const pageSize = 48;
   const { articles, total, hasMore, error } = await loadNewsArticles({ limit: pageSize, offset: (currentPage - 1) * pageSize });
-  if (error) console.error("News stream error:", error);
+  if (error) throw new Error("News archive is temporarily unavailable", { cause: error });
   if (!error && currentPage > 1 && !articles.length) notFound();
   const totalPages = Number.isFinite(total) ? Math.max(1, Math.ceil(total / pageSize)) : null;
   const stories = currentPage === 1 ? rankNewsByPriority(articles) : articles;

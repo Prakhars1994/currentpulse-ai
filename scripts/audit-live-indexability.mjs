@@ -31,7 +31,8 @@ for (const section of ['news', 'current-affairs', 'exams']) {
   for (let i = 0; i < Math.min(12, group.length); i++) selected.push(group[Math.floor(i * (group.length - 1) / Math.max(1, Math.min(12, group.length) - 1))]);
 }
 const results = [];
-const sample = [...new Set(selected)];
+const full = process.env.SEO_AUDIT_FULL === '1';
+const sample = full ? all : [...new Set(selected)];
 for (let i = 0; i < sample.length; i += 3) {
   await Promise.all(sample.slice(i, i + 3).map(async url => {
     try {
@@ -46,15 +47,17 @@ for (let i = 0; i < sample.length; i += 3) {
       if (canonical.replace(/\/$/, '') !== url.replace(/\/$/, '')) row.issues.push('canonical-mismatch');
       if (!row.title) row.issues.push('missing-title');
       if (!row.description) row.issues.push('missing-description');
+      if (!row.h1) row.issues.push('missing-h1');
+      if (/\b(?:not found|application error|internal server error)\b/i.test(row.title)) row.issues.push('error-page');
       results.push(row);
     } catch (error) { results.push({ url, error: error.message, issues: ['fetch-error'] }); }
   }));
 }
-const report = { generatedAt: new Date().toISOString(), maps, sitemapUrls: all.length, sampleMethod: 'All sitemap pages outside article/exam sections, plus up to 12 evenly spaced URLs per section; not a population estimate or Google index-status check.', results };
+const report = { generatedAt: new Date().toISOString(), maps, sitemapUrls: all.length, sampleMethod: full ? 'Every sitemap URL; HTTP checks do not establish Google indexing.' : 'All sitemap pages outside article/exam sections, plus up to 12 evenly spaced URLs per section; not a population estimate or Google index-status check.', results };
 // A successful homepage fetch cannot detect a broken archive or a silent
 // noindex/canonical regression. Probe missing pages as well as published URLs.
 const missingPaths = ['/definitely-missing-seo-audit-page'];
-if (origin === 'https://cp.vliab.workers.dev') missingPaths.push('/news/page/99999');
+if (origin === 'https://cp.vliab.workers.dev') missingPaths.push('/news/page/99999', '/current-affairs?page=99999', '/current-affairs/hindi?page=99999');
 report.missingPages = [];
 for (const pathname of missingPaths) {
   const url = origin + pathname;

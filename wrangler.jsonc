@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
+  "main": "worker-entry.mjs",
   "name": "cp",
   "compatibility_date": "2026-08-13",
   "minify": true,
@@ -19,7 +19,10 @@
       "/admin/*",
       "/member",
       "/member/*",
-      "/current-affairs"
+      "/current-affairs",
+      "/current-affairs/hindi",
+      "/news",
+      "/exams"
     ]
   },
 

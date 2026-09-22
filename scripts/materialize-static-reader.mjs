@@ -3,6 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import { createClient } from "@supabase/supabase-js";
 import { assessExamSitemapRecord, isStandaloneCurrentAffairsArticle } from "../lib/sitemapQuality.js";
+import { readerAssetIssues } from "../lib/readerAssetHealth.mjs";
 
 function arg(name, fallback = "") {
   const index = process.argv.indexOf(name);
@@ -13,6 +14,8 @@ function arg(name, fallback = "") {
 const base = String(arg("--base", process.env.STATIC_READER_BASE || "http://127.0.0.1:3100"))
   .replace(/\/+$/, "");
 const outDir = path.resolve(arg("--out", ".open-next/assets"));
+const sitemapDir = String(arg("--sitemap-dir", ""));
+const sitemapReaderPaths = new Set();
 const changedFile = String(
   arg("--changed-file", process.env.STATIC_READER_CHANGED_FILE || "")
 ).trim();
@@ -346,6 +349,29 @@ async function collectPaths() {
   }
 
   const paths = new Set(CORE_PATHS);
+  // Render the exact sitemap being shipped, including every nested shard.
+  // The dynamic sitemap is not a safe substitute: its query limits and
+  // eligibility filters can differ from the release sitemap.
+  if (sitemapDir) {
+    const visited = new Set();
+    async function readMap(relative) {
+      if (visited.has(relative)) return;
+      visited.add(relative);
+      const xml = await fs.readFile(path.join(path.resolve(sitemapDir), relative), "utf8");
+      for (const entry of extractSitemapEntries(xml)) {
+        const url = new URL(entry.location);
+        if (url.origin !== "https://cp.vliab.workers.dev") throw new Error("Unexpected release sitemap origin");
+        if (/<sitemapindex\b/i.test(xml)) await readMap(url.pathname.slice(1));
+        else if (isReaderPath(url.pathname)) {
+          paths.add(url.pathname);
+          sitemapReaderPaths.add(url.pathname);
+          pathMetadata.set(url.pathname, { lastModified: entry.lastModified });
+        }
+      }
+    }
+    await readMap("sitemap.xml");
+    if (!sitemapReaderPaths.size) throw new Error("Release sitemap contains no reader pages");
+  }
 
   // Query-string pagination cannot be materialized as distinct Cloudflare
   // static files. Pre-render a bounded path-based News archive instead.
@@ -359,7 +385,7 @@ async function collectPaths() {
   for (let page = 2; page <= staticNewsArchivePages; page += 1) {
     paths.add(`/news/page/${page}`);
   }
-  for (const sitemapPath of ["/sitemap.xml", "/news-sitemap.xml"]) {
+  for (const sitemapPath of (sitemapDir ? [] : ["/sitemap.xml", "/news-sitemap.xml"])) {
     try {
       const { response, text } = await fetchText(`${base}${sitemapPath}`, 30000);
       if (!response.ok) {
@@ -386,6 +412,7 @@ async function collectPaths() {
   }
 
   await addRecentlyChangedDatabasePaths(paths);
+  if (sitemapDir && paths.size > maxPages) throw new Error(`Reader page cap ${maxPages} would truncate ${paths.size} paths`);
 
   return [...paths]
     .filter(isReaderPath)
@@ -464,6 +491,9 @@ async function renderOne(pathname) {
       return { pathname, ok: false, status: response.status, reason: "HTML response was unexpectedly small." };
     }
     if (isPublicArticleDetailPath(pathname) && looksLikeNotFoundPlaceholder(text)) {
+      if (sitemapReaderPaths.has(pathname)) {
+        return { pathname, ok: false, status: response.status, reason: "Submitted article rendered as not-found" };
+      }
       // Do not publish a successful-looking static asset for a page whose
       // reader itself says "not found". Licensed Conversation pages are
       // intentionally noindex and remain valid public reader pages.
@@ -475,6 +505,14 @@ async function renderOne(pathname) {
         status: response.status,
         reason: "Article detail rendered as not-found; stale static asset removed.",
       };
+    }
+
+    if (sitemapReaderPaths.has(pathname)) {
+      const issues = readerAssetIssues(text, `https://cp.vliab.workers.dev${pathname}`);
+      if (issues.length) return { pathname, ok: false, status: response.status, reason: issues.join(", ") };
+    } else if (/NEXT_HTTP_ERROR_FALLBACK;404/.test(text)) {
+      await fs.rm(destination, { force: true });
+      return { pathname, ok: false, staleRemoved: true, status: response.status, reason: "Confirmed missing archive removed" };
     }
 
     await fs.mkdir(path.dirname(destination), { recursive: true });
@@ -593,11 +631,11 @@ const staleRemoved = results.filter((item) => item?.staleRemoved);
 const failed = results.filter((item) => item && !item.ok && !item.staleRemoved);
 const requiredFailures = [
   ...failed.filter(
-    (item) => Boolean(changedFile) || CORE_PATHS.includes(item.pathname)
+    (item) => Boolean(changedFile) || CORE_PATHS.includes(item.pathname) || sitemapReaderPaths.has(item.pathname)
   ),
   ...skippedForBudget
     .filter(
-      (pathname) => Boolean(changedFile) || CORE_PATHS.includes(pathname)
+      (pathname) => Boolean(changedFile) || CORE_PATHS.includes(pathname) || sitemapReaderPaths.has(pathname)
     )
     .map((pathname) => ({
       pathname,
@@ -649,11 +687,11 @@ console.log(
 
 if (requiredFailures.length) {
   console.error(JSON.stringify(requiredFailures, null, 2));
-  process.exit(2);
+  process.exitCode = 2;
 }
 if (requiredStaticFailures.length) {
   console.error(JSON.stringify(requiredStaticFailures, null, 2));
-  process.exit(4);
+  process.exitCode = 4;
 }
 if (
   !changedFile &&
@@ -661,5 +699,5 @@ if (
   succeeded.length + staleRemoved.length < Math.min(25, paths.length)
 ) {
   console.error("Static reader produced too few pages to be considered healthy.");
-  process.exit(3);
+  process.exitCode = 3;
 }

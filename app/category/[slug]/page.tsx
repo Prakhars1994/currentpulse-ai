@@ -68,9 +68,7 @@ export default async function CategoryPage({ params }: Props) {
   const route = resolveCategoryRoute(slug);
   if (!route) notFound();
 
-  const { data, error } = await loadRecentCategoryCandidates();
-
-  if (error) console.error("Category fetch failed:", error.message);
+  const { data } = await loadRecentCategoryCandidates();
 
   const articles = ((data || []) as Article[]).filter((article) =>
     articleMatchesCategory(article, route) &&

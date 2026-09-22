@@ -41,9 +41,10 @@ function NewsAtlasMap({location}){if(!location)return null;const atlas=COUNTRY_A
 
 const getArticle = unstable_cache(async (slug) => {
   const supabase = createServerSupabase();
-  const { data } = await supabase.from("articles")
+  const { data, error } = await supabase.from("articles")
     .select("*,article_sources(id,source_kind,source_name,source_title,source_url,source_published_at,source_key)")
     .eq("slug", slug).eq("status", "published").maybeSingle();
+  if (error) throw new Error("News article is temporarily unavailable", { cause: error });
   return data && isPublicNewsArticle(data) ? data : null;
 }, ["currentpulse-news-detail-v5"], { revalidate: 60, tags: ["currentpulse-articles", "currentpulse-news"] });
 

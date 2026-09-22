@@ -59,6 +59,7 @@ export default async function ExamUpdatesPage({
     error = loadError instanceof Error ? loadError : new Error("ResultPulse is temporarily unavailable.");
   }
 
+  if (error) throw new Error("Exam archive is temporarily unavailable", { cause: error });
   const hasFilters = Boolean(activeFilters.type || activeFilters.group || activeFilters.source || activeFilters.q);
   const queryForPage = (targetPage) => {
     const query = new URLSearchParams();
