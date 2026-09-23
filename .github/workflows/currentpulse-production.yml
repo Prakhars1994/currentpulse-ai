@@ -137,7 +137,6 @@ jobs:
           fi
 
       - name: Start production reader renderer
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: bash
         run: |
           set -euo pipefail
@@ -155,7 +154,6 @@ jobs:
 
       - name: Plan code-affected reader paths
         id: code-release-plan
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: bash
         env:
           PREVIOUS_ASSETS_READY: ${{ steps.previous-assets.outputs.ready }}
@@ -206,11 +204,9 @@ jobs:
           cp -a --update=none /tmp/currentpulse-previous-assets/. .open-next/assets/
 
       - name: Build static sitemap index and shards
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: node scripts/build-static-sitemaps.mjs --out .open-next/assets
 
       - name: Materialize static reader
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         shell: bash
         env:
           RELEASE_MODE: ${{ steps.code-release-plan.outputs.mode }}
@@ -233,11 +229,10 @@ jobs:
             "${changed_args[@]}"
 
       - name: Verify every sitemap URL has a healthy static asset
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: node scripts/verify-reader-assets.mjs --out .open-next/assets
 
       - name: Stop production reader renderer
-        if: always() && steps.deploy-ready.outputs.ready == 'true'
+        if: always()
         shell: bash
         run: |
           if [[ -f /tmp/currentpulse-reader.pid ]]; then

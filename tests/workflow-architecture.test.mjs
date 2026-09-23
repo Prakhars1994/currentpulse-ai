@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { load as parseYaml } from "js-yaml";
 
 function load(path) {
   return fs.readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -77,4 +78,16 @@ test("production workflow validates code then materializes the Cloudflare reader
   assert.match(production, /Production smoke test/);
   assert.match(production, /CLOUDFLARE_API_TOKEN/);
   assert.match(production, /Save validated release snapshot/);
+});
+
+test("pull requests generate and validate the complete reader without deploying", () => {
+  const { steps } = parseYaml(production).jobs.production;
+  for (const name of ["Start production reader renderer", "Plan code-affected reader paths", "Build static sitemap index and shards", "Materialize static reader", "Verify every sitemap URL has a healthy static asset"]) {
+    const step = steps.find(step => step.name === name);
+    assert.ok(step, `Missing reader validation step: ${name}`);
+    assert.equal(step.if, undefined, `${name} must run for pull requests`);
+  }
+  assert.equal(steps.find(step => step.name === "Stop production reader renderer").if, "always()");
+  assert.equal(steps.find(step => step.name === "Deploy the validated Worker build").if,
+    "github.event_name == 'push' || github.event_name == 'workflow_dispatch'");
 });
