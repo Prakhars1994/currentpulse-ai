@@ -12,7 +12,7 @@ const SITE_URL = "https://cp.vliab.workers.dev";
 const SHARD_SIZE = 45_000;
 const PAGE_SIZE = 1_000;
 const STATIC_PATHS = [
-  "/", "/current-affairs", "/news", "/categories", "/quiz", "/mock-tests",
+  "/", "/current-affairs", "/upsc-current-affairs-2026", "/upsc-prelims-current-affairs-2026", "/news", "/categories", "/quiz", "/mock-tests",
   "/pdf", "/pyq", "/question-papers", "/videos", "/exams",
   "/about", "/contact", "/editorial-methodology", "/sources-policy",
   "/ai-usage-policy", "/corrections-policy", "/privacy", "/terms",
@@ -87,14 +87,24 @@ for (;;) {
 }
 
 await fs.mkdir(path.join(outDir, "sitemaps"), { recursive: true });
-const { data: examRows, error: examError } = await supabase
-  .from("exam_updates")
-  .select("slug,title,agency,update_type,official_url,source_name,created_at,updated_at")
-  .eq("status", "published");
-if (examError && examError.code !== "42P01") {
-  throw new Error(`Sitemap exam query failed: ${examError.message}`);
+// PostgREST defaults can silently truncate an unrestricted select. Page through
+// the entire ResultPulse set so a growing archive never loses old URLs.
+const examRows = [];
+for (let offset = 0;; offset += PAGE_SIZE) {
+  const { data, error: examError } = await supabase
+    .from("exam_updates")
+    .select("slug,title,agency,update_type,official_url,source_name,created_at,updated_at")
+    .eq("status", "published")
+    .order("id", { ascending: true })
+    .range(offset, offset + PAGE_SIZE - 1);
+  if (examError) {
+    if (examError.code === "42P01") break;
+    throw new Error(`Sitemap exam query failed: ${examError.message}`);
+  }
+  examRows.push(...(data || []));
+  if ((data || []).length < PAGE_SIZE) break;
 }
-for (const exam of selectExamSitemapRecords(examRows || []).included) {
+for (const exam of selectExamSitemapRecords(examRows).included) {
   entries.push({ path: `/exams/${exam.slug}`, lastModified: exam.updated_at || exam.created_at || "" });
 }
 

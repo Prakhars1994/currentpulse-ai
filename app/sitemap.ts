@@ -39,7 +39,7 @@ type SitemapExam = {
 
 function staticRoutes(): MetadataRoute.Sitemap {
   const publicPages = [
-    "current-affairs","current-affairs/hindi","news","categories","quiz","mock-tests","pdf","pyq",
+    "current-affairs","current-affairs/hindi","upsc-current-affairs-2026","upsc-prelims-current-affairs-2026","news","categories","quiz","mock-tests","pdf","pyq",
     "question-papers","videos","contact","about","editorial-methodology",
     "sources-policy","ai-usage-policy","corrections-policy","privacy","terms",
     "exams","exams/results","exams/admit-cards","exams/notifications",
@@ -56,8 +56,10 @@ function staticRoutes(): MetadataRoute.Sitemap {
         ? 0.95
         : path === "current-affairs/hindi"
           ? 0.9
-          : path === "news"
-            ? 0.9
+            : path === "news"
+              ? 0.9
+              : path === "upsc-current-affairs-2026" || path === "upsc-prelims-current-affairs-2026"
+                ? 0.85
             : 0.7,
   }));
 

@@ -2,6 +2,8 @@ import Link from "next/link";
 
 const studyLinks = [
   ["Current Affairs", "/current-affairs"],
+  ["UPSC Current Affairs 2026", "/upsc-current-affairs-2026"],
+  ["UPSC Prelims Current Affairs 2026", "/upsc-prelims-current-affairs-2026"],
   ["Daily Quiz", "/quiz"],
   ["PDF Digests", "/pdf"],
   ["Revision Notes", "/notes"],

@@ -29,5 +29,7 @@ test("production builds static sitemap shards outside the Worker", () => {
   assert.match(readerWorkflow, /build-static-sitemaps\.mjs/);
   assert.match(generator, /SHARD_SIZE = 45_000/);
   assert.match(generator, /\.gt\("id", cursor\)/);
+  assert.match(generator, /for \(let offset = 0;; offset \+= PAGE_SIZE\)/);
+  assert.match(generator, /\.range\(offset, offset \+ PAGE_SIZE - 1\)/);
   assert.doesNotMatch(generator, /visual_summary,memory_trick,content,seo_description/);
 });

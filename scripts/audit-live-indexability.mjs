@@ -57,7 +57,14 @@ const report = { generatedAt: new Date().toISOString(), maps, sitemapUrls: all.l
 // A successful homepage fetch cannot detect a broken archive or a silent
 // noindex/canonical regression. Probe missing pages as well as published URLs.
 const missingPaths = ['/definitely-missing-seo-audit-page'];
-if (origin === 'https://cp.vliab.workers.dev') missingPaths.push('/news/page/99999', '/current-affairs?page=99999', '/current-affairs/hindi?page=99999');
+if (origin === 'https://cp.vliab.workers.dev') {
+  missingPaths.push(
+    '/news/page/99999',
+    '/news?page=99999',
+    '/current-affairs?page=99999',
+    '/current-affairs/hindi?page=99999',
+  );
+}
 report.missingPages = [];
 for (const pathname of missingPaths) {
   const url = origin + pathname;

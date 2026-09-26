@@ -13,8 +13,10 @@ test("major indexable landing pages define page-specific social metadata", () =>
   const exams = read("app/exams/page.js");
   const questionPapers = read("app/question-papers/page.js");
   const category = read("app/category/[slug]/page.tsx");
+  const currentAffairsHub = read("app/upsc-current-affairs-2026/page.js");
+  const prelimsHub = read("app/upsc-prelims-current-affairs-2026/page.js");
 
-  for (const source of [currentAffairs, news, exams, questionPapers, category]) {
+  for (const source of [currentAffairs, news, exams, questionPapers, category, currentAffairsHub, prelimsHub]) {
     assert.match(source, /openGraph\s*:/);
     assert.match(source, /twitter\s*:/);
     assert.match(source, /summary_large_image/);
@@ -24,6 +26,9 @@ test("major indexable landing pages define page-specific social metadata", () =>
   assert.match(questionPapers, /UPSC Previous Year Question Papers \(PYQ\) 2011–2026 \| Prelims & Mains/);
   assert.match(questionPapers, /<h1>UPSC Previous Year Question Papers \(PYQ\)<\/h1>/);
   assert.match(questionPapers, /Prelims 2011–2026/);
+  assert.match(currentAffairsHub, /<h1 className=.*UPSC Current Affairs 2026/);
+  assert.match(currentAffairsHub, /FAQPage/);
+  assert.match(prelimsHub, /<h1 className=.*UPSC Prelims Current Affairs 2026/);
 });
 
 test("all sitemap landing pages avoid inherited homepage metadata", () => {

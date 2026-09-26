@@ -6,6 +6,7 @@ import ResultPulsePreview from "@/components/ResultPulsePreview";
 import Features from "@/components/Features";
 import Categories from "@/components/Categories";
 import LatestNews from "@/components/LatestNews";
+import Link from "next/link";
 import { loadHomepageSnapshot } from "@/lib/siteStats";
 import { SITE_URL } from "@/lib/siteUrl";
 import { cleanPublicExcerpt, repairedCaTitle, repairedNewsTitle } from "@/lib/publicArticleRepair";
@@ -66,6 +67,22 @@ export default async function Home() {
     <main className="min-h-screen bg-slate-950 text-white">
       <BreakingNews newsStream={streams.news} error={streams.error} />
       <Hero featured={featured} latestCurrentAffairs={streams.currentAffairs[0] || null} />
+      <section className="border-y border-cyan-400/15 bg-slate-900/60 py-12 text-white">
+        <div className="mx-auto grid max-w-7xl gap-5 px-6 md:grid-cols-2">
+          <Link href="/upsc-current-affairs-2026" className="group rounded-2xl border border-cyan-400/20 bg-slate-950 p-6 transition hover:border-cyan-300 hover:bg-slate-900">
+            <p className="text-xs font-black uppercase tracking-[.18em] text-cyan-300">Evergreen revision hub</p>
+            <h2 className="mt-3 text-2xl font-black group-hover:text-cyan-200">UPSC Current Affairs 2026</h2>
+            <p className="mt-3 leading-7 text-slate-300">Use a clear daily-to-subject revision route for Prelims facts, Mains context, PYQs and syllabus-linked study.</p>
+            <span className="mt-5 inline-block font-bold text-cyan-300">Open UPSC Current Affairs hub →</span>
+          </Link>
+          <Link href="/upsc-prelims-current-affairs-2026" className="group rounded-2xl border border-violet-400/20 bg-slate-950 p-6 transition hover:border-violet-300 hover:bg-slate-900">
+            <p className="text-xs font-black uppercase tracking-[.18em] text-violet-300">Prelims practice hub</p>
+            <h2 className="mt-3 text-2xl font-black group-hover:text-violet-200">UPSC Prelims Current Affairs 2026</h2>
+            <p className="mt-3 leading-7 text-slate-300">Turn current issues into recall: concepts, official sources, common traps, quizzes and previous-year questions.</p>
+            <span className="mt-5 inline-block font-bold text-violet-300">Open Prelims revision hub →</span>
+          </Link>
+        </div>
+      </section>
       <Features />
       <Categories />
       <LatestNews streams={streams} />

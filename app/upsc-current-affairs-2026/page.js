@@ -1,0 +1,35 @@
+import Link from "next/link";
+import { SITE_URL } from "@/lib/siteUrl";
+
+const canonical = `${SITE_URL}/upsc-current-affairs-2026`;
+const title = "UPSC Current Affairs 2026 — Daily UPSC Prelims & Mains Revision";
+const description = "Use CurrentPulse's 2026 UPSC current affairs hub to revise daily issues by subject, connect them to the syllabus, and move from current events to Prelims and Mains practice.";
+
+export const metadata = {
+  title,
+  description,
+  alternates: { canonical },
+  openGraph: { title, description, url: canonical, type: "website" },
+  twitter: { card: "summary_large_image", title, description },
+};
+
+const subjects = [
+  ["Polity & Governance", "/category/polity", "Constitutional bodies, laws, rights, governance and public policy."],
+  ["Economy", "/category/economy", "Growth, inflation, banking, external sector, agriculture and public finance."],
+  ["International Relations", "/category/international", "India's neighbourhood, global institutions, trade, conflicts and diplomacy."],
+  ["Environment", "/category/environment", "Climate, biodiversity, conventions, ecology and environmental governance."],
+  ["Science & Technology", "/category/science-tech", "Space, health, digital technology, research and strategic technologies."],
+  ["Geography", "/category/geography", "Physical processes, maps, resources, disasters and human geography."],
+];
+
+const faq = [
+  ["How should I use current affairs for UPSC 2026?", "Start with the daily brief, identify the GS paper and syllabus theme, then revise the linked static concept. Return to the topic through subject pages and test it against relevant PYQs."],
+  ["Should I revise every news item?", "No. Prioritise developments with a clear syllabus connection, an official source, a policy or institutional implication, a map or data point, or a recurring UPSC theme."],
+  ["How does this hub differ from the daily archive?", "The daily archive is for reading a specific publication day. This page is an evergreen study route that organises revision around the UPSC syllabus and practice workflow."],
+];
+
+export default function UpscCurrentAffairs2026Page() {
+  const faqSchema = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map(([name, text]) => ({ "@type": "Question", name, acceptedAnswer: { "@type": "Answer", text } })) };
+  const breadcrumbSchema = { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: SITE_URL }, { "@type": "ListItem", position: 2, name: "UPSC Current Affairs 2026", item: canonical }] };
+  return <main className="min-h-screen bg-slate-950 py-12 text-white sm:py-16"><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} /><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} /><article className="mx-auto max-w-5xl px-5 sm:px-7"><nav className="text-sm text-slate-400"><Link href="/">Home</Link> <span aria-hidden="true">/</span> <span>UPSC Current Affairs 2026</span></nav><header className="mt-8 rounded-3xl border border-cyan-400/20 bg-gradient-to-br from-cyan-400/10 via-slate-900 to-slate-900 p-7 sm:p-10"><p className="text-xs font-black uppercase tracking-[.2em] text-cyan-300">UPSC preparation hub</p><h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">UPSC Current Affairs 2026</h1><p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">A practical route from today&apos;s issue to the UPSC syllabus: read the daily brief, connect it to static foundations, revise by subject, and practise with PYQs and quizzes.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/current-affairs" className="rounded-xl bg-cyan-400 px-5 py-3 font-black text-slate-950">Read latest current affairs</Link><Link href="/quiz" className="rounded-xl border border-slate-600 px-5 py-3 font-bold">Practise daily quiz</Link></div></header><section className="mt-12"><h2 className="text-3xl font-black">A repeatable UPSC revision workflow</h2><ol className="mt-6 grid gap-4 sm:grid-cols-2"><li className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><strong className="text-cyan-300">01 · Read selectively</strong><p className="mt-2 leading-7 text-slate-300">Use the dated archive for published briefs rather than treating every headline as equally important.</p></li><li className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><strong className="text-cyan-300">02 · Map to the syllabus</strong><p className="mt-2 leading-7 text-slate-300">Classify the topic by GS paper and subject so revision builds connected mental models.</p></li><li className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><strong className="text-cyan-300">03 · Recover the static base</strong><p className="mt-2 leading-7 text-slate-300">Keep definitions, institutions, data and map context beside the current development.</p></li><li className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><strong className="text-cyan-300">04 · Test recall</strong><p className="mt-2 leading-7 text-slate-300">Use a quiz or PYQ to check whether the topic can be applied under exam conditions.</p></li></ol></section><section className="mt-12"><div className="flex flex-wrap items-end justify-between gap-4"><div><h2 className="text-3xl font-black">Revise UPSC current affairs by subject</h2><p className="mt-3 max-w-3xl leading-7 text-slate-400">Choose a subject to review its current-affairs stream and identify patterns across separate daily developments.</p></div><Link href="/categories" className="font-bold text-cyan-300">All subjects →</Link></div><div className="mt-6 grid gap-4 md:grid-cols-2">{subjects.map(([name, href, text]) => <Link key={href} href={href} className="rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-cyan-400"><h3 className="text-xl font-black">{name}</h3><p className="mt-2 leading-7 text-slate-400">{text}</p><span className="mt-4 inline-block font-bold text-cyan-300">Open {name} current affairs →</span></Link>)}</div></section><section className="mt-12 rounded-3xl border border-slate-800 bg-slate-900 p-7"><h2 className="text-3xl font-black">Frequently asked questions</h2><div className="mt-6 space-y-5">{faq.map(([question, answer]) => <section key={question}><h3 className="text-lg font-bold text-cyan-200">{question}</h3><p className="mt-2 leading-7 text-slate-300">{answer}</p></section>)}</div></section><section className="mt-12 rounded-3xl border border-cyan-400/20 bg-cyan-400/5 p-7 text-center"><h2 className="text-3xl font-black">Continue with today&apos;s UPSC revision</h2><p className="mx-auto mt-3 max-w-2xl leading-7 text-slate-300">Use the current-affairs archive for administrator-published daily briefs, then return here to revise by subject and practise recall.</p><Link href="/current-affairs" className="mt-6 inline-block rounded-xl bg-cyan-400 px-6 py-3 font-black text-slate-950">Open Current Affairs</Link></section></article></main>;
+}
