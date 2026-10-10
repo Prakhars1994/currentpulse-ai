@@ -17,3 +17,14 @@ test("hard-clipped stored description is skipped in favor of the complete source
   assert.doesNotMatch(selected, /\bwhe$/i);
   assert.ok(selected.length <= 160);
 });
+
+// Regression: a PDF field may include the next Markdown section in its summary.
+test("archive excerpts and SEO descriptions stop before leaked Markdown sections", async () => {
+  const { cleanPublicExcerpt, cleanSeoDescription } = await import("../lib/publicArticleRepair.js");
+  const lead = "Reuters reported a significant change in India's rice production outlook.";
+  const stored = lead + " ## TOP DATA & FACTS - Industry estimates indicated a decline. - Other facts.";
+  assert.equal(cleanPublicExcerpt(stored, "Rice Output", 240), lead);
+  assert.equal(cleanSeoDescription(stored, "Rice Output", 240), lead);
+  const escaped = lead + String.raw`\\n## WHY IN NEWS\\nAnother section`;
+  assert.equal(cleanPublicExcerpt(escaped, "Rice Output", 240), lead);
+});
