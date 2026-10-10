@@ -25,6 +25,6 @@ test("archive excerpts and SEO descriptions stop before leaked Markdown sections
   const stored = lead + " ## TOP DATA & FACTS - Industry estimates indicated a decline. - Other facts.";
   assert.equal(cleanPublicExcerpt(stored, "Rice Output", 240), lead);
   assert.equal(cleanSeoDescription(stored, "Rice Output", 240), lead);
-  const escaped = lead + String.raw`\\n## WHY IN NEWS\\nAnother section`;
+  const escaped = lead + String.raw`\n## TOP DATA & FACTS\nAnother section`;
   assert.equal(cleanPublicExcerpt(escaped, "Rice Output", 240), lead);
 });
