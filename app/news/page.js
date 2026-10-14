@@ -8,7 +8,6 @@ import { Fragment } from "react";
 import { loadNewsArticles } from "@/lib/articleStreams";
 import { createCategorySlug } from "@/lib/categoryRouting";
 import { resolveCardImage } from "@/lib/news/categoryImage";
-import { rankNewsByPriority } from "@/lib/news/headlinePriority";
 import { cleanPublicExcerpt, normalizedPublicCategory, repairedNewsTitle } from "@/lib/publicArticleRepair";
 import { SITE_URL } from "@/lib/siteUrl";
 
@@ -34,7 +33,9 @@ export default async function NewsPage({ searchParams }) {
   if (error) throw new Error("News archive is temporarily unavailable", { cause: error });
   if (!error && currentPage > 1 && !articles.length) notFound();
   const totalPages = Number.isFinite(total) ? Math.max(1, Math.ceil(total / pageSize)) : null;
-  const stories = currentPage === 1 ? rankNewsByPriority(articles) : articles;
+  // The repository already returns News newest-first; preserve that order so
+  // each archive date appears in one contiguous section.
+  const stories = articles;
 
   return <main className="min-h-screen bg-[#171713] text-[#f4f0e8]">
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
