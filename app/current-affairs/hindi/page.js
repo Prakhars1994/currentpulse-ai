@@ -6,6 +6,17 @@ import { notFound } from "next/navigation";
 import { archivePage, hindiArchiveHref } from "@/lib/archiveSeo";
 import { loadCurrentAffairsArticles } from "@/lib/articleStreams";
 import { SITE_URL } from "@/lib/siteUrl";
+import { cleanPublicExcerpt } from "@/lib/publicArticleRepair";
+
+function hindiCardExcerpt(value = "", title = "") {
+  const text = String(value || "")
+    .replace(/\\r\\n|\\n|\\r/g, " ")
+    .replace(/\[\[[^\]]{0,30}(?:BULLET|बुलेट)\]\]/gi, " ");
+  const why = /खबरों में क्यों\s*[?？]\s*/.exec(text);
+  const bullet = text.indexOf("•");
+  const relevant = why ? text.slice(why.index + why[0].length) : bullet >= 0 ? text.slice(bullet) : text;
+  return cleanPublicExcerpt(relevant.replace(/^\s*[•*]\s*/, ""), title, 260);
+}
 
 export async function generateMetadata({ searchParams }) {
   const page = archivePage((await searchParams)?.page);
@@ -25,5 +36,5 @@ export default async function HindiCurrentAffairsPage({ searchParams }) {
   if (error) throw new Error("Hindi archive is temporarily unavailable", { cause: error });
   if (page > 1 && !articles.length && !error) notFound();
   const href = hindiArchiveHref;
-  return <main className="min-h-screen bg-slate-950 py-10 text-white"><div className="mx-auto max-w-7xl px-4 sm:px-6"><header className="rounded-3xl border border-cyan-400/20 bg-slate-900 p-8"><p className="font-black uppercase tracking-[.2em] text-cyan-300">Hindi Current Affairs</p><h1 className="mt-3 text-4xl font-black">हिंदी करेंट अफेयर्स</h1><p className="mt-3 text-slate-300">प्रतियोगी परीक्षाओं की तैयारी के लिए प्रमुख घटनाएँ, विषयवार लेख और उपयोगी तथ्य हिंदी में पढ़ें।</p><Link href="/current-affairs" className="mt-5 inline-block font-bold text-cyan-300">English Current Affairs →</Link></header><section className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{articles.map((article) => <article key={article.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><p className="text-sm font-bold text-cyan-300">{article.category || "Current Affairs"}</p><Link href={`/current-affairs/${article.slug}`}><h2 className="mt-3 text-xl font-black leading-snug">{article.title}</h2></Link><p className="mt-3 line-clamp-4 text-slate-400">{article.why_news}</p></article>)}</section>{!articles.length && <p className="mt-8 rounded-2xl border border-dashed border-slate-700 p-8 text-center text-slate-300">अभी कोई हिंदी Current Affairs PDF प्रकाशित नहीं है।</p>}{(page > 1 || hasMore) && <nav className="mt-8 flex gap-4"><>{page > 1 && <Link href={href(page - 1)}>← नए लेख</Link>}</>{hasMore && <Link href={href(page + 1)}>पुराने लेख →</Link>}</nav>}</div></main>;
+  return <main lang="hi" className="min-h-screen bg-slate-950 py-10 text-white"><div className="mx-auto max-w-7xl px-4 sm:px-6"><header className="rounded-3xl border border-cyan-400/20 bg-slate-900 p-8"><p className="font-black uppercase tracking-[.2em] text-cyan-300">Hindi Current Affairs</p><h1 className="mt-3 text-4xl font-black">हिंदी करेंट अफेयर्स</h1><p className="mt-3 text-slate-300">प्रतियोगी परीक्षाओं की तैयारी के लिए प्रमुख घटनाएँ, विषयवार लेख और उपयोगी तथ्य हिंदी में पढ़ें।</p><Link href="/current-affairs" className="mt-5 inline-block font-bold text-cyan-300">English Current Affairs →</Link></header><section className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">{articles.map((article) => <article key={article.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><p className="text-sm font-bold text-cyan-300">{String(article.category || "करेंट अफेयर्स").replace(/^\s*श्रेणी\s*[:：]\s*/, "")}</p><Link href={`/current-affairs/${article.slug}`}><h2 className="mt-3 text-xl font-black leading-snug">{String(article.title || "").replace(/^\s*शीर्षक\s*[:：]\s*/, "")}</h2></Link><p className="mt-3 line-clamp-4 text-slate-400">{hindiCardExcerpt(article.why_news, article.title)}</p></article>)}</section>{!articles.length && <p className="mt-8 rounded-2xl border border-dashed border-slate-700 p-8 text-center text-slate-300">अभी कोई हिंदी Current Affairs PDF प्रकाशित नहीं है।</p>}{(page > 1 || hasMore) && <nav className="mt-8 flex gap-4"><>{page > 1 && <Link href={href(page - 1)}>← नए लेख</Link>}</>{hasMore && <Link href={href(page + 1)}>पुराने लेख →</Link>}</nav>}</div></main>;
 }
