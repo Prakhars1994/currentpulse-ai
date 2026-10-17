@@ -345,12 +345,12 @@ async function collectPaths() {
         if (visited.has(relative)) return;
         visited.add(relative);
         const xml = await fs.readFile(path.join(path.resolve(sitemapDir), relative), "utf8");
-        const index = /<sitemapindex\\b/i.test(xml);
+        const index = /<sitemapindex\b/i.test(xml);
         for (const entry of extractSitemapEntries(xml)) {
           const url = new URL(entry.location);
           if (url.origin !== "https://cp.vliab.workers.dev") throw new Error("Unexpected release sitemap origin");
           if (index) { await addMissing(url.pathname.slice(1)); continue; }
-          const pathname = url.pathname.replace(/\\/+$/, "") || "/";
+          const pathname = url.pathname.replace(/\/+$/, "") || "/";
           if (!isReaderPath(pathname) || paths.has(pathname)) continue;
           const nested = destinationFor(pathname);
           const flat = path.join(outDir, pathname === "/" ? "index.html" : pathname.slice(1) + ".html");
