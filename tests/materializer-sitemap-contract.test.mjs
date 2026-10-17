@@ -45,3 +45,42 @@ test('full materialization follows shipped sitemap shards and rejects a submitte
     await fs.rm(dir,{recursive:true,force:true});
   }
 });
+
+test('incremental release renders sitemap-only exam paths missing from the asset cache', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'cp-incremental-sitemap-'));
+  const origin = 'https://cp.vliab.workers.dev';
+  const exam = '/exams/new-official-exam-update';
+  const requests = [];
+  const server = http.createServer((req, res) => {
+    requests.push(req.url);
+    if (req.url === '/robots.txt') { res.end('User-agent: *\\nAllow: /'); return; }
+    res.setHeader('content-type', 'text/html');
+    res.end(`<html><head><title>Official exam update</title><meta name="description" content="Official exam information"><link rel="canonical" href="${origin}${req.url}"></head><body><h1>Official exam update</h1><p>${'Official update context. '.repeat(45)}</p></body></html>`);
+  });
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  try {
+    await fs.mkdir(path.join(dir, 'sitemaps'));
+    await fs.writeFile(path.join(dir, 'sitemap.xml'), `<sitemapindex><sitemap><loc>${origin}/sitemaps/one.xml</loc></sitemap></sitemapindex>`);
+    await fs.writeFile(path.join(dir, 'sitemaps/one.xml'), `<urlset><url><loc>${origin}${exam}</loc></url></urlset>`);
+    const changed = path.join(dir, 'changed.txt');
+    await fs.writeFile(changed, '/current-affairs/previously-published-brief\\n');
+    const child = spawn(process.execPath, ['scripts/materialize-static-reader.mjs', '--base', `http://127.0.0.1:${server.address().port}`, '--out', dir, '--sitemap-dir', dir, '--changed-file', changed], {
+      cwd: new URL('../', import.meta.url),
+      env: { ...process.env, NEXT_PUBLIC_SUPABASE_URL: '', SUPABASE_SERVICE_ROLE_KEY: '' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let output = '';
+    child.stdout.on('data', chunk => output += chunk);
+    child.stderr.on('data', chunk => output += chunk);
+    const code = await new Promise((resolve, reject) => {
+      child.on('error', reject);
+      child.on('close', resolve);
+    });
+    assert.equal(code, 0, output);
+    assert.ok(requests.includes(exam), 'sitemap-only exam page must be materialized');
+    assert.match(await fs.readFile(path.join(dir, exam.slice(1), 'index.html'), 'utf8'), /currentpulse-static-reader/);
+  } finally {
+    await new Promise(resolve => server.close(resolve));
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});

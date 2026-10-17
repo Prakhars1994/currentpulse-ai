@@ -337,6 +337,33 @@ async function collectPaths() {
     // the exact changed details keeps the incremental release safe without
     // walking the historical sitemap/archive.
     const paths = new Set([...CORE_PATHS, ...explicitPaths]);
+    // Incremental code releases must also render newly indexed pages absent
+    // from the restored validated asset snapshot (especially new exam URLs).
+    if (sitemapDir) {
+      const visited = new Set();
+      async function addMissing(relative) {
+        if (visited.has(relative)) return;
+        visited.add(relative);
+        const xml = await fs.readFile(path.join(path.resolve(sitemapDir), relative), "utf8");
+        const index = /<sitemapindex\\b/i.test(xml);
+        for (const entry of extractSitemapEntries(xml)) {
+          const url = new URL(entry.location);
+          if (url.origin !== "https://cp.vliab.workers.dev") throw new Error("Unexpected release sitemap origin");
+          if (index) { await addMissing(url.pathname.slice(1)); continue; }
+          const pathname = url.pathname.replace(/\\/+$/, "") || "/";
+          if (!isReaderPath(pathname) || paths.has(pathname)) continue;
+          const nested = destinationFor(pathname);
+          const flat = path.join(outDir, pathname === "/" ? "index.html" : pathname.slice(1) + ".html");
+          try { await fs.access(nested); continue; } catch {}
+          try { await fs.access(flat); continue; } catch {}
+          paths.add(pathname);
+          sitemapReaderPaths.add(pathname);
+          pathMetadata.set(pathname, { lastModified: entry.lastModified });
+        }
+      }
+      await addMissing("sitemap.xml");
+    }
+    if (paths.size > maxPages) throw new Error(`Reader page cap ${maxPages} would truncate ${paths.size} incremental paths`);
 
     return [...paths]
       .filter(isReaderPath)
