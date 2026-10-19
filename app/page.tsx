@@ -22,6 +22,14 @@ export const metadata = {
       "UPSC current affairs, Prelims facts, Mains analysis, PYQs, quizzes and revision tools from CurrentPulse AI.",
     url: SITE_URL,
     type: "website",
+    images: [
+      {
+        url: `${SITE_URL}/api/article-visual?title=${encodeURIComponent("CurrentPulse AI: UPSC Current Affairs, PYQs, Quiz & News")}&category=${encodeURIComponent("UPSC | Prelims | Mains")}`,
+        width: 1200,
+        height: 630,
+        alt: "CurrentPulse AI - UPSC current affairs",
+      },
+    ],
   },
 };
 

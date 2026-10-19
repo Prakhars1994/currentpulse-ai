@@ -73,7 +73,7 @@ export default function Hero({
             </span>
 
             <h1 className="mt-7 max-w-3xl text-5xl font-black leading-[1.05] tracking-[-0.045em] text-white sm:text-6xl xl:text-7xl">
-              CurrentPulse AI
+              CurrentPulse AI{" "}
               <span className="block bg-gradient-to-r from-cyan-300 via-cyan-400 to-blue-400 bg-clip-text text-transparent">
                 current affairs for the UPSC syllabus
               </span>

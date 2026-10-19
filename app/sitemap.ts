@@ -121,7 +121,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       if (!article?.slug) continue;
       const sources = article.article_sources || [];
       const kinds = new Set(sources.map((source) => source?.source_kind));
-      const lastModified = article.updated_at || article.created_at || undefined;
+      // Bulk maintenance jobs rewrite updated_at on many rows at once, which makes
+      // lastmod look unreliable to Google. Use the publication date instead.
+      const lastModified = article.created_at || article.updated_at || undefined;
 
       if (
         kinds.has("coaching") &&
