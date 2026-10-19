@@ -338,6 +338,37 @@ async function collectPaths() {
     // walking the historical sitemap/archive.
     const paths = new Set([...CORE_PATHS, ...explicitPaths]);
 
+    // A code release can publish a newer sitemap than the cached reader.
+    // Render only newly indexed routes without an existing static asset.
+    if (sitemapDir) {
+      const visited = new Set();
+      async function includeMissingSitemapAssets(relative) {
+        if (visited.has(relative)) return;
+        visited.add(relative);
+        const xml = await fs.readFile(path.join(path.resolve(sitemapDir), relative), "utf8");
+        const isIndex = /<sitemapindex\b/i.test(xml);
+        for (const entry of extractSitemapEntries(xml)) {
+          const url = new URL(entry.location);
+          if (url.origin !== "https://cp.vliab.workers.dev") throw new Error("Unexpected release sitemap origin");
+          if (isIndex) {
+            await includeMissingSitemapAssets(url.pathname.slice(1));
+          } else if (isReaderPath(url.pathname)) {
+            sitemapReaderPaths.add(url.pathname);
+            pathMetadata.set(url.pathname, { lastModified: entry.lastModified });
+            try {
+              await fs.access(destinationFor(url.pathname));
+            } catch (error) {
+              if (error?.code !== "ENOENT") throw error;
+              paths.add(url.pathname);
+            }
+          }
+        }
+      }
+      await includeMissingSitemapAssets("sitemap.xml");
+      if (!sitemapReaderPaths.size) throw new Error("Release sitemap contains no reader pages");
+    }
+    if (paths.size > maxPages) throw new Error("Reader page cap " + maxPages + " would truncate " + paths.size + " paths");
+
     return [...paths]
       .filter(isReaderPath)
       .sort((a, b) => {

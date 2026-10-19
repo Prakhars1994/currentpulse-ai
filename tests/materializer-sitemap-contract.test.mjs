@@ -45,3 +45,44 @@ test('full materialization follows shipped sitemap shards and rejects a submitte
     await fs.rm(dir,{recursive:true,force:true});
   }
 });
+
+test('incremental materialization includes newly indexed routes missing from the cached reader', async () => {
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'cp-incremental-sitemap-'));
+  const origin = 'https://cp.vliab.workers.dev';
+  const oldRoute = '/exams/existing-archive';
+  const newRoute = '/exams/newly-published-notice';
+  const requests = [];
+  const html = (route) => `<html><head><title>Official exam notice</title><meta name="description" content="Verified official examination update and published notification"><link rel="canonical" href="${origin}${route}"></head><body><h1>Official exam notice</h1><p>${'Verified official exam information. '.repeat(40)}</p></body></html>`;
+  const server = http.createServer((req, res) => {
+    requests.push(req.url);
+    if (req.url === '/robots.txt') { res.end('User-agent: *\nAllow: /'); return; }
+    res.setHeader('content-type', 'text/html');
+    res.end(html(req.url));
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  try {
+    await fs.mkdir(path.join(dir, 'sitemaps'));
+    await fs.mkdir(path.join(dir, oldRoute.slice(1)), { recursive: true });
+    await fs.writeFile(path.join(dir, oldRoute.slice(1), 'index.html'), html(oldRoute));
+    await fs.writeFile(path.join(dir, 'sitemap.xml'), `<sitemapindex><sitemap><loc>${origin}/sitemaps/one.xml</loc></sitemap></sitemapindex>`);
+    await fs.writeFile(path.join(dir, 'sitemaps/one.xml'), `<urlset><url><loc>${origin}${oldRoute}</loc></url><url><loc>${origin}${newRoute}</loc></url></urlset>`);
+    const changed = path.join(dir, 'changed.txt');
+    await fs.writeFile(changed, '/\n');
+    const child = spawn(process.execPath, ['scripts/materialize-static-reader.mjs', '--base', `http://127.0.0.1:${server.address().port}`, '--out', dir, '--sitemap-dir', dir, '--changed-file', changed], {
+      cwd: new URL('../', import.meta.url),
+      env: { ...process.env, NEXT_PUBLIC_SUPABASE_URL: '', SUPABASE_SERVICE_ROLE_KEY: '' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let output = '';
+    child.stdout.on('data', (chunk) => output += chunk);
+    child.stderr.on('data', (chunk) => output += chunk);
+    const code = await new Promise((resolve, reject) => { child.on('error', reject); child.on('close', resolve); });
+    assert.equal(code, 0, output);
+    assert.ok(requests.includes(newRoute), 'new sitemap route must be rendered');
+    assert.ok(!requests.includes(oldRoute), 'healthy cached archive must not be re-rendered');
+    assert.match(await fs.readFile(path.join(dir, newRoute.slice(1), 'index.html'), 'utf8'), /currentpulse-static-reader/);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+});
