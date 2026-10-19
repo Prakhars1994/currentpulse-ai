@@ -12,7 +12,7 @@ test("ResultPulse filter metadata covers the intended groups and authorities", (
   assert.deepEqual(EXAM_FILTER_GROUPS, ["UPSC", "SSC", "Railways", "Banking", "Entrance Exams", "Defence", "State PSC"]);
   assert.deepEqual(
     EXAM_FILTER_SOURCES.map((source) => source.id),
-    ["upsc", "ssc", "nta", "ibps", "sbi", "rrcb", "rrb-cdg", "iaf", "navy", "uppsc", "rpsc-results", "bpsc", "mpsc", "mppsc", "tnpsc", "hpsc", "opsc", "gpsc", "jpsc"]
+    ["upsc", "ssc", "nta", "ibps", "sbi", "rrcb", "rrb-cdg", "iaf", "navy", "uppsc", "rpsc-results", "bpsc", "mpsc", "mppsc", "tnpsc", "hpsc", "opsc", "gpsc", "jpsc", "ppsc"]
   );
 });
 
