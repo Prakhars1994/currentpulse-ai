@@ -43,11 +43,12 @@ function articleRoute(article) {
   const sources = article.article_sources || [];
   const hasCoaching = sources.some((source) => source?.source_kind === "coaching");
   const hasNews = sources.some((source) => source?.source_kind === "news");
-  if (hasCoaching && isStandaloneCurrentAffairsArticle(article) && isCurrentAffairsPubliclySafe(article)) {
-    return "/current-affairs/" + article.slug;
-  }
+  // Mirror the article page canonical: an indexable news article is served at /news/.
   if (hasNews && isIndexableNewsArticle(article)) {
     return "/news/" + article.slug;
+  }
+  if (hasCoaching && isStandaloneCurrentAffairsArticle(article) && isCurrentAffairsPubliclySafe(article)) {
+    return "/current-affairs/" + article.slug;
   }
   // PDF-imported articles have no source rows. The current-affairs page serves
   // them when they pass the same safety and standalone checks, so list them too.
