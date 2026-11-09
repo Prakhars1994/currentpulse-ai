@@ -49,6 +49,11 @@ function articleRoute(article) {
   if (hasNews && isIndexableNewsArticle(article)) {
     return "/news/" + article.slug;
   }
+  // PDF-imported articles have no source rows. The current-affairs page serves
+  // them when they pass the same safety and standalone checks, so list them too.
+  if (!hasCoaching && !hasNews && isStandaloneCurrentAffairsArticle(article) && isCurrentAffairsPubliclySafe(article)) {
+    return "/current-affairs/" + article.slug;
+  }
   return "";
 }
 
