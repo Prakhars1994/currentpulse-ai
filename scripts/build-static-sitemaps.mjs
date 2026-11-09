@@ -63,10 +63,16 @@ function sitemapXml(entries) {
 }
 
 let cursor = 0;
-const entries = [
+const RECENT_MS = 90 * 24 * 60 * 60 * 1000;
+const recentCutoff = Date.now() - RECENT_MS;
+// Shards are grouped so Google sees fresh pages first: core + recent articles,
+// then older articles, then exam updates.
+const coreEntries = [
   ...STATIC_PATHS.map((path) => ({ path })),
   ...CATEGORY_ROUTES.map((category) => ({ path: `/category/${category.slug}` })),
 ];
+const archiveEntries = [];
+const entries = coreEntries;
 for (;;) {
   const { data, error } = await supabase
     .from("articles")
@@ -80,7 +86,10 @@ for (;;) {
   const rows = data || [];
   for (const row of rows) {
     const route = row.slug ? articleRoute(row) : "";
-    if (route) entries.push({ path: route, lastModified: row.updated_at || row.created_at || "" });
+    if (!route) continue;
+    const created = Date.parse(row.created_at || "");
+    const target = Number.isFinite(created) && created >= recentCutoff ? coreEntries : archiveEntries;
+    target.push({ path: route, lastModified: row.updated_at || row.created_at || "" });
   }
   if (rows.length < PAGE_SIZE) break;
   cursor = Number(rows.at(-1)?.id || cursor);
@@ -104,16 +113,20 @@ for (let offset = 0;; offset += PAGE_SIZE) {
   examRows.push(...(data || []));
   if ((data || []).length < PAGE_SIZE) break;
 }
+const examEntries = [];
 for (const exam of selectExamSitemapRecords(examRows).included) {
-  entries.push({ path: `/exams/${exam.slug}`, lastModified: exam.updated_at || exam.created_at || "" });
+  examEntries.push({ path: `/exams/${exam.slug}`, lastModified: exam.updated_at || exam.created_at || "" });
 }
 
 const shards = [];
-for (let offset = 0; offset < entries.length; offset += SHARD_SIZE) {
-  const number = String(shards.length + 1).padStart(4, "0");
-  const file = `sitemap-${number}.xml`;
-  await fs.writeFile(path.join(outDir, "sitemaps", file), sitemapXml(entries.slice(offset, offset + SHARD_SIZE)), "utf8");
-  shards.push(`/sitemaps/${file}`);
+const groups = [coreEntries, archiveEntries, examEntries];
+for (const group of groups) {
+  for (let offset = 0; offset < group.length; offset += SHARD_SIZE) {
+    const number = String(shards.length + 1).padStart(4, "0");
+    const file = `sitemap-${number}.xml`;
+    await fs.writeFile(path.join(outDir, "sitemaps", file), sitemapXml(group.slice(offset, offset + SHARD_SIZE)), "utf8");
+    shards.push(`/sitemaps/${file}`);
+  }
 }
 
 const index = shards.map((file) => `<sitemap><loc>${SITE_URL}${file}</loc></sitemap>`).join("");
@@ -122,4 +135,4 @@ await fs.writeFile(
   `<?xml version="1.0" encoding="UTF-8"?><sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${index}</sitemapindex>`,
   "utf8"
 );
-console.log(JSON.stringify({ entries: entries.length, shards: shards.length, shardSize: SHARD_SIZE }));
+console.log(JSON.stringify({ core: coreEntries.length, archive: archiveEntries.length, exams: examEntries.length, shards: shards.length, shardSize: SHARD_SIZE }));
