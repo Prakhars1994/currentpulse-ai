@@ -4,6 +4,7 @@ import process from "node:process";
 import { createClient } from "@supabase/supabase-js";
 import { assessExamSitemapRecord, isStandaloneCurrentAffairsArticle } from "../lib/sitemapQuality.js";
 import { readerAssetIssues } from "../lib/readerAssetHealth.mjs";
+import { isIndexableNewsArticle } from "../lib/newsIndexability.js";
 
 function arg(name, fallback = "") {
   const index = process.argv.indexOf(name);
@@ -238,7 +239,7 @@ async function addRecentlyChangedDatabasePaths(paths) {
     const [articleResult, examResult] = await Promise.all([
       supabase
         .from("articles")
-        .select("title,slug,created_at,updated_at,article_sources(source_kind)")
+        .select("title,slug,created_at,updated_at,quality_flags,article_sources(source_kind)")
         .eq("status", "published")
         .gte("updated_at", since)
         .order("updated_at", { ascending: false })
@@ -265,7 +266,10 @@ async function addRecentlyChangedDatabasePaths(paths) {
           recentlyChangedPaths.add(route);
           pathMetadata.set(route, { lastModified });
         }
-        if (kinds.has("coaching") && isStandaloneCurrentAffairsArticle(article)) {
+        // Articles served as /news/ canonicalize there; don't materialize a second
+        // /current-affairs/ reader page for them (it fails the canonical check).
+        const servedAsNews = kinds.has("news") && isIndexableNewsArticle(article);
+        if (kinds.has("coaching") && !servedAsNews && isStandaloneCurrentAffairsArticle(article)) {
           const route = `/current-affairs/${article.slug}`;
           paths.add(route);
           recentlyChangedPaths.add(route);
