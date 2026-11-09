@@ -222,7 +222,7 @@ jobs:
             --base http://127.0.0.1:3100 \
             --out .open-next/assets \
             --sitemap-dir .open-next/assets \
-            --max-pages 1200 \
+            --max-pages 2500 \
             --concurrency 4 \
             --timeout-ms 10000 \
             --budget-seconds 720 \
