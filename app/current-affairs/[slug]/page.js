@@ -130,7 +130,7 @@ export async function generateMetadata({ params }) {
     };
   }
 
-  const isCoaching = (article.article_sources || []).some((source) => source.source_kind === "coaching");
+  const isCoaching = (article.article_sources || []).some((source) => source.source_kind === "coaching") || (article.article_sources || []).length === 0;
   const canonicalPath = isCoaching ? `/current-affairs/${slug}` : `/news/${slug}`;
   const resolvedImage = resolveDisplayImage(article);
   const image = resolvedImage ? absoluteImageUrl(resolvedImage) : "";
@@ -201,7 +201,8 @@ export default async function ArticlePage({ params }) {
     articleSources.some((source) => source.source_kind === "coaching") &&
     typeof article.content === "string" && article.content.trim().length > 0;
   if (!isCurrentAffairsPubliclySafe(article)) notFound();
-  const isCoachingArticle = (articleSources || []).some((source) => source.source_kind === "coaching");
+  // PDF-imported articles have no source rows. Serve them here instead of redirecting to /news/.
+  const isCoachingArticle = (articleSources || []).some((source) => source.source_kind === "coaching") || (articleSources || []).length === 0;
   const hasNewsVersion = (articleSources || []).some((source) => source.source_kind === "news");
   if (!isCoachingArticle) {
     permanentRedirect(`/news/${slug}`);
