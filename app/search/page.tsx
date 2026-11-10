@@ -10,7 +10,7 @@ export const metadata = {
   title: "Search Current Affairs | CurrentPulse AI",
   description: "Search CurrentPulse News and UPSC Current Affairs by title, category and GS paper.",
   alternates: { canonical: "/search" },
-  robots: { index: false, follow: true },
+  robots: { index: true, follow: true },
   openGraph: {
     title: "Search Current Affairs | CurrentPulse AI",
     description: "Search CurrentPulse News and UPSC Current Affairs by title, category and GS paper.",
