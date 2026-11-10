@@ -11,8 +11,8 @@ test("SEO origin is locked to the Cloudflare production domain", () => {
   assert.doesNotMatch(siteUrl, /NEXT_PUBLIC_SITE_URL/);
 });
 
-test("AI utility pages are crawlable but excluded from indexing and the sitemap", () => {
-  assert.match(read("app/ai/layout.js"), /index: false/);
+test("AI utility pages are crawlable and indexable (only The Conversation licensed articles stay noindex)", () => {
+  assert.match(read("app/ai/layout.js"), /index: true/);
   const sitemap = read("app/sitemap.ts");
   assert.doesNotMatch(sitemap, /"videos","ai","contact"/);
 });
