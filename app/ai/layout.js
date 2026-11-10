@@ -7,7 +7,7 @@ export const metadata = {
     canonical: `${SITE_URL}/ai`,
   },
   robots: {
-    index: false,
+    index: true,
     follow: true,
   },
 };
